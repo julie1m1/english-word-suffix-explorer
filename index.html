@@ -1,280 +1,586 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vocab Lab Omni - Full Pro</title>
+    <title>Vocab Lab Omni</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,700;1,300&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #2c3e50;
-            --accent: #3498db;
-            --bg: #f8f9fa;
-            --card-bg: #ffffff;
-            --highlight: #00ff88;
-            --text-main: #333;
-            --text-muted: #7f8c8d;
+        /* ══ DARK THEME (默认) ══ */
+        :root, [data-theme="dark"] {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-2: #22253a;
+            --border: rgba(255,255,255,0.07);
+            --accent: #7c6af5;
+            --accent-soft: rgba(124,106,245,0.15);
+            --green: #2dd4a0;
+            --green-soft: rgba(45,212,160,0.12);
+            --yellow: #f5c518;
+            --text-1: #e8eaf6;
+            --text-2: #8b90b8;
+            --text-3: #555a80;
+            --shadow: rgba(0,0,0,0.4);
+            --topbar-bg: #1a1d27;
+            --scrollbar: rgba(255,255,255,0.1);
         }
 
-        body { 
-            margin: 0; display: flex; height: 100vh; 
-            font-family: -apple-system, system-ui, sans-serif; 
-            background: var(--bg); color: var(--text-main); overflow: hidden;
+        /* ══ LIGHT THEME — Claude 品牌色（橙棕 + 暖米白） ══
+           参考 Claude 官网真实配色：
+           背景  #f5f0e8  暖奶油白
+           品牌橙 #d97757  Claude 标志性橙棕
+           文字   #1f1b16  深暖棕黑
+        ══ */
+        [data-theme="light"] {
+            --bg: #f5f0e8;
+            --surface: #fdfaf5;
+            --surface-2: #ede8df;
+            --border: rgba(0,0,0,0.08);
+            --accent: #d97757;           /* Claude 橙 */
+            --accent-soft: rgba(217,119,87,0.09);
+            --green: #2a9d6e;
+            --green-soft: rgba(42,157,110,0.1);
+            --yellow: #b07d2a;
+            --text-1: #1f1b16;
+            --text-2: #6b5f52;
+            --text-3: #a89a8a;
+            --shadow: rgba(80,50,20,0.09);
+            --topbar-bg: #fdfaf5;
+            --scrollbar: rgba(0,0,0,0.1);
         }
 
-        /* ========== 1. 基础布局 ========== */
-        .sidebar { 
-            width: 240px; background: #fff; border-right: 1px solid #e0e0e0; 
-            display: flex; flex-direction: column; flex-shrink: 0;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'DM Mono', monospace;
+            background: var(--bg);
+            color: var(--text-1);
+            height: 100dvh;
+            display: flex;
+            overflow: hidden;
+            transition: background 0.3s, color 0.3s;
         }
-        .sidebar-title { padding: 20px; font-size: 14px; font-weight: bold; color: var(--primary); border-bottom: 1px solid #eee; }
-        #suffix-container { overflow-y: auto; flex: 1; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 4px; }
 
-        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        
-        /* 顶部导航栏 */
-        .top-bar { 
-            padding: 12px 20px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
-            display: flex; align-items: center; gap: 12px; z-index: 100; transition: transform 0.3s;
-            flex-wrap: wrap; /* 允许在窄屏换行 */
+        /* ══ SIDEBAR ══ */
+        .sidebar {
+            width: 220px;
+            flex-shrink: 0;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .sidebar-header {
+            padding: 20px 16px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-header h2 {
+            font-family: 'Fraunces', serif;
+            font-style: italic;
+            font-weight: 300;
+            font-size: 18px;
+            color: var(--text-1);
+        }
+        .sidebar-header span {
+            font-size: 10px;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            display: block;
+            margin-top: 3px;
+        }
+        #suffix-container { overflow-y: auto; flex: 1; padding: 8px 0; }
+
+        .filter-btn {
+            width: 100%; border: none;
+            padding: 10px 16px; text-align: left;
+            background: transparent; cursor: pointer;
+            color: var(--text-2);
+            border-left: 3px solid transparent;
+            transition: all 0.15s;
+            display: flex; align-items: baseline; gap: 8px;
+        }
+        .filter-btn:hover { background: var(--surface-2); color: var(--text-1); }
+        .filter-btn.active { background: var(--accent-soft); color: var(--accent); border-left-color: var(--accent); }
+        .filter-btn .sfx { font-size: 13px; font-weight: 500; }
+        .filter-btn .meaning { font-size: 10px; color: var(--text-3); }
+        .filter-btn.active .meaning { color: var(--accent); opacity: 0.7; }
+
+        /* ══ MAIN ══ */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+        /* ══ TOP BAR ══ */
+        .top-bar {
+            padding: 10px 16px;
+            background: var(--topbar-bg);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center;
+            gap: 8px; flex-wrap: wrap; z-index: 100;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .stats-badge {
+            font-size: 12px; color: var(--text-2);
+            background: var(--surface-2);
+            padding: 5px 12px; border-radius: 20px;
+            border: 1px solid var(--border);
+            white-space: nowrap; flex-shrink: 0;
+        }
+        .stats-badge b { color: var(--green); }
+        #vocabSelect {
+            padding: 5px 10px; border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface-2); color: var(--text-1);
+            font-family: 'DM Mono', monospace; font-size: 12px;
+            cursor: pointer; max-width: 140px;
+            transition: background 0.3s;
+        }
+        #vocabSelect:focus { outline: 1px solid var(--accent); }
+        #pos-container { display: flex; gap: 5px; flex-wrap: wrap; }
+        .pos-btn {
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            background: transparent; color: var(--text-2);
+            border-radius: 20px; cursor: pointer;
+            font-size: 11px; font-family: 'DM Mono', monospace;
+            transition: all 0.15s;
+        }
+        .pos-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .pos-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .toggle-all-btn {
+            padding: 5px 12px;
+            border: 1px solid var(--yellow);
+            background: transparent; color: var(--yellow);
+            border-radius: 20px; cursor: pointer;
+            font-size: 11px; font-family: 'DM Mono', monospace;
+            transition: all 0.15s; white-space: nowrap;
+        }
+        .toggle-all-btn:hover, .toggle-all-btn.active { background: var(--yellow); color: #111; }
+
+        /* ══ THEME TOGGLE（右上角固定） ══ */
+        .theme-toggle {
+            position: fixed;
+            top: 12px; right: 16px;
+            z-index: 9999;
+            display: flex; align-items: center; gap: 6px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: 'DM Mono', monospace;
+            color: var(--text-2);
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ══ GRID ══ */
+        #grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 12px;
+            padding: 16px;
+            overflow-y: auto;
+            align-content: start;
         }
 
-        .stats-badge { background: var(--primary); color: #bdc3c7; padding: 6px 14px; border-radius: 20px; font-size: 12px; white-space: nowrap; }
-        .highlight-num { color: var(--highlight); font-weight: bold; }
-
-        /* 词性按钮样式 */
-        #pos-container { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
-        .pos-btn { padding: 4px 10px; border: 1px solid #ddd; background: #fff; border-radius: 15px; cursor: pointer; font-size: 11px; transition: 0.2s; }
-        .pos-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-
-        /* 全局显示翻译按钮 */
-        .toggle-all-btn { padding: 4px 12px; border: 1px solid #f1c40f; background: #f1c40f; color: #fff; border-radius: 15px; cursor: pointer; font-size: 11px; font-weight: bold; white-space: nowrap; }
-
-        /* 网格与卡片 */
-        #grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; padding: 20px; overflow-y: auto; align-content: start; }
-        
-        .card { 
-            background: var(--card-bg); padding: 18px; border-radius: 12px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; 
-            display: flex; flex-direction: column; border: 1px solid transparent;
+        /* ══ CARD — 修复截断问题 ══
+           关键修复：
+           1. 去掉 overflow:hidden（它是截断元凶）
+           2. 用独立 .card-inner 添加内边距
+           3. word-text 加 min-width:0 + overflow-wrap:anywhere
+           4. word-def max-height 给 300px
+        */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s, background 0.3s;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            height: auto; /* 自适应内容高度 */
         }
-        .card.viewed { border-left: 5px solid #2ecc71; background: #fafafa; }
-        .word-header { display: flex; justify-content: space-between; align-items: center; }
-        .word-text { font-size: 18px; font-weight: 700; color: var(--primary); word-break: break-all; }
-        .external-link { text-decoration: none; opacity: 0.4; padding: 5px; font-size: 16px; }
+        /* 干净的 hover：只用阴影 + 边框，无渐变光晕 */
+        .card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--shadow); border-color: var(--accent); }
+        .card.viewed { border-left: 3px solid var(--green); }
+        .card.speaking { border-color: var(--green); box-shadow: 0 0 0 2px var(--green-soft); }
 
-        .word-def { margin-top: 10px; font-size: 14px; color: var(--text-muted); opacity: 0; transition: opacity 0.2s; line-height: 1.4; }
+        .card-inner {
+            padding: 14px 14px 12px;
+            display: flex; flex-direction: column; gap: 7px;
+        }
+        .word-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 6px;
+        }
+        .word-text {
+            font-family: 'Fraunces', serif;
+            font-size: 18px; font-weight: 700;
+            color: var(--text-1);
+            word-break: break-word;
+            overflow-wrap: anywhere; /* 超长词自动换行 */
+            line-height: 1.25;
+            flex: 1; min-width: 0; /* flex 子项必须，防止撑出父容器 */
+        }
 
-        /* ========== 2. 响应式适配 ========== */
+        /* 双词典链接 */
+        .card-links {
+            display: flex; gap: 4px;
+            flex-shrink: 0;
+            align-items: flex-start;
+            opacity: 0; transition: opacity 0.15s;
+        }
+        .card:hover .card-links { opacity: 1; }
+        .dict-link {
+            text-decoration: none;
+            font-size: 10px;
+            font-family: 'DM Mono', monospace;
+            padding: 2px 6px;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text-2);
+            transition: all 0.15s;
+            white-space: nowrap;
+            line-height: 1.5;
+        }
+        .dict-link.en-cn { border-color: var(--green); color: var(--green); }
+        .dict-link.en-en { border-color: var(--accent); color: var(--accent); }
+        .dict-link.en-cn:hover { background: var(--green); color: #fff; }
+        .dict-link.en-en:hover { background: var(--accent); color: #fff; }
+
+        .word-def {
+            font-size: 12px; color: var(--text-2);
+            line-height: 1.65;
+            opacity: 0; max-height: 0; overflow: hidden;
+            transition: opacity 0.2s, max-height 0.3s ease;
+            word-break: break-word;
+        }
+        .card:hover .word-def,
+        .card.viewed .word-def,
+        .show-all-def .word-def {
+            opacity: 1;
+            max-height: 300px; /* 足够显示长释义 */
+        }
+        .highlight { color: var(--accent); font-weight: 500; }
+
+        /* ══ SKELETON ══ */
+        .skeleton {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 14px; padding: 16px;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .skeleton-line {
+            background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface) 50%, var(--surface-2) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite; border-radius: 6px;
+        }
+        .skeleton-line.title { height: 20px; width: 65%; }
+        .skeleton-line.sub { height: 11px; }
+        .skeleton-line.sub2 { height: 11px; width: 80%; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* ══ EMPTY STATE ══ */
+        .empty-state {
+            grid-column: 1 / -1; text-align: center;
+            padding: 60px 20px; color: var(--text-3);
+        }
+        .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+        .empty-state p { font-size: 13px; line-height: 1.8; }
+
+        /* ══ MOBILE BOTTOM NAV ══ */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: 60px;
+            background: var(--topbar-bg);
+            border-top: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            overflow-x: auto; align-items: center;
+            padding: 0 12px; gap: 8px;
+            z-index: 200; transition: transform 0.3s;
+        }
+        .suffix-pill {
+            flex-shrink: 0; padding: 6px 12px;
+            background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 20px; font-size: 12px; color: var(--text-2);
+            cursor: pointer; white-space: nowrap;
+            font-family: 'DM Mono', monospace; transition: all 0.15s;
+        }
+        .suffix-pill.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+        /* ══ RESPONSIVE ══ */
         @media (max-width: 768px) {
             .sidebar { display: none; }
-            .top-bar { position: fixed; top: 0; left: 0; width: 100%; box-sizing: border-box; gap: 8px; padding: 8px; }
-            #grid { padding-top: 130px; padding-bottom: 80px; grid-template-columns: 1fr; }
-            .mobile-suffix-nav {
-                position: fixed; bottom: 0; left: 0; width: 100%; height: 65px;
-                background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
-                border-top: 1px solid #eee; display: flex !important;
-                overflow-x: auto; align-items: center; padding: 0 15px; z-index: 100; transition: transform 0.3s;
-            }
-            .card.viewed .word-def { opacity: 1 !important; display: block; }
+            .mobile-bottom-nav { display: flex; }
+            #grid { padding-bottom: 76px; grid-template-columns: 1fr 1fr; }
+            .top-bar { padding: 8px 10px; gap: 6px; padding-right: 90px; }
+            .word-def { opacity: 1 !important; max-height: 300px !important; }
         }
+        @media (max-width: 480px) { #grid { grid-template-columns: 1fr; } }
 
-        /* PC端悬停逻辑 */
-        @media (min-width: 769px) {
-            .card:hover .word-def { opacity: 1; }
-            .mobile-suffix-nav { display: none !important; }
-        }
-
-        /* 全局功能类 */
-        .show-all-def .word-def { opacity: 1 !important; display: block !important; }
-        .nav-hidden-top { transform: translateY(-100%); }
-        .nav-hidden-bottom { transform: translateY(100%); }
-        
-        .filter-btn { width: 100%; border: none; padding: 12px 20px; text-align: left; background: transparent; cursor: pointer; border-left: 4px solid transparent; }
-        .filter-btn.active, .suffix-pill.active { background: #eef6fc; color: var(--accent); border-left-color: var(--accent); font-weight: bold; }
-        .suffix-pill { flex:0 0 auto; padding: 8px 15px; background: #f1f3f5; border-radius: 20px; margin-right: 8px; font-size: 12px; }
-        .highlight { color: #e74c3c; text-decoration: underline; font-weight: bold; }
-        #vocabSelect { padding: 4px; border-radius: 8px; border: 1px solid #ddd; max-width: 120px; }
+        .show-all-def .word-def { opacity: 1 !important; max-height: 300px !important; }
+        .nav-hidden-top { transform: translateY(-110%); }
+        .nav-hidden-bottom { transform: translateY(110%); }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <div class="sidebar-title">SUFFIX EXPLORER</div>
+    <div class="sidebar-header">
+        <h2>Suffix Lab</h2>
+        <span>Explorer</span>
+    </div>
     <div id="suffix-container"></div>
 </div>
 
 <div class="main">
     <div class="top-bar" id="topBar">
         <div class="stats-badge">
-            <span class="highlight-num" id="match-count">0</span> / <span id="total-count">0</span> (<span class="highlight-num" id="match-percent">0%</span>)
+            <b id="match-count">0</b> / <span id="total-count">0</span>
+            &nbsp;<span style="opacity:.6">(<b id="match-percent">0%</b>)</span>
         </div>
-        
-        <select id="vocabSelect"><option>Loading...</option></select>
-
+        <select id="vocabSelect"><option>Loading…</option></select>
         <div id="pos-container"></div>
-
-        <button class="toggle-all-btn" id="toggleAllBtn">👁️ Show All</button>
+        <button class="toggle-all-btn" id="toggleAllBtn">👁 Show All</button>
     </div>
-
     <div id="grid"></div>
-    <div class="mobile-suffix-nav" id="mobileBottomNav"></div>
+    <div class="mobile-bottom-nav" id="mobileBottomNav"></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<!-- 主题切换按钮（右上角） -->
+<button class="theme-toggle" id="themeToggle">
+    <span id="themeIcon">☀️</span>
+    <span id="themeLabel">Light</span>
+</button>
+
 <script>
-    let vocab = [];
-    let suffixList = [];
-    let currentFilter = { suffix: null, pos: 'All' };
-    let lastScrollTop = 0;
-
-    const isMobile = () => window.innerWidth <= 768;
-
-    window.addEventListener('load', () => {
-        fetch('data/list.json').then(res => res.json()).then(data => {
-            const select = document.getElementById("vocabSelect");
-            select.innerHTML = '';
-            data.vocabs.forEach(n => {
-                const opt = document.createElement("option");
-                opt.value = `data/${n}`; opt.textContent = n.replace('.csv','');
-                select.appendChild(opt);
-            });
-            if (data.vocabs[0]) loadVocab(`data/${data.vocabs[0]}`);
-            if (data.suffixes && data.suffixes[0]) loadSuffix(`data/${data.suffixes[0]}`);
-        });
-    });
-
-    function loadVocab(url) {
-        fetch(url).then(res => res.text()).then(text => {
-            const res = Papa.parse(text.trim());
-            vocab = res.data.filter(r => r[0] && r[1]).map(r => ({ 
-                word: r[0].trim(), 
-                def: r[1].trim(),
-                pos: r[1].match(/[a-z]+\./g) || [] // 提取词性
-            }));
-            updatePOSMenu();
-            applyFilters();
-        });
-    }
-
-    function loadSuffix(url) {
-        fetch(url).then(res => res.text()).then(text => {
-            const res = Papa.parse(text.trim());
-            suffixList = [];
-            res.data.forEach(r => {
-                if (r[0]) r[0].split('/').forEach(p => {
-                    const s = p.replace('-','').trim();
-                    if(s) suffixList.push({ suffix: s, meaning: r[1] || '' });
-                });
-            });
-            renderSuffixControls();
-        });
-    }
-
-    // 更新词性菜单（含 All）
-    function updatePOSMenu() {
-        const box = document.getElementById("pos-container");
-        box.innerHTML = "";
-        const posList = ["All", ...new Set(vocab.flatMap(v => v.pos))];
-        
-        posList.forEach(p => {
-            const btn = document.createElement("button");
-            btn.className = "pos-btn" + (p === currentFilter.pos ? " active" : "");
-            btn.innerText = p;
-            btn.onclick = () => {
-                currentFilter.pos = p;
-                updatePOSMenu();
-                applyFilters();
-            };
-            box.appendChild(btn);
-        });
-    }
-
-    // 全局翻译显示切换
-    document.getElementById("toggleAllBtn").onclick = function() {
-        const grid = document.getElementById("grid");
-        const isShow = grid.classList.toggle("show-all-def");
-        this.innerText = isShow ? "🙈 Hide All" : "👁️ Show All";
-    };
-
-    function renderSuffixControls() {
-        const pcBox = document.getElementById("suffix-container");
-        const mobileBox = document.getElementById("mobileBottomNav");
-        pcBox.innerHTML = ""; mobileBox.innerHTML = "";
-        suffixList.forEach(item => {
-            const btn = document.createElement("button");
-            btn.className = "filter-btn" + (currentFilter.suffix === item.suffix ? " active" : "");
-            btn.innerHTML = `<div>${item.suffix}</div><div style="font-size:10px;color:#999">${item.meaning}</div>`;
-            btn.onclick = () => toggleSuffix(item.suffix);
-            pcBox.appendChild(btn);
-
-            const pill = document.createElement("div");
-            pill.className = "suffix-pill" + (currentFilter.suffix === item.suffix ? " active" : "");
-            pill.innerHTML = `<b>${item.suffix}</b> <span style="font-size:10px">${item.meaning}</span>`;
-            pill.onclick = () => toggleSuffix(item.suffix);
-            mobileBox.appendChild(pill);
-        });
-    }
-
-    function toggleSuffix(s) {
-        currentFilter.suffix = (currentFilter.suffix === s) ? null : s;
-        renderSuffixControls();
-        applyFilters();
-        if(isMobile()) window.scrollTo({top: 0, behavior: 'smooth'});
-    }
-
-    function applyFilters() {
-        let f = vocab;
-        // 词性过滤
-        if (currentFilter.pos !== 'All') {
-            f = f.filter(v => v.pos.includes(currentFilter.pos));
-        }
-        // 后缀过滤
-        if (currentFilter.suffix) {
-            const s = currentFilter.suffix.toLowerCase();
-            f = f.filter(v => v.word.toLowerCase().endsWith(s) || v.word.toLowerCase().includes(s));
-        }
-
-        document.getElementById("match-count").innerText = f.length;
-        document.getElementById("total-count").innerText = vocab.length;
-        document.getElementById("match-percent").innerText = vocab.length > 0 ? ((f.length/vocab.length)*100).toFixed(1)+"%" : "0%";
-        
-        const grid = document.getElementById("grid");
-        grid.innerHTML = "";
-        f.forEach(item => {
-            const card = document.createElement("div");
-            card.className = "card";
-            let wordHTML = item.word;
-            if (currentFilter.suffix) {
-                const reg = new RegExp(currentFilter.suffix + "$", "i");
-                wordHTML = item.word.replace(reg, `<span class="highlight">$&</span>`);
+/* ══ 极简 CSV 解析器（内联，零网络依赖） ══ */
+const Papa = {
+    parse(text) {
+        return { data: text.split(/\r?\n/).map(line => {
+            const cols = []; let cur = '', inQ = false;
+            for (const c of line) {
+                if (c === '"') { inQ = !inQ; continue; }
+                if (c === ',' && !inQ) { cols.push(cur); cur = ''; continue; }
+                cur += c;
             }
-            card.innerHTML = `<div class="word-header"><div class="word-text">${wordHTML}</div><a href="https://www.onelook.com/?w=${item.word}" target="_blank" class="external-link">🔗</a></div><div class="word-def">${item.def}</div>`;
-            
-            card.onclick = (e) => {
-                if(e.target.tagName === 'A') return;
-                window.speechSynthesis.cancel();
-                const u = new SpeechSynthesisUtterance(item.word);
-                u.lang = 'en-US'; window.speechSynthesis.speak(u);
-                if(isMobile()) card.classList.add('viewed');
-            };
-            grid.appendChild(card);
+            cols.push(cur); return cols;
+        })};
+    }
+};
+
+/* ══ 主题切换 ══ */
+function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('vocab-theme', t);
+    document.getElementById('themeIcon').textContent  = t === 'light' ? '🌙' : '☀️';
+    document.getElementById('themeLabel').textContent = t === 'light' ? 'Dark' : 'Light';
+}
+applyTheme(localStorage.getItem('vocab-theme') || 'dark');
+document.getElementById('themeToggle').addEventListener('click', () => {
+    applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+});
+
+/* ══ 全局状态 ══ */
+let vocab = [], suffixList = [], currentFilter = { suffix: null, pos: 'All' };
+let lastScrollTop = 0, showAllDef = false;
+const isMobile = () => window.innerWidth <= 768;
+
+/* ══ 骨架屏 ══ */
+function showSkeletons(n = 12) {
+    document.getElementById('grid').innerHTML = Array(n).fill(
+        `<div class="skeleton">
+            <div class="skeleton-line title"></div>
+            <div class="skeleton-line sub"></div>
+            <div class="skeleton-line sub2"></div>
+        </div>`
+    ).join('');
+}
+
+/* ══ 初始化（并发加载） ══ */
+window.addEventListener('load', () => {
+    showSkeletons();
+    fetch('data/list.json')
+        .then(r => r.json())
+        .then(data => {
+            const sel = document.getElementById('vocabSelect');
+            sel.innerHTML = '';
+            data.vocabs.forEach(n => {
+                const o = document.createElement('option');
+                o.value = `data/${n}`; o.textContent = n.replace('.csv','');
+                sel.appendChild(o);
+            });
+            Promise.all([
+                data.vocabs[0]     ? loadVocab(`data/${data.vocabs[0]}`)    : Promise.resolve(),
+                data.suffixes?.[0] ? loadSuffix(`data/${data.suffixes[0]}`) : Promise.resolve()
+            ]);
+        })
+        .catch(() => showError('无法加载 data/list.json，请检查文件路径'));
+});
+
+function loadVocab(url) {
+    showSkeletons();
+    return fetch(url).then(r => r.text()).then(text => {
+        const { data } = Papa.parse(text.trim());
+        vocab = data.filter(r => r[0] && r[1]).map(r => ({
+            word: r[0].trim(), def: r[1].trim(), pos: r[1].match(/[a-z]+\./g) || []
+        }));
+        updatePOSMenu(); applyFilters();
+    }).catch(() => showError('词汇文件加载失败：' + url));
+}
+
+function loadSuffix(url) {
+    return fetch(url).then(r => r.text()).then(text => {
+        suffixList = [];
+        Papa.parse(text.trim()).data.forEach(r => {
+            if (!r[0]) return;
+            r[0].split('/').forEach(p => {
+                const s = p.replace('-','').trim();
+                if (s) suffixList.push({ suffix: s, meaning: r[1] || '' });
+            });
         });
+        renderSuffixControls();
+    });
+}
+
+function updatePOSMenu() {
+    const box = document.getElementById('pos-container');
+    box.innerHTML = '';
+    ['All', ...new Set(vocab.flatMap(v => v.pos))].forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'pos-btn' + (p === currentFilter.pos ? ' active' : '');
+        btn.textContent = p;
+        btn.onclick = () => { currentFilter.pos = p; updatePOSMenu(); applyFilters(); };
+        box.appendChild(btn);
+    });
+}
+
+function renderSuffixControls() {
+    ['suffix-container','mobileBottomNav'].forEach(id => document.getElementById(id).innerHTML = '');
+    const items = [{ suffix: null, meaning: '' }, ...suffixList];
+    items.forEach(item => {
+        const isActive = currentFilter.suffix === item.suffix;
+        const label = item.suffix || 'All';
+
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn' + (isActive ? ' active' : '');
+        btn.innerHTML = `<span class="sfx">${label}</span><span class="meaning">${item.meaning}</span>`;
+        btn.onclick = () => toggleSuffix(item.suffix);
+        document.getElementById('suffix-container').appendChild(btn);
+
+        const pill = document.createElement('div');
+        pill.className = 'suffix-pill' + (isActive ? ' active' : '');
+        pill.innerHTML = `<b>${label}</b>${item.meaning ? ` <span style="font-size:10px;opacity:.6">${item.meaning}</span>` : ''}`;
+        pill.onclick = () => toggleSuffix(item.suffix);
+        document.getElementById('mobileBottomNav').appendChild(pill);
+    });
+}
+
+function toggleSuffix(s) {
+    currentFilter.suffix = currentFilter.suffix === s ? null : s;
+    renderSuffixControls(); applyFilters();
+    if (isMobile()) window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ══ 核心渲染 ══ */
+function applyFilters() {
+    let f = vocab;
+    if (currentFilter.pos !== 'All') f = f.filter(v => v.pos.includes(currentFilter.pos));
+    if (currentFilter.suffix) {
+        const s = currentFilter.suffix.toLowerCase();
+        f = f.filter(v => v.word.toLowerCase().endsWith(s) || v.word.toLowerCase().includes(s));
     }
 
-    window.addEventListener('scroll', () => {
-        if(!isMobile()) return;
-        let st = window.pageYOffset || document.documentElement.scrollTop;
-        if (st > lastScrollTop && st > 60) {
-            document.getElementById('topBar').classList.add('nav-hidden-top');
-            document.getElementById('mobileBottomNav').classList.add('nav-hidden-bottom');
-        } else {
-            document.getElementById('topBar').classList.remove('nav-hidden-top');
-            document.getElementById('mobileBottomNav').classList.remove('nav-hidden-bottom');
-        }
-        lastScrollTop = Math.max(0, st);
+    document.getElementById('match-count').textContent   = f.length;
+    document.getElementById('total-count').textContent   = vocab.length;
+    document.getElementById('match-percent').textContent =
+        vocab.length ? ((f.length/vocab.length)*100).toFixed(1)+'%' : '0%';
+
+    const grid = document.getElementById('grid');
+    if (!f.length) {
+        grid.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>没有匹配的词汇<br>换个条件试试</p></div>`;
+        return;
+    }
+
+    const frag = document.createDocumentFragment();
+    const sfxReg = currentFilter.suffix ? new RegExp(currentFilter.suffix+'$','i') : null;
+
+    f.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        let wordHTML = esc(item.word);
+        if (sfxReg) wordHTML = wordHTML.replace(sfxReg, m => `<span class="highlight">${m}</span>`);
+
+        // 双词典链接
+        const w = encodeURIComponent(item.word);
+        const eudicUrl   = `https://dict.eudic.net/dicts/en/${w}`;
+        const onelookUrl = `https://www.onelook.com/?w=${w}`;
+
+        card.innerHTML = `
+            <div class="card-inner">
+                <div class="word-header">
+                    <div class="word-text">${wordHTML}</div>
+                    <div class="card-links">
+                        <a href="${eudicUrl}"   target="_blank" class="dict-link en-cn" title="欧路词典 — 中文释义（初级推荐）">中文</a>
+                        <a href="${onelookUrl}" target="_blank" class="dict-link en-en" title="OneLook — 英英释义（高级推荐）">EN↗</a>
+                    </div>
+                </div>
+                <div class="word-def">${esc(item.def)}</div>
+            </div>`;
+
+        card.addEventListener('click', e => {
+            if (e.target.closest('a')) return;
+            speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(item.word);
+            u.lang = 'en-US'; speechSynthesis.speak(u);
+            card.classList.add('speaking','viewed');
+            u.onend = () => card.classList.remove('speaking');
+        });
+
+        frag.appendChild(card);
     });
 
-    document.getElementById("vocabSelect").onchange = (e) => loadVocab(e.target.value);
+    grid.innerHTML = '';
+    grid.appendChild(frag);
+    if (showAllDef) grid.classList.add('show-all-def');
+}
+
+/* ══ 全局显示翻译 ══ */
+document.getElementById('toggleAllBtn').addEventListener('click', function() {
+    showAllDef = !showAllDef;
+    document.getElementById('grid').classList.toggle('show-all-def', showAllDef);
+    this.classList.toggle('active', showAllDef);
+    this.textContent = showAllDef ? '🙈 Hide All' : '👁 Show All';
+});
+
+document.getElementById('vocabSelect').addEventListener('change', e => loadVocab(e.target.value));
+
+window.addEventListener('scroll', () => {
+    if (!isMobile()) return;
+    const st = window.pageYOffset;
+    const down = st > lastScrollTop && st > 60;
+    document.getElementById('topBar').classList.toggle('nav-hidden-top', down);
+    document.getElementById('mobileBottomNav').classList.toggle('nav-hidden-bottom', down);
+    lastScrollTop = Math.max(0, st);
+}, { passive: true });
+
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function showError(msg) {
+    document.getElementById('grid').innerHTML =
+        `<div class="empty-state"><div class="icon">⚠️</div><p>${msg}</p></div>`;
+}
 </script>
 </body>
 </html>
