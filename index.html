@@ -26,18 +26,13 @@
             --scrollbar: rgba(255,255,255,0.1);
         }
 
-        /* ══ LIGHT THEME — Claude 品牌色（橙棕 + 暖米白） ══
-           参考 Claude 官网真实配色：
-           背景  #f5f0e8  暖奶油白
-           品牌橙 #d97757  Claude 标志性橙棕
-           文字   #1f1b16  深暖棕黑
-        ══ */
+        /* ══ LIGHT THEME ══ */
         [data-theme="light"] {
             --bg: #f5f0e8;
             --surface: #fdfaf5;
             --surface-2: #ede8df;
             --border: rgba(0,0,0,0.08);
-            --accent: #d97757;           /* Claude 橙 */
+            --accent: #d97757;           
             --accent-soft: rgba(217,119,87,0.09);
             --green: #2a9d6e;
             --green-soft: rgba(42,157,110,0.1);
@@ -64,7 +59,6 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 4px; }
 
-        /* ══ SIDEBAR ══ */
         .sidebar {
             width: 220px;
             flex-shrink: 0;
@@ -110,10 +104,8 @@
         .filter-btn .meaning { font-size: 10px; color: var(--text-3); }
         .filter-btn.active .meaning { color: var(--accent); opacity: 0.7; }
 
-        /* ══ MAIN ══ */
         .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 
-        /* ══ TOP BAR ══ */
         .top-bar {
             padding: 10px 16px;
             background: var(--topbar-bg);
@@ -160,7 +152,6 @@
         }
         .toggle-all-btn:hover, .toggle-all-btn.active { background: var(--yellow); color: #111; }
 
-        /* ══ THEME TOGGLE（右上角固定） ══ */
         .theme-toggle {
             position: fixed;
             top: 12px; right: 16px;
@@ -179,7 +170,6 @@
         }
         .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
-        /* ══ GRID ══ */
         #grid {
             flex: 1;
             display: grid;
@@ -190,13 +180,6 @@
             align-content: start;
         }
 
-        /* ══ CARD — 修复截断问题 ══
-           关键修复：
-           1. 去掉 overflow:hidden（它是截断元凶）
-           2. 用独立 .card-inner 添加内边距
-           3. word-text 加 min-width:0 + overflow-wrap:anywhere
-           4. word-def max-height 给 300px
-        */
         .card {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -206,9 +189,8 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            height: auto; /* 自适应内容高度 */
+            height: auto;
         }
-        /* 干净的 hover：只用阴影 + 边框，无渐变光晕 */
         .card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--shadow); border-color: var(--accent); }
         .card.viewed { border-left: 3px solid var(--green); }
         .card.speaking { border-color: var(--green); box-shadow: 0 0 0 2px var(--green-soft); }
@@ -228,12 +210,21 @@
             font-size: 18px; font-weight: 700;
             color: var(--text-1);
             word-break: break-word;
-            overflow-wrap: anywhere; /* 超长词自动换行 */
+            overflow-wrap: anywhere;
             line-height: 1.25;
-            flex: 1; min-width: 0; /* flex 子项必须，防止撑出父容器 */
+            flex: 1; min-width: 0;
         }
 
-        /* 双词典链接 */
+        /* 音标样式 */
+        .word-ipa {
+            font-size: 11px;
+            color: var(--accent);
+            font-family: sans-serif;
+            margin-top: -2px;
+            min-height: 14px;
+            opacity: 0.8;
+        }
+
         .card-links {
             display: flex; gap: 4px;
             flex-shrink: 0;
@@ -270,11 +261,10 @@
         .card.viewed .word-def,
         .show-all-def .word-def {
             opacity: 1;
-            max-height: 300px; /* 足够显示长释义 */
+            max-height: 300px;
         }
         .highlight { color: var(--accent); font-weight: 500; }
 
-        /* ══ SKELETON ══ */
         .skeleton {
             background: var(--surface); border: 1px solid var(--border);
             border-radius: 14px; padding: 16px;
@@ -290,7 +280,6 @@
         .skeleton-line.sub2 { height: 11px; width: 80%; }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        /* ══ EMPTY STATE ══ */
         .empty-state {
             grid-column: 1 / -1; text-align: center;
             padding: 60px 20px; color: var(--text-3);
@@ -298,7 +287,6 @@
         .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
         .empty-state p { font-size: 13px; line-height: 1.8; }
 
-        /* ══ MOBILE BOTTOM NAV ══ */
         .mobile-bottom-nav {
             display: none;
             position: fixed; bottom: 0; left: 0; right: 0;
@@ -319,7 +307,6 @@
         }
         .suffix-pill.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
 
-        /* ══ RESPONSIVE ══ */
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .mobile-bottom-nav { display: flex; }
@@ -358,14 +345,12 @@
     <div class="mobile-bottom-nav" id="mobileBottomNav"></div>
 </div>
 
-<!-- 主题切换按钮（右上角） -->
 <button class="theme-toggle" id="themeToggle">
     <span id="themeIcon">☀️</span>
     <span id="themeLabel">Light</span>
 </button>
 
 <script>
-/* ══ 极简 CSV 解析器（内联，零网络依赖） ══ */
 const Papa = {
     parse(text) {
         return { data: text.split(/\r?\n/).map(line => {
@@ -380,7 +365,6 @@ const Papa = {
     }
 };
 
-/* ══ 主题切换 ══ */
 function applyTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     localStorage.setItem('vocab-theme', t);
@@ -392,12 +376,10 @@ document.getElementById('themeToggle').addEventListener('click', () => {
     applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
 });
 
-/* ══ 全局状态 ══ */
 let vocab = [], suffixList = [], currentFilter = { suffix: null, pos: 'All' };
 let lastScrollTop = 0, showAllDef = false;
 const isMobile = () => window.innerWidth <= 768;
 
-/* ══ 骨架屏 ══ */
 function showSkeletons(n = 12) {
     document.getElementById('grid').innerHTML = Array(n).fill(
         `<div class="skeleton">
@@ -408,7 +390,6 @@ function showSkeletons(n = 12) {
     ).join('');
 }
 
-/* ══ 初始化（并发加载） ══ */
 window.addEventListener('load', () => {
     showSkeletons();
     fetch('data/list.json')
@@ -493,7 +474,34 @@ function toggleSuffix(s) {
     if (isMobile()) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* ══ 核心渲染 ══ */
+/* ══ 获取音标逻辑 ══ */
+async function fetchIPA(word, element) {
+    try {
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const ipa = data[0].phonetics.find(p => p.text)?.text || data[0].phonetic || "";
+        if (ipa) {
+            element.textContent = ipa;
+            element.animate([{ opacity: 0 }, { opacity: 0.8 }], { duration: 300, fill: 'forwards' });
+        }
+    } catch (e) {}
+}
+
+/* ══ 懒加载观察者 ══ */
+const ipaObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const card = entry.target;
+            const ipaEl = card.querySelector('.word-ipa');
+            if (ipaEl && !ipaEl.textContent) {
+                fetchIPA(card.dataset.word, ipaEl);
+            }
+            ipaObserver.unobserve(card);
+        }
+    });
+}, { threshold: 0.1 });
+
 function applyFilters() {
     let f = vocab;
     if (currentFilter.pos !== 'All') f = f.filter(v => v.pos.includes(currentFilter.pos));
@@ -519,11 +527,11 @@ function applyFilters() {
     f.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card';
+        card.dataset.word = item.word; // 用于懒加载识别
 
         let wordHTML = esc(item.word);
         if (sfxReg) wordHTML = wordHTML.replace(sfxReg, m => `<span class="highlight">${m}</span>`);
 
-        // 双词典链接
         const w = encodeURIComponent(item.word);
         const eudicUrl   = `https://dict.eudic.net/dicts/en/${w}`;
         const onelookUrl = `https://www.onelook.com/?w=${w}`;
@@ -533,23 +541,23 @@ function applyFilters() {
                 <div class="word-header">
                     <div class="word-text">${wordHTML}</div>
                     <div class="card-links">
-                        <a href="${eudicUrl}"   target="_blank" class="dict-link en-cn" title="欧路词典 — 中文释义（初级推荐）">中文</a>
-                        <a href="${onelookUrl}" target="_blank" class="dict-link en-en" title="OneLook — 英英释义（高级推荐）">EN↗</a>
+                        <a href="${eudicUrl}"   target="_blank" class="dict-link en-cn">中文</a>
+                        <a href="${onelookUrl}" target="_blank" class="dict-link en-en">EN↗</a>
                     </div>
                 </div>
-                <div class="word-def">${esc(item.def)}</div>
+                <div class="word-ipa"></div> <div class="word-def">${esc(item.def)}</div>
             </div>`;
 
         card.addEventListener('click', e => {
             if (e.target.closest('a')) return;
-            speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(item.word);
-            u.lang = 'en-US'; speechSynthesis.speak(u);
-            card.classList.add('speaking','viewed');
-            u.onend = () => card.classList.remove('speaking');
+            card.classList.add('speaking', 'viewed');
+            const audio = new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(item.word)}&type=2`);
+            audio.play();
+            audio.onended = () => card.classList.remove('speaking');
         });
 
         frag.appendChild(card);
+        ipaObserver.observe(card); // 启动观察
     });
 
     grid.innerHTML = '';
@@ -557,7 +565,6 @@ function applyFilters() {
     if (showAllDef) grid.classList.add('show-all-def');
 }
 
-/* ══ 全局显示翻译 ══ */
 document.getElementById('toggleAllBtn').addEventListener('click', function() {
     showAllDef = !showAllDef;
     document.getElementById('grid').classList.toggle('show-all-def', showAllDef);
