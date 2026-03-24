@@ -179,6 +179,50 @@
             overflow-y: auto;
             align-content: start;
         }
+/* ── LIST VIEW ── */
+#grid.list-view {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 12px 16px;
+}
+#grid.list-view .card {
+    border-radius: 8px;
+    padding: 0;
+}
+#grid.list-view .card-inner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;           /* 窄屏自动换行 */
+    padding: 9px 12px;
+    gap: 6px;
+    width: 100%;
+}
+#grid.list-view .word-header {
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0;
+    min-width: 0;
+    width: auto;               /* 不固定宽度，跟着单词走 */
+}
+#grid.list-view .word-text {
+    font-size: 15px;
+    white-space: nowrap;       /* 单词本身不换行 */
+    overflow-wrap: normal;
+    min-width: 0;
+}
+#grid.list-view .card-links { /* 链接挪到 word-header 里跟着走 */
+    opacity: 1;
+    flex-shrink: 0;
+}
+
+#grid.list-view .word-def {
+    flex: 1;
+    min-width: 200px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+#grid.list-view .card:hover { transform: none; }
 
         .card {
             background: var(--surface);
@@ -216,7 +260,7 @@
         }
 
         /* 音标样式 */
-        .word-ipa {
+        .word-phonetic {
             font-size: 11px;
             color: var(--accent);
             font-family: sans-serif;
@@ -308,6 +352,8 @@
         .suffix-pill.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
 
         @media (max-width: 768px) {
+            
+            #toggleAllBtn { display: none; }   /* ← 加这一行 */
             .sidebar { display: none; }
             .mobile-bottom-nav { display: flex; }
             #grid { padding-bottom: 76px; grid-template-columns: 1fr 1fr; }
@@ -319,6 +365,11 @@
         .show-all-def .word-def { opacity: 1 !important; max-height: 300px !important; }
         .nav-hidden-top { transform: translateY(-110%); }
         .nav-hidden-bottom { transform: translateY(110%); }
+        @media (max-width: 1200px) {
+    #grid.list-view {
+        grid-template-columns: 1fr;
+    }
+}
     </style>
 </head>
 <body>
@@ -340,6 +391,7 @@
         <select id="vocabSelect"><option>Loading…</option></select>
         <div id="pos-container"></div>
         <button class="toggle-all-btn" id="toggleAllBtn">👁 Show All</button>
+        <button class="toggle-all-btn" id="viewToggleBtn" title="切换视图">☰ List</button>
     </div>
     <div id="grid"></div>
     <div class="mobile-bottom-nav" id="mobileBottomNav"></div>
@@ -493,9 +545,9 @@ const ipaObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
             const card = entry.target;
-            const ipaEl = card.querySelector('.word-ipa');
-            if (ipaEl && !ipaEl.textContent) {
-                fetchIPA(card.dataset.word, ipaEl);
+          const ipaEl = card.querySelector('.word-phonetic');
+if (ipaEl && ipaEl.textContent === '...') {
+    fetchIPA(card.dataset.word, ipaEl);
             }
             ipaObserver.unobserve(card);
         }
@@ -536,17 +588,18 @@ function applyFilters() {
         const eudicUrl   = `https://dict.eudic.net/dicts/en/${w}`;
         const onelookUrl = `https://www.onelook.com/?w=${w}`;
 
-        card.innerHTML = `
-            <div class="card-inner">
-                <div class="word-header">
-                    <div class="word-text">${wordHTML}</div>
-                    <div class="card-links">
-                        <a href="${eudicUrl}"   target="_blank" class="dict-link en-cn">中文</a>
-                        <a href="${onelookUrl}" target="_blank" class="dict-link en-en">EN↗</a>
-                    </div>
-                </div>
-                <div class="word-ipa"></div> <div class="word-def">${esc(item.def)}</div>
-            </div>`;
+       card.innerHTML = `
+    <div class="card-inner">
+        <div class="word-header">
+            <div class="word-text">${wordHTML}</div>
+        </div>
+        <div class="word-phonetic" data-word="${esc(item.word)}">...</div>
+        <div class="word-def">${esc(item.def)}</div>
+        <div class="card-links">
+            <a href="${eudicUrl}"   target="_blank" class="dict-link en-cn" title="欧路词典 — 中文释义">中文</a>
+            <a href="${onelookUrl}" target="_blank" class="dict-link en-en" title="OneLook — 英英释义">EN↗</a>
+        </div>
+    </div>`;
 
         card.addEventListener('click', e => {
             if (e.target.closest('a')) return;
@@ -587,6 +640,18 @@ const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;
 function showError(msg) {
     document.getElementById('grid').innerHTML =
         `<div class="empty-state"><div class="icon">⚠️</div><p>${msg}</p></div>`;
+}
+/* ── 视图切换 ── */
+document.getElementById('viewToggleBtn').addEventListener('click', function () {
+    const grid = document.getElementById('grid');
+    const isList = grid.classList.toggle('list-view');
+    this.textContent = isList ? '⊞ Card' : '☰ List';
+    localStorage.setItem('vocab-view', isList ? 'list' : 'card');
+});
+// 记住上次的视图
+if (localStorage.getItem('vocab-view') === 'list') {
+    document.getElementById('grid').classList.add('list-view');
+    document.getElementById('viewToggleBtn').textContent = '⊞ Card';
 }
 </script>
 </body>
