@@ -392,6 +392,7 @@
         <div id="pos-container"></div>
         <button class="toggle-all-btn" id="toggleAllBtn">👁 Show All</button>
         <button class="toggle-all-btn" id="viewToggleBtn" title="切换视图">☰ List</button>
+        <button class="toggle-all-btn" id="sortBtn">A→Z</button>
     </div>
     <div id="grid"></div>
     <div class="mobile-bottom-nav" id="mobileBottomNav"></div>
@@ -429,7 +430,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 });
 
 let vocab = [], suffixList = [], currentFilter = { suffix: null, pos: 'All' };
-let lastScrollTop = 0, showAllDef = false;
+let lastScrollTop = 0, showAllDef = false, sortAZ = false;
 const isMobile = () => window.innerWidth <= 768;
 
 function showSkeletons(n = 12) {
@@ -479,8 +480,13 @@ function loadSuffix(url) {
         Papa.parse(text.trim()).data.forEach(r => {
             if (!r[0]) return;
             r[0].split('/').forEach(p => {
-                const s = p.replace('-','').trim();
-                if (s) suffixList.push({ suffix: s, meaning: r[1] || '' });
+                p = p.trim();
+                if (!p) return;
+                // -fold → 后缀，un- → 前缀，-tion- → 中缀都归后缀
+                const isPrefix = p.endsWith('-') && !p.startsWith('-');
+                const type = isPrefix ? 'prefix' : 'suffix';
+                const s = p.replace(/-/g, '').trim();
+                if (s) suffixList.push({ suffix: s, meaning: r[1] || '', type });
             });
         });
         renderSuffixControls();
@@ -508,20 +514,30 @@ function renderSuffixControls() {
 
         const btn = document.createElement('button');
         btn.className = 'filter-btn' + (isActive ? ' active' : '');
-        btn.innerHTML = `<span class="sfx">${label}</span><span class="meaning">${item.meaning}</span>`;
-        btn.onclick = () => toggleSuffix(item.suffix);
+        const typeTag = item.type === 'prefix' 
+    ? `<span style="font-size:9px;opacity:.5;margin-left:auto">suffix</span>` 
+    : `<span style="font-size:9px;opacity:.5;margin-left:auto">prefix</span>`;
+btn.innerHTML = `<span class="sfx">${label}</span><span class="meaning">${item.meaning}</span>${item.type ? typeTag : ''}`;
+        btn.onclick = () => toggleSuffix(item.suffix, item.type);
         document.getElementById('suffix-container').appendChild(btn);
 
         const pill = document.createElement('div');
         pill.className = 'suffix-pill' + (isActive ? ' active' : '');
-        pill.innerHTML = `<b>${label}</b>${item.meaning ? ` <span style="font-size:10px;opacity:.6">${item.meaning}</span>` : ''}`;
-        pill.onclick = () => toggleSuffix(item.suffix);
+        const pillTag = item.type === 'prefix' ? ' 前' : ' 后';
+pill.innerHTML = `<b>${label}</b>${item.meaning ? ` <span style="font-size:10px;opacity:.6">${item.meaning}</span>` : ''}<span style="font-size:9px;opacity:.4">${pillTag}</span>`;
+        pill.onclick = () => toggleSuffix(item.suffix, item.type);
         document.getElementById('mobileBottomNav').appendChild(pill);
     });
 }
 
-function toggleSuffix(s) {
-    currentFilter.suffix = currentFilter.suffix === s ? null : s;
+function toggleSuffix(s, type) {
+    if (currentFilter.suffix === s) {
+        currentFilter.suffix = null;
+        currentFilter.suffixType = null;
+    } else {
+        currentFilter.suffix = s;
+        currentFilter.suffixType = type;
+    }
     renderSuffixControls(); applyFilters();
     if (isMobile()) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -530,14 +546,18 @@ function toggleSuffix(s) {
 async function fetchIPA(word, element) {
     try {
         const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
-        if (!res.ok) return;
+        if (!res.ok) { element.textContent = ''; return; }
         const data = await res.json();
-        const ipa = data[0].phonetics.find(p => p.text)?.text || data[0].phonetic || "";
+        const ipa = data[0]?.phonetics?.find(p => p.text)?.text 
+                 || data[0]?.phonetic 
+                 || '';
+        element.textContent = ipa;
         if (ipa) {
-            element.textContent = ipa;
             element.animate([{ opacity: 0 }, { opacity: 0.8 }], { duration: 300, fill: 'forwards' });
         }
-    } catch (e) {}
+    } catch (e) { 
+        element.textContent = ''; 
+    }
 }
 
 /* ══ 懒加载观察者 ══ */
@@ -557,10 +577,15 @@ if (ipaEl && ipaEl.textContent === '...') {
 function applyFilters() {
     let f = vocab;
     if (currentFilter.pos !== 'All') f = f.filter(v => v.pos.includes(currentFilter.pos));
-    if (currentFilter.suffix) {
-        const s = currentFilter.suffix.toLowerCase();
-        f = f.filter(v => v.word.toLowerCase().endsWith(s) || v.word.toLowerCase().includes(s));
-    }
+  if (currentFilter.suffix) {
+    const s = currentFilter.suffix.toLowerCase();
+    const type = currentFilter.suffixType || 'suffix';
+    f = f.filter(v => {
+        const w = v.word.toLowerCase();
+        if (type === 'prefix') return w.startsWith(s);
+        return w.endsWith(s);
+    });
+}
 
     document.getElementById('match-count').textContent   = f.length;
     document.getElementById('total-count').textContent   = vocab.length;
@@ -572,9 +597,16 @@ function applyFilters() {
         grid.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>没有匹配的词汇<br>换个条件试试</p></div>`;
         return;
     }
-
+    if (sortAZ) f = [...f].sort((a, b) => a.word.localeCompare(b.word));
     const frag = document.createDocumentFragment();
-    const sfxReg = currentFilter.suffix ? new RegExp(currentFilter.suffix+'$','i') : null;
+    const sfxReg = currentFilter.suffix
+    ? new RegExp(
+        currentFilter.suffixType === 'prefix'
+            ? '^' + currentFilter.suffix   // 前缀：匹配开头
+            : currentFilter.suffix + '$',  // 后缀：匹配末尾
+        'i'
+      )
+    : null;
 
     f.forEach(item => {
         const card = document.createElement('div');
@@ -586,7 +618,9 @@ function applyFilters() {
 
         const w = encodeURIComponent(item.word);
         const eudicUrl   = `https://dict.eudic.net/dicts/en/${w}`;
-        const onelookUrl = `https://www.onelook.com/?w=${w}`;
+        const onelookUrl = `https://www.onelook.com/?w=${w}&phrases=1`;
+        
+        const langManUrl = `https://www.ldoceonline.com/dictionary/${w}`;
 
        card.innerHTML = `
     <div class="card-inner">
@@ -598,6 +632,7 @@ function applyFilters() {
         <div class="card-links">
             <a href="${eudicUrl}"   target="_blank" class="dict-link en-cn" title="欧路词典 — 中文释义">中文</a>
             <a href="${onelookUrl}" target="_blank" class="dict-link en-en" title="OneLook — 英英释义">EN↗</a>
+             <a href="${langManUrl}"   target="_blank" class="dict-link en-cn" title="朗文词典 — 英文例句">lang</a>
         </div>
     </div>`;
 
@@ -653,6 +688,13 @@ if (localStorage.getItem('vocab-view') === 'list') {
     document.getElementById('grid').classList.add('list-view');
     document.getElementById('viewToggleBtn').textContent = '⊞ Card';
 }
+
+document.getElementById('sortBtn').addEventListener('click', function() {
+    sortAZ = !sortAZ;
+    this.textContent = sortAZ ? 'Z→A off' : 'A→Z';
+    this.classList.toggle('active', sortAZ);
+    applyFilters();
+});
 </script>
 </body>
 </html>
