@@ -32,7 +32,7 @@
             --surface: #fdfaf5;
             --surface-2: #ede8df;
             --border: rgba(0,0,0,0.08);
-            --accent: #d97757;           
+            --accent: #d97757;
             --accent-soft: rgba(217,119,87,0.09);
             --green: #2a9d6e;
             --green-soft: rgba(42,157,110,0.1);
@@ -114,6 +114,51 @@
             gap: 8px; flex-wrap: wrap; z-index: 100;
             transition: background 0.3s, border-color 0.3s;
         }
+
+        /* ══ A-Z FILTER BAR ══ */
+        .az-bar {
+            padding: 6px 16px;
+            background: var(--topbar-bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            z-index: 99;
+            flex-shrink: 0;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .az-bar::-webkit-scrollbar { height: 0; }
+        .az-btn {
+            flex-shrink: 0;
+            min-width: 30px;
+            height: 28px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-2);
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: 'DM Mono', 'DM Sans', monospace;
+            font-weight: 500;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 8px;
+        }
+        .az-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .az-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .az-btn.has-no-data {
+            opacity: 0.25;
+            cursor: default;
+            pointer-events: none;
+        }
+
         .stats-badge {
             font-size: 12px; color: var(--text-2);
             background: var(--surface-2);
@@ -179,50 +224,51 @@
             overflow-y: auto;
             align-content: start;
         }
-/* ── LIST VIEW ── */
-#grid.list-view {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    padding: 12px 16px;
-}
-#grid.list-view .card {
-    border-radius: 8px;
-    padding: 0;
-}
-#grid.list-view .card-inner {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    flex-wrap: wrap;           /* 窄屏自动换行 */
-    padding: 9px 12px;
-    gap: 6px;
-    width: 100%;
-}
-#grid.list-view .word-header {
-    flex-shrink: 0;
-    align-items: center;
-    gap: 0;
-    min-width: 0;
-    width: auto;               /* 不固定宽度，跟着单词走 */
-}
-#grid.list-view .word-text {
-    font-size: 15px;
-    white-space: nowrap;       /* 单词本身不换行 */
-    overflow-wrap: normal;
-    min-width: 0;
-}
-#grid.list-view .card-links { /* 链接挪到 word-header 里跟着走 */
-    opacity: 1;
-    flex-shrink: 0;
-}
 
-#grid.list-view .word-def {
-    flex: 1;
-    min-width: 200px;
-    font-size: 12px;
-    line-height: 1.5;
-}
-#grid.list-view .card:hover { transform: none; }
+        /* ── LIST VIEW ── */
+        #grid.list-view {
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 12px 16px;
+            align-content: start;
+        }
+        #grid.list-view .card {
+            border-radius: 8px;
+            padding: 0;
+        }
+        #grid.list-view .card-inner {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 9px 12px;
+            gap: 6px;
+            width: 100%;
+        }
+        #grid.list-view .word-header {
+            flex-shrink: 0;
+            align-items: center;
+            gap: 0;
+            min-width: 0;
+            width: auto;
+        }
+        #grid.list-view .word-text {
+            font-size: 15px;
+            white-space: nowrap;
+            overflow-wrap: normal;
+            min-width: 0;
+        }
+        #grid.list-view .card-links {
+            opacity: 1;
+            flex-shrink: 0;
+        }
+        #grid.list-view .word-def {
+            flex: 1;
+            min-width: 200px;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        #grid.list-view .card:hover { transform: none; }
 
         .card {
             background: var(--surface);
@@ -259,7 +305,6 @@
             flex: 1; min-width: 0;
         }
 
-        /* 音标样式 */
         .word-phonetic {
             font-size: 11px;
             color: var(--accent);
@@ -351,9 +396,31 @@
         }
         .suffix-pill.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
 
+        /* ── LOAD MORE ── */
+        .load-more-wrapper {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 20px;
+        }
+        .load-more-btn {
+            padding: 10px 36px;
+            border-radius: 24px;
+            border: 1px solid var(--accent);
+            background: var(--accent-soft);
+            color: var(--accent);
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .load-more-btn:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+
         @media (max-width: 768px) {
-            
-            #toggleAllBtn { display: none; }   /* ← 加这一行 */
+            #toggleAllBtn { display: none; }
             .sidebar { display: none; }
             .mobile-bottom-nav { display: flex; }
             #grid { padding-bottom: 76px; grid-template-columns: 1fr 1fr; }
@@ -366,10 +433,8 @@
         .nav-hidden-top { transform: translateY(-110%); }
         .nav-hidden-bottom { transform: translateY(110%); }
         @media (max-width: 1200px) {
-    #grid.list-view {
-        grid-template-columns: 1fr;
-    }
-}
+            #grid.list-view { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -394,6 +459,10 @@
         <button class="toggle-all-btn" id="viewToggleBtn" title="切换视图">☰ List</button>
         <button class="toggle-all-btn" id="sortBtn">A→Z</button>
     </div>
+
+    <!-- ★ A-Z 字母筛选栏 -->
+    <div class="az-bar" id="azBar"></div>
+
     <div id="grid"></div>
     <div class="mobile-bottom-nav" id="mobileBottomNav"></div>
 </div>
@@ -404,6 +473,9 @@
 </button>
 
 <script>
+/* ═══════════════════════════════════════
+   CSV PARSER
+   ═══════════════════════════════════════ */
 const Papa = {
     parse(text) {
         return { data: text.split(/\r?\n/).map(line => {
@@ -418,6 +490,9 @@ const Papa = {
     }
 };
 
+/* ═══════════════════════════════════════
+   THEME
+   ═══════════════════════════════════════ */
 function applyTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     localStorage.setItem('vocab-theme', t);
@@ -429,10 +504,23 @@ document.getElementById('themeToggle').addEventListener('click', () => {
     applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
 });
 
-let vocab = [], suffixList = [], currentFilter = { suffix: null, pos: 'All' };
+/* ═══════════════════════════════════════
+   GLOBAL STATE
+   ═══════════════════════════════════════ */
+let vocab = [], suffixList = [];
+let currentFilter = { suffix: null, pos: 'All', letter: null };
 let lastScrollTop = 0, showAllDef = false, sortAZ = false;
+
+// ★ 分页
+let currentPage = 0;
+const PAGE_SIZE = 40;
+let filteredVocab = [];
+
 const isMobile = () => window.innerWidth <= 768;
 
+/* ═══════════════════════════════════════
+   SKELETON
+   ═══════════════════════════════════════ */
 function showSkeletons(n = 12) {
     document.getElementById('grid').innerHTML = Array(n).fill(
         `<div class="skeleton">
@@ -443,6 +531,9 @@ function showSkeletons(n = 12) {
     ).join('');
 }
 
+/* ═══════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════ */
 window.addEventListener('load', () => {
     showSkeletons();
     fetch('data/list.json')
@@ -463,6 +554,9 @@ window.addEventListener('load', () => {
         .catch(() => showError('无法加载 data/list.json，请检查文件路径'));
 });
 
+/* ═══════════════════════════════════════
+   LOAD VOCAB / SUFFIX
+   ═══════════════════════════════════════ */
 function loadVocab(url) {
     showSkeletons();
     return fetch(url).then(r => r.text()).then(text => {
@@ -470,7 +564,9 @@ function loadVocab(url) {
         vocab = data.filter(r => r[0] && r[1]).map(r => ({
             word: r[0].trim(), def: r[1].trim(), pos: r[1].match(/[a-z]+\./g) || []
         }));
-        updatePOSMenu(); applyFilters();
+        updatePOSMenu();
+        updateAZBar();
+        applyFilters();
     }).catch(() => showError('词汇文件加载失败：' + url));
 }
 
@@ -482,7 +578,6 @@ function loadSuffix(url) {
             r[0].split('/').forEach(p => {
                 p = p.trim();
                 if (!p) return;
-                // -fold → 后缀，un- → 前缀，-tion- → 中缀都归后缀
                 const isPrefix = p.endsWith('-') && !p.startsWith('-');
                 const type = isPrefix ? 'prefix' : 'suffix';
                 const s = p.replace(/-/g, '').trim();
@@ -493,6 +588,9 @@ function loadSuffix(url) {
     });
 }
 
+/* ═══════════════════════════════════════
+   POS MENU
+   ═══════════════════════════════════════ */
 function updatePOSMenu() {
     const box = document.getElementById('pos-container');
     box.innerHTML = '';
@@ -505,6 +603,49 @@ function updatePOSMenu() {
     });
 }
 
+/* ═══════════════════════════════════════
+   A-Z BAR  ★ 新增
+   ═══════════════════════════════════════ */
+function updateAZBar() {
+    const bar = document.getElementById('azBar');
+    bar.innerHTML = '';
+
+    // 统计每个首字母有多少词
+    const letterCounts = {};
+    vocab.forEach(v => {
+        const l = v.word[0]?.toUpperCase();
+        if (l && l >= 'A' && l <= 'Z') {
+            letterCounts[l] = (letterCounts[l] || 0) + 1;
+        }
+    });
+
+    // "All" 按钮
+    const allBtn = document.createElement('button');
+    allBtn.className = 'az-btn' + (currentFilter.letter === null ? ' active' : '');
+    allBtn.textContent = 'All';
+    allBtn.onclick = () => { currentFilter.letter = null; updateAZBar(); applyFilters(); };
+    bar.appendChild(allBtn);
+
+    // A-Z 按钮
+    for (let i = 65; i <= 90; i++) {
+        const letter = String.fromCharCode(i);
+        const count = letterCounts[letter] || 0;
+        const btn = document.createElement('button');
+        btn.className = 'az-btn'
+            + (currentFilter.letter === letter ? ' active' : '')
+            + (count === 0 ? ' has-no-data' : '');
+        btn.textContent = letter;
+        btn.onclick = () => {
+            currentFilter.letter = (currentFilter.letter === letter) ? null : letter;
+            updateAZBar(); applyFilters();
+        };
+        bar.appendChild(btn);
+    }
+}
+
+/* ═══════════════════════════════════════
+   SUFFIX CONTROLS
+   ═══════════════════════════════════════ */
 function renderSuffixControls() {
     ['suffix-container','mobileBottomNav'].forEach(id => document.getElementById(id).innerHTML = '');
     const items = [{ suffix: null, meaning: '' }, ...suffixList];
@@ -514,17 +655,17 @@ function renderSuffixControls() {
 
         const btn = document.createElement('button');
         btn.className = 'filter-btn' + (isActive ? ' active' : '');
-        const typeTag = item.type === 'prefix' 
-    ? `<span style="font-size:9px;opacity:.5;margin-left:auto">suffix</span>` 
-    : `<span style="font-size:9px;opacity:.5;margin-left:auto">prefix</span>`;
-btn.innerHTML = `<span class="sfx">${label}</span><span class="meaning">${item.meaning}</span>${item.type ? typeTag : ''}`;
+        const typeTag = item.type
+            ? `<span style="font-size:9px;opacity:.5;margin-left:auto">${item.type}</span>`
+            : '';
+        btn.innerHTML = `<span class="sfx">${label}</span><span class="meaning">${item.meaning}</span>${typeTag}`;
         btn.onclick = () => toggleSuffix(item.suffix, item.type);
         document.getElementById('suffix-container').appendChild(btn);
 
         const pill = document.createElement('div');
         pill.className = 'suffix-pill' + (isActive ? ' active' : '');
-        const pillTag = item.type === 'prefix' ? ' 前' : ' 后';
-pill.innerHTML = `<b>${label}</b>${item.meaning ? ` <span style="font-size:10px;opacity:.6">${item.meaning}</span>` : ''}<span style="font-size:9px;opacity:.4">${pillTag}</span>`;
+        const pillTag = item.type === 'prefix' ? ' 前' : item.type === 'suffix' ? ' 后' : '';
+        pill.innerHTML = `<b>${label}</b>${item.meaning ? ` <span style="font-size:10px;opacity:.6">${item.meaning}</span>` : ''}${pillTag ? `<span style="font-size:9px;opacity:.4">${pillTag}</span>` : ''}`;
         pill.onclick = () => toggleSuffix(item.suffix, item.type);
         document.getElementById('mobileBottomNav').appendChild(pill);
     });
@@ -542,120 +683,150 @@ function toggleSuffix(s, type) {
     if (isMobile()) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-
-
-    const ipaCache = {};
+/* ═══════════════════════════════════════
+   IPA (音标)
+   ═══════════════════════════════════════ */
+function getIPACache() {
+    try { return JSON.parse(localStorage.getItem('ipa-cache') || '{}'); }
+    catch { return {}; }
+}
+function setIPACache(word, ipa) {
+    const cache = getIPACache();
+    cache[word] = ipa;
+    const keys = Object.keys(cache);
+    if (keys.length > 5000) keys.slice(0, keys.length - 5000).forEach(k => delete cache[k]);
+    localStorage.setItem('ipa-cache', JSON.stringify(cache));
+}
 
 async function fetchIPA(word, element) {
-    if (ipaCache[word] !== undefined) {
-        element.textContent = ipaCache[word];
-        if (ipaCache[word]) {
-            element.animate([{ opacity: 0 }, { opacity: 0.8 }], { duration: 300, fill: 'forwards' });
-        }
+    const cache = getIPACache();
+    if (cache[word]) {
+        element.textContent = cache[word];
+        if (cache[word]) element.style.opacity = '0.8';
         return;
     }
     try {
         const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
-        if (!res.ok) { ipaCache[word] = ''; element.textContent = ''; return; }
+        if (!res.ok) { setIPACache(word, ''); return; }
         const data = await res.json();
         const ipa = data[0]?.phonetics?.find(p => p.text)?.text
-                 || data[0]?.phonetic
-                 || '';
-        ipaCache[word] = ipa;
+                 || data[0]?.phonetic || '';
+        setIPACache(word, ipa);
         element.textContent = ipa;
-        if (ipa) {
-            element.animate([{ opacity: 0 }, { opacity: 0.8 }], { duration: 300, fill: 'forwards' });
-        }
-    } catch (e) {
-        ipaCache[word] = '';
-        element.textContent = '';
+        if (ipa) element.style.opacity = '0.8';
+    } catch {
+        setIPACache(word, '');
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* ══ 获取音标逻辑 ══ */
-async function fetchIPA(word, element) {
-    try {
-        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
-        if (!res.ok) { element.textContent = ''; return; }
-        const data = await res.json();
-        const ipa = data[0]?.phonetics?.find(p => p.text)?.text 
-                 || data[0]?.phonetic 
-                 || '';
-        element.textContent = ipa;
-        if (ipa) {
-            element.animate([{ opacity: 0 }, { opacity: 0.8 }], { duration: 300, fill: 'forwards' });
-        }
-    } catch (e) { 
-        element.textContent = ''; 
-    }
-}
-
-/* ══ 懒加载观察者 ══ */
 const ipaObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
             const card = entry.target;
-          const ipaEl = card.querySelector('.word-phonetic');
-if (ipaEl && ipaEl.textContent === '...') {
-    fetchIPA(card.dataset.word, ipaEl);
+            const ipaEl = card.querySelector('.word-phonetic');
+            if (ipaEl && ipaEl.textContent === '...') {
+                fetchIPA(card.dataset.word, ipaEl);
             }
             ipaObserver.unobserve(card);
         }
     });
 }, { threshold: 0.1 });
 
+/* ═══════════════════════════════════════
+   FILTER + PAGINATION
+   ═══════════════════════════════════════ */
 function applyFilters() {
-    let f = vocab;
-    if (currentFilter.pos !== 'All') f = f.filter(v => v.pos.includes(currentFilter.pos));
-  if (currentFilter.suffix) {
-    const s = currentFilter.suffix.toLowerCase();
-    const type = currentFilter.suffixType || 'suffix';
-    f = f.filter(v => {
-        const w = v.word.toLowerCase();
-        if (type === 'prefix') return w.startsWith(s);
-        return w.endsWith(s);
-    });
-}
+    filteredVocab = vocab;
 
-    document.getElementById('match-count').textContent   = f.length;
+    // POS filter
+    if (currentFilter.pos !== 'All')
+        filteredVocab = filteredVocab.filter(v => v.pos.includes(currentFilter.pos));
+
+    // Suffix filter
+    if (currentFilter.suffix) {
+        const s = currentFilter.suffix.toLowerCase();
+        const type = currentFilter.suffixType || 'suffix';
+        filteredVocab = filteredVocab.filter(v => {
+            const w = v.word.toLowerCase();
+            return type === 'prefix' ? w.startsWith(s) : w.endsWith(s);
+        });
+    }
+
+    // ★ A-Z filter
+    if (currentFilter.letter) {
+        const l = currentFilter.letter;
+        filteredVocab = filteredVocab.filter(v => v.word[0]?.toUpperCase() === l);
+    }
+
+    // Sort
+    if (sortAZ) filteredVocab = [...filteredVocab].sort((a, b) => a.word.localeCompare(b.word));
+
+    // Stats
+    document.getElementById('match-count').textContent   = filteredVocab.length;
     document.getElementById('total-count').textContent   = vocab.length;
     document.getElementById('match-percent').textContent =
-        vocab.length ? ((f.length/vocab.length)*100).toFixed(1)+'%' : '0%';
+        vocab.length ? ((filteredVocab.length / vocab.length) * 100).toFixed(1) + '%' : '0%';
 
-    const grid = document.getElementById('grid');
-    if (!f.length) {
-        grid.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>没有匹配的词汇<br>换个条件试试</p></div>`;
+    // Reset pagination
+    currentPage = 0;
+    document.getElementById('grid').innerHTML = '';
+
+    if (!filteredVocab.length) {
+        document.getElementById('grid').innerHTML =
+            `<div class="empty-state"><div class="icon">🔍</div><p>没有匹配的词汇<br>换个条件试试</p></div>`;
         return;
     }
-    if (sortAZ) f = [...f].sort((a, b) => a.word.localeCompare(b.word));
+
+    renderNextPage();
+}
+
+function renderNextPage() {
+    const grid = document.getElementById('grid');
+
+    // Remove old load-more button
+    const oldBtn = grid.querySelector('.load-more-wrapper');
+    if (oldBtn) oldBtn.remove();
+
+    const start = currentPage * PAGE_SIZE;
+    const end = Math.min(start + PAGE_SIZE, filteredVocab.length);
+    const slice = filteredVocab.slice(start, end);
+
     const frag = document.createDocumentFragment();
     const sfxReg = currentFilter.suffix
-    ? new RegExp(
-        currentFilter.suffixType === 'prefix'
-            ? '^' + currentFilter.suffix   // 前缀：匹配开头
-            : currentFilter.suffix + '$',  // 后缀：匹配末尾
-        'i'
-      )
-    : null;
+        ? new RegExp(
+            currentFilter.suffixType === 'prefix'
+                ? '^' + currentFilter.suffix
+                : currentFilter.suffix + '$', 'i')
+        : null;
 
- let requestCount = 0;
-const MAX_IPA_REQUESTS = 20; // 手机只请求前20个可见的
+    let requestCount = grid.querySelectorAll('.card').length;
+    const MAX_IPA = 25;
 
-f.forEach(item => {
+    slice.forEach(item => {
+        const card = createCard(item, sfxReg);
+        frag.appendChild(card);
+        if (requestCount < MAX_IPA) { ipaObserver.observe(card); requestCount++; }
+    });
+    grid.appendChild(frag);
+
+    // Load-more button
+    if (end < filteredVocab.length) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'load-more-wrapper';
+        wrapper.innerHTML = `<button class="load-more-btn">加载更多 (${end}/${filteredVocab.length})</button>`;
+        wrapper.querySelector('button').onclick = () => { currentPage++; renderNextPage(); };
+        grid.appendChild(wrapper);
+    }
+
+    if (showAllDef) grid.classList.add('show-all-def');
+}
+
+/* ═══════════════════════════════════════
+   CARD CREATION
+   ═══════════════════════════════════════ */
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function createCard(item, sfxReg) {
     const card = document.createElement('div');
     card.className = 'card';
     card.dataset.word = item.word;
@@ -664,10 +835,6 @@ f.forEach(item => {
     if (sfxReg) wordHTML = wordHTML.replace(sfxReg, m => `<span class="highlight">${m}</span>`);
 
     const w = encodeURIComponent(item.word);
-    const eudicUrl   = `https://dict.eudic.net/dicts/en/${w}`;
-    const onelookUrl = `https://www.onelook.com/?w=${w}&phrases=1`;
-    const langManUrl = `https://www.ldoceonline.com/dictionary/${w}`;
-
     card.innerHTML = `
     <div class="card-inner">
         <div class="word-header">
@@ -676,9 +843,9 @@ f.forEach(item => {
         <div class="word-phonetic" data-word="${esc(item.word)}">...</div>
         <div class="word-def">${esc(item.def)}</div>
         <div class="card-links">
-            <a href="${eudicUrl}"   target="_blank" class="dict-link en-cn" title="欧路词典">中文</a>
-            <a href="${onelookUrl}" target="_blank" class="dict-link en-en" title="OneLook">EN↗</a>
-            <a href="${langManUrl}" target="_blank" class="dict-link en-cn" title="朗文词典">lang</a>
+            <a href="https://dict.eudic.net/dicts/en/${w}" target="_blank" class="dict-link en-cn" title="欧路词典">中文</a>
+            <a href="https://www.onelook.com/?w=${w}&phrases=1" target="_blank" class="dict-link en-en" title="OneLook">EN↗</a>
+            <a href="https://www.ldoceonline.com/dictionary/${w}" target="_blank" class="dict-link en-cn" title="朗文词典">lang</a>
         </div>
     </div>`;
 
@@ -690,21 +857,12 @@ f.forEach(item => {
         audio.onended = () => card.classList.remove('speaking');
     });
 
-    frag.appendChild(card);
-
-    // ★ 关键修复：限制 IPA 请求
-    if (requestCount < MAX_IPA_REQUESTS) {
-        ipaObserver.observe(card);
-        requestCount++;
-    }
-});
-
-
-    grid.innerHTML = '';
-    grid.appendChild(frag);
-    if (showAllDef) grid.classList.add('show-all-def');
+    return card;
 }
 
+/* ═══════════════════════════════════════
+   UI EVENT HANDLERS
+   ═══════════════════════════════════════ */
 document.getElementById('toggleAllBtn').addEventListener('click', function() {
     showAllDef = !showAllDef;
     document.getElementById('grid').classList.toggle('show-all-def', showAllDef);
@@ -714,36 +872,43 @@ document.getElementById('toggleAllBtn').addEventListener('click', function() {
 
 document.getElementById('vocabSelect').addEventListener('change', e => loadVocab(e.target.value));
 
+// Scroll hide/show bars (mobile)
+let ticking = false;
 window.addEventListener('scroll', () => {
-    if (!isMobile()) return;
-    const st = window.pageYOffset;
-    const down = st > lastScrollTop && st > 60;
-    document.getElementById('topBar').classList.toggle('nav-hidden-top', down);
-    document.getElementById('mobileBottomNav').classList.toggle('nav-hidden-bottom', down);
-    lastScrollTop = Math.max(0, st);
+    if (!isMobile() || ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+        const st = window.pageYOffset;
+        const down = st > lastScrollTop && st > 60;
+        document.getElementById('topBar').classList.toggle('nav-hidden-top', down);
+        document.getElementById('azBar').classList.toggle('nav-hidden-top', down);
+        document.getElementById('mobileBottomNav').classList.toggle('nav-hidden-bottom', down);
+        lastScrollTop = Math.max(0, st);
+        ticking = false;
+    });
 }, { passive: true });
 
-const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 function showError(msg) {
     document.getElementById('grid').innerHTML =
         `<div class="empty-state"><div class="icon">⚠️</div><p>${msg}</p></div>`;
 }
-/* ── 视图切换 ── */
+
+/* ── View toggle ── */
 document.getElementById('viewToggleBtn').addEventListener('click', function () {
     const grid = document.getElementById('grid');
     const isList = grid.classList.toggle('list-view');
     this.textContent = isList ? '⊞ Card' : '☰ List';
     localStorage.setItem('vocab-view', isList ? 'list' : 'card');
 });
-// 记住上次的视图
 if (localStorage.getItem('vocab-view') === 'list') {
     document.getElementById('grid').classList.add('list-view');
     document.getElementById('viewToggleBtn').textContent = '⊞ Card';
 }
 
+/* ── Sort toggle ── */
 document.getElementById('sortBtn').addEventListener('click', function() {
     sortAZ = !sortAZ;
-    this.textContent = sortAZ ? 'Z→A off' : 'A→Z';
+    this.textContent = sortAZ ? 'Z→A' : 'A→Z';
     this.classList.toggle('active', sortAZ);
     applyFilters();
 });
