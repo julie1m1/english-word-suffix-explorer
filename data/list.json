@@ -1,7 +1,6 @@
 {
   "vocabs": [
-    "---",
-    "【雅思】",
+    "雅思",
     "7天搞定雅思高频核心词.csv",
     "100个句子记完7000个雅思单词.csv",
     "2012雅思词汇加强版.csv",
@@ -11,9 +10,9 @@
     "王冬梅雅思词汇过目不忘.csv",
     "新雅思真词库.csv",
     "雅思词组必备.csv",
-
+    
     "---",
-    "【托福 / SAT / GMAT / GRE】",
+    "托福 / SAT / GMAT / GRE",
     "托福词组必备.csv",
     "BMC-SAT核心单词乱序版.csv",
     "BMC-SAT核心单词顺序版.csv",
@@ -21,23 +20,65 @@
     "GMAT词汇精选.csv",
     "GRE巴朗词表第3版.csv",
     "GRE高分必备短语搭配.csv",
-
+    
     "---",
-    "【考研 / PET / KET】",
+    "考研 / PET / KET",
     "14天攻克KET核心词汇.csv",
-    "100个句子记完5500个考研单词（2025）.csv",
-    "2020王江涛考研英语（二）满分写作.csv",
+    "100个句子记完5500个考研单词([2025]).csv",
+    "2020王江涛考研英语([二])满分写作.csv",
     "PET核心词 巧记速练.csv",
-
+    
     "---",
-    "【BEC】",
+    "BEC",
     "BEC高级词汇精选.csv",
     "BEC中级词汇精选.csv",
-
+    
     "---",
-    "【通用词组】",
+    "通用词组",
     "英语词组全书（上）.csv",
-    "英语词组全书（下）.csv"
+    "英语词组全书（下）.csv",
+    
+    "---",
+    "牛津与Wordly Wise系列",
+    "The Oxford 3000 - American.csv",
+    "The Oxford 3000 - English.csv",
+    "The Oxford 5000 - American.csv",
+    "The Oxford 5000 - English.csv",
+    "Wordly Wise 3000 Book 1.csv",
+    "Wordly Wise 3000 Book 2.csv",
+    "Wordly Wise 3000 Book 3.csv",
+    "Wordly Wise 3000 Book 4.csv",
+    "Wordly Wise 3000 Book 5.csv",
+    "Wordly Wise 3000 Book 6.csv",
+    "Wordly Wise 3000 Book 7.csv",
+    "Wordly Wise 3000 Book 8.csv",
+    "Wordly Wise 3000 Book 9.csv",
+    "Wordly Wise 3000 Book 10.csv",
+    "Wordly Wise 3000 Book K.csv",
+    
+    "---",
+    "朗文与语料库",
+    "背单词，记住这200个词根词缀就够了.csv",
+    "朗文3000常用交流词汇.csv",
+    "朗文国际英语教程(Side by Side)第1册.csv",
+    "朗文国际英语教程(Side by Side)第2册.csv",
+    "朗文国际英语教程(Side by Side)第3册.csv",
+    "朗文国际英语教程(Side by Side)第4册.csv",
+    "美国当代语料库 5000.csv",
+    "美国当代语料库 20200.csv",
+    
+    "---",
+    "竞赛与热词",
+    "全国大学生英语竞赛必背词汇8000.csv",
+    "热词红宝书 第1版.csv",
+    "热词红宝书 第2版.csv",
+    "热词红宝书 第3版.csv",
+    
+    "---",
+    "其他考试",
+    "鸭圈雅思核心词2.0.csv",
+    "Academic Voc List (SM2).csv",
+    "ACT必备核心词汇.csv"
   ],
   "suffixes": [
     "Suffix_Ref.csv"

@@ -1,917 +1,273 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN" data-theme="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vocab Lab Omni</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:ital,wght@0,300;0,700;1,300&display=swap" rel="stylesheet">
-    <style>
-        /* ══ DARK THEME (默认) ══ */
-        :root, [data-theme="dark"] {
-            --bg: #0f1117;
-            --surface: #1a1d27;
-            --surface-2: #22253a;
-            --border: rgba(255,255,255,0.07);
-            --accent: #7c6af5;
-            --accent-soft: rgba(124,106,245,0.15);
-            --green: #2dd4a0;
-            --green-soft: rgba(45,212,160,0.12);
-            --yellow: #f5c518;
-            --text-1: #e8eaf6;
-            --text-2: #8b90b8;
-            --text-3: #555a80;
-            --shadow: rgba(0,0,0,0.4);
-            --topbar-bg: #1a1d27;
-            --scrollbar: rgba(255,255,255,0.1);
-        }
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='2' y='2' width='12' height='12' rx='3' fill='%23D0BCFF'/><rect x='18' y='2' width='12' height='12' rx='3' fill='%23D0BCFF' opacity='.6'/><rect x='2' y='18' width='12' height='12' rx='3' fill='%23D0BCFF' opacity='.6'/><rect x='18' y='18' width='12' height='12' rx='3' fill='%23D0BCFF' opacity='.3'/></svg>">
 
-        /* ══ LIGHT THEME ══ */
-        [data-theme="light"] {
-            --bg: #f5f0e8;
-            --surface: #fdfaf5;
-            --surface-2: #ede8df;
-            --border: rgba(0,0,0,0.08);
-            --accent: #d97757;
-            --accent-soft: rgba(217,119,87,0.09);
-            --green: #2a9d6e;
-            --green-soft: rgba(42,157,110,0.1);
-            --yellow: #b07d2a;
-            --text-1: #1f1b16;
-            --text-2: #6b5f52;
-            --text-3: #a89a8a;
-            --shadow: rgba(80,50,20,0.09);
-            --topbar-bg: #fdfaf5;
-            --scrollbar: rgba(0,0,0,0.1);
-        }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--bg);
-            color: var(--text-1);
-            height: 100dvh;
-            display: flex;
-            overflow: hidden;
-            transition: background 0.3s, color 0.3s;
-        }
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 4px; }
-
-        .sidebar {
-            width: 220px;
-            flex-shrink: 0;
-            background: var(--surface);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            transition: background 0.3s, border-color 0.3s;
-        }
-        .sidebar-header {
-            padding: 20px 16px 14px;
-            border-bottom: 1px solid var(--border);
-        }
-        .sidebar-header h2 {
-            font-family: 'Fraunces', serif;
-            font-style: italic;
-            font-weight: 300;
-            font-size: 18px;
-            color: var(--text-1);
-        }
-        .sidebar-header span {
-            font-size: 10px;
-            color: var(--text-3);
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            display: block;
-            margin-top: 3px;
-        }
-        #suffix-container { overflow-y: auto; flex: 1; padding: 8px 0; }
-
-        .filter-btn {
-            width: 100%; border: none;
-            padding: 10px 16px; text-align: left;
-            background: transparent; cursor: pointer;
-            color: var(--text-2);
-            border-left: 3px solid transparent;
-            transition: all 0.15s;
-            display: flex; align-items: baseline; gap: 8px;
-        }
-        .filter-btn:hover { background: var(--surface-2); color: var(--text-1); }
-        .filter-btn.active { background: var(--accent-soft); color: var(--accent); border-left-color: var(--accent); }
-        .filter-btn .sfx { font-size: 13px; font-weight: 500; }
-        .filter-btn .meaning { font-size: 10px; color: var(--text-3); }
-        .filter-btn.active .meaning { color: var(--accent); opacity: 0.7; }
-
-        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
-
-        .top-bar {
-            padding: 10px 16px;
-            background: var(--topbar-bg);
-            border-bottom: 1px solid var(--border);
-            display: flex; align-items: center;
-            gap: 8px; flex-wrap: wrap; z-index: 100;
-            transition: background 0.3s, border-color 0.3s;
-        }
-
-        /* ══ A-Z FILTER BAR ══ */
-        .az-bar {
-            padding: 6px 16px;
-            background: var(--topbar-bg);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            gap: 4px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            z-index: 99;
-            flex-shrink: 0;
-            transition: background 0.3s, border-color 0.3s;
-        }
-        .az-bar::-webkit-scrollbar { height: 0; }
-        .az-btn {
-            flex-shrink: 0;
-            min-width: 30px;
-            height: 28px;
-            border: 1px solid var(--border);
-            background: transparent;
-            color: var(--text-2);
-            border-radius: 14px;
-            cursor: pointer;
-            font-size: 11px;
-            font-family: 'DM Mono', 'DM Sans', monospace;
-            font-weight: 500;
-            transition: all 0.15s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 8px;
-        }
-        .az-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .az-btn.active {
-            background: var(--accent);
-            color: #fff;
-            border-color: var(--accent);
-        }
-        .az-btn.has-no-data {
-            opacity: 0.25;
-            cursor: default;
-            pointer-events: none;
-        }
-
-        .stats-badge {
-            font-size: 12px; color: var(--text-2);
-            background: var(--surface-2);
-            padding: 5px 12px; border-radius: 20px;
-            border: 1px solid var(--border);
-            white-space: nowrap; flex-shrink: 0;
-        }
-        .stats-badge b { color: var(--green); }
-        #vocabSelect {
-            padding: 5px 10px; border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--surface-2); color: var(--text-1);
-            font-family: 'DM Sans', sans-serif;  font-size: 12px;
-            cursor: pointer; max-width: 140px;
-            transition: background 0.3s;
-        }
-        #vocabSelect:focus { outline: 1px solid var(--accent); }
-        #pos-container { display: flex; gap: 5px; flex-wrap: wrap; }
-        .pos-btn {
-            padding: 4px 10px;
-            border: 1px solid var(--border);
-            background: transparent; color: var(--text-2);
-            border-radius: 20px; cursor: pointer;
-            font-size: 11px; font-family: 'DM Mono', sans-serif;
-            transition: all 0.15s;
-        }
-        .pos-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .pos-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-        .toggle-all-btn {
-            padding: 5px 12px;
-            border: 1px solid var(--yellow);
-            background: transparent; color: var(--yellow);
-            border-radius: 20px; cursor: pointer;
-            font-size: 11px; font-family: 'DM Mono', sans-serif;
-            transition: all 0.15s; white-space: nowrap;
-        }
-        .toggle-all-btn:hover, .toggle-all-btn.active { background: var(--yellow); color: #111; }
-
-        .theme-toggle {
-            position: fixed;
-            top: 12px; right: 16px;
-            z-index: 9999;
-            display: flex; align-items: center; gap: 6px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 5px 12px;
-            cursor: pointer;
-            font-size: 12px;
-            font-family: 'DM Mono', monospace;
-            color: var(--text-2);
-            transition: all 0.2s;
-            box-shadow: 0 2px 8px var(--shadow);
-        }
-        .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
-
-        #grid {
-            flex: 1;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-            gap: 12px;
-            padding: 16px;
-            overflow-y: auto;
-            align-content: start;
-        }
-
-        /* ── LIST VIEW ── */
-        #grid.list-view {
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            padding: 12px 16px;
-            align-content: start;
-        }
-        #grid.list-view .card {
-            border-radius: 8px;
-            padding: 0;
-        }
-        #grid.list-view .card-inner {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            flex-wrap: wrap;
-            padding: 9px 12px;
-            gap: 6px;
-            width: 100%;
-        }
-        #grid.list-view .word-header {
-            flex-shrink: 0;
-            align-items: center;
-            gap: 0;
-            min-width: 0;
-            width: auto;
-        }
-        #grid.list-view .word-text {
-            font-size: 15px;
-            white-space: nowrap;
-            overflow-wrap: normal;
-            min-width: 0;
-        }
-        #grid.list-view .card-links {
-            opacity: 1;
-            flex-shrink: 0;
-        }
-        #grid.list-view .word-def {
-            flex: 1;
-            min-width: 200px;
-            font-size: 12px;
-            line-height: 1.5;
-        }
-        #grid.list-view .card:hover { transform: none; }
-
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s, background 0.3s;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            height: auto;
-        }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--shadow); border-color: var(--accent); }
-        .card.viewed { border-left: 3px solid var(--green); }
-        .card.speaking { border-color: var(--green); box-shadow: 0 0 0 2px var(--green-soft); }
-
-        .card-inner {
-            padding: 14px 14px 12px;
-            display: flex; flex-direction: column; gap: 7px;
-        }
-        .word-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 6px;
-        }
-        .word-text {
-            font-family: 'DM Sans', sans-serif;
-            font-size: 18px; font-weight: 700;
-            color: var(--text-1);
-            word-break: break-word;
-            overflow-wrap: anywhere;
-            line-height: 1.25;
-            flex: 1; min-width: 0;
-        }
-
-        .word-phonetic {
-            font-size: 11px;
-            color: var(--accent);
-            font-family: sans-serif;
-            margin-top: -2px;
-            min-height: 14px;
-            opacity: 0.8;
-        }
-
-        .card-links {
-            display: flex; gap: 4px;
-            flex-shrink: 0;
-            align-items: flex-start;
-            opacity: 0; transition: opacity 0.15s;
-        }
-        .card:hover .card-links { opacity: 1; }
-        .dict-link {
-            text-decoration: none;
-            font-size: 10px;
-            font-family: 'DM Mono', monospace;
-            padding: 2px 6px;
-            border-radius: 5px;
-            border: 1px solid var(--border);
-            background: var(--surface-2);
-            color: var(--text-2);
-            transition: all 0.15s;
-            white-space: nowrap;
-            line-height: 1.5;
-        }
-        .dict-link.en-cn { border-color: var(--green); color: var(--green); }
-        .dict-link.en-en { border-color: var(--accent); color: var(--accent); }
-        .dict-link.en-cn:hover { background: var(--green); color: #fff; }
-        .dict-link.en-en:hover { background: var(--accent); color: #fff; }
-
-        .word-def {
-            font-size: 12px; color: var(--text-2);
-            line-height: 1.65;
-            opacity: 0; max-height: 0; overflow: hidden;
-            transition: opacity 0.2s, max-height 0.3s ease;
-            word-break: break-word;
-        }
-        .card:hover .word-def,
-        .card.viewed .word-def,
-        .show-all-def .word-def {
-            opacity: 1;
-            max-height: 300px;
-        }
-        .highlight { color: var(--accent); font-weight: 500; }
-
-        .skeleton {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 14px; padding: 16px;
-            display: flex; flex-direction: column; gap: 10px;
-        }
-        .skeleton-line {
-            background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface) 50%, var(--surface-2) 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.4s infinite; border-radius: 6px;
-        }
-        .skeleton-line.title { height: 20px; width: 65%; }
-        .skeleton-line.sub { height: 11px; }
-        .skeleton-line.sub2 { height: 11px; width: 80%; }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-        .empty-state {
-            grid-column: 1 / -1; text-align: center;
-            padding: 60px 20px; color: var(--text-3);
-        }
-        .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
-        .empty-state p { font-size: 13px; line-height: 1.8; }
-
-        .mobile-bottom-nav {
-            display: none;
-            position: fixed; bottom: 0; left: 0; right: 0;
-            height: 60px;
-            background: var(--topbar-bg);
-            border-top: 1px solid var(--border);
-            backdrop-filter: blur(12px);
-            overflow-x: auto; align-items: center;
-            padding: 0 12px; gap: 8px;
-            z-index: 200; transition: transform 0.3s;
-        }
-        .suffix-pill {
-            flex-shrink: 0; padding: 6px 12px;
-            background: var(--surface-2); border: 1px solid var(--border);
-            border-radius: 20px; font-size: 12px; color: var(--text-2);
-            cursor: pointer; white-space: nowrap;
-            font-family: 'DM Mono', monospace; transition: all 0.15s;
-        }
-        .suffix-pill.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
-
-        /* ── LOAD MORE ── */
-        .load-more-wrapper {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 20px;
-        }
-        .load-more-btn {
-            padding: 10px 36px;
-            border-radius: 24px;
-            border: 1px solid var(--accent);
-            background: var(--accent-soft);
-            color: var(--accent);
-            cursor: pointer;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .load-more-btn:hover {
-            background: var(--accent);
-            color: #fff;
-        }
-
-        @media (max-width: 768px) {
-            #toggleAllBtn { display: none; }
-            .sidebar { display: none; }
-            .mobile-bottom-nav { display: flex; }
-            #grid { padding-bottom: 76px; grid-template-columns: 1fr 1fr; }
-            .top-bar { padding: 8px 10px; gap: 6px; padding-right: 90px; }
-            .word-def { opacity: 1 !important; max-height: 300px !important; }
-        }
-        @media (max-width: 480px) { #grid { grid-template-columns: 1fr; } }
-
-        .show-all-def .word-def { opacity: 1 !important; max-height: 300px !important; }
-        .nav-hidden-top { transform: translateY(-110%); }
-        .nav-hidden-bottom { transform: translateY(110%); }
-        @media (max-width: 1200px) {
-            #grid.list-view { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-<body>
-
-<div class="sidebar">
-    <div class="sidebar-header">
-        <h2>Suffix Lab</h2>
-        <span>Explorer</span>
-    </div>
-    <div id="suffix-container"></div>
-</div>
-
-<div class="main">
-    <div class="top-bar" id="topBar">
-        <div class="stats-badge">
-            <b id="match-count">0</b> / <span id="total-count">0</span>
-            &nbsp;<span style="opacity:.6">(<b id="match-percent">0%</b>)</span>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:ital,wght@0,300;0,700;1,300&display=swap"
+      rel="stylesheet"
+    />
+     <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- ══ SIDEBAR (desktop) ══ -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg
+            viewBox="0 0 18 18"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect
+              x="2"
+              y="2"
+              width="6"
+              height="6"
+              rx="2"
+              fill="var(--md-on-primary-container)"
+            />
+            <rect
+              x="10"
+              y="2"
+              width="6"
+              height="6"
+              rx="2"
+              fill="var(--md-on-primary-container)"
+              opacity=".6"
+            />
+            <rect
+              x="2"
+              y="10"
+              width="6"
+              height="6"
+              rx="2"
+              fill="var(--md-on-primary-container)"
+              opacity=".6"
+            />
+            <rect
+              x="10"
+              y="10"
+              width="6"
+              height="6"
+              rx="2"
+              fill="var(--md-on-primary-container)"
+              opacity=".3"
+            />
+          </svg>
         </div>
-        <select id="vocabSelect"><option>Loading…</option></select>
-        <div id="pos-container"></div>
-        <button class="toggle-all-btn" id="toggleAllBtn">👁 Show All</button>
-        <button class="toggle-all-btn" id="viewToggleBtn" title="切换视图">☰ List</button>
-        <button class="toggle-all-btn" id="sortBtn">A→Z</button>
+        <div>
+          <h2>Vocab Lab</h2>
+          <span>Omni Explorer</span>
+        </div>
+      </div>
+      <div class="suffix-search-wrap">
+        <input
+          type="text"
+          id="suffixSearch"
+          placeholder="Filter suffixes…"
+          autocomplete="off"
+        />
+      </div>
+      <div id="suffix-container"></div>
     </div>
 
-    <!-- ★ A-Z 字母筛选栏 -->
-    <div class="az-bar" id="azBar"></div>
+    <!-- ══ MAIN ══ -->
+    <div class="main">
+      <!-- Top control bar -->
+      <div class="top-bar" id="topBar">
+        <div class="top-bar-title">Vocab Lab</div>
+        <!-- Desktop: POS buttons inline left (hidden on mobile via CSS) -->
+        <div class="top-bar-pos" id="topBarPos"></div>
+<div class="top-bar-right">
+  <div class="select-wrapper">
+    <select id="vocabSelect">
+      <option>Loading…</option>
+    </select>
+  </div>
 
-    <div id="grid"></div>
-    <div class="mobile-bottom-nav" id="mobileBottomNav"></div>
-</div>
+  <div class="stats-badge">
+    <b id="match-count">0</b>/<span id="total-count">0</span>
+    <span class="percent-tag"> <b id="match-percent">0%</b></span>
+  </div>
 
-<button class="theme-toggle" id="themeToggle">
-    <span id="themeIcon">☀️</span>
-    <span id="themeLabel">Light</span>
+  <button class="util-btn" id="toggleAllBtn">
+    <span class="icon">👁</span><span class="label">Show All</span>
+  </button>
+  
+  <button class="util-btn" id="viewToggleBtn">
+    <span class="icon">☰</span><span class="label">List</span>
+  </button>
+
+  <button class="util-btn" id="playModeBtn" title="Auto Play">
+  <span class="icon">▶</span><span class="label">Play</span>
+</button>
+<button class="util-btn" id="spellingModeBtn" title="Spelling Mode">
+  <span class="icon">✏️</span><span class="label">Spell</span>
 </button>
 
-<script>
-/* ═══════════════════════════════════════
-   CSV PARSER
-   ═══════════════════════════════════════ */
-const Papa = {
-    parse(text) {
-        return { data: text.split(/\r?\n/).map(line => {
-            const cols = []; let cur = '', inQ = false;
-            for (const c of line) {
-                if (c === '"') { inQ = !inQ; continue; }
-                if (c === ',' && !inQ) { cols.push(cur); cur = ''; continue; }
-                cur += c;
-            }
-            cols.push(cur); return cols;
-        })};
-    }
-};
 
-/* ═══════════════════════════════════════
-   THEME
-   ═══════════════════════════════════════ */
-function applyTheme(t) {
-    document.documentElement.setAttribute('data-theme', t);
-    localStorage.setItem('vocab-theme', t);
-    document.getElementById('themeIcon').textContent  = t === 'light' ? '🌙' : '☀️';
-    document.getElementById('themeLabel').textContent = t === 'light' ? 'Dark' : 'Light';
-}
-applyTheme(localStorage.getItem('vocab-theme') || 'dark');
-document.getElementById('themeToggle').addEventListener('click', () => {
-    applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-});
 
-/* ═══════════════════════════════════════
-   GLOBAL STATE
-   ═══════════════════════════════════════ */
-let vocab = [], suffixList = [];
-let currentFilter = { suffix: null, pos: 'All', letter: null };
-let lastScrollTop = 0, showAllDef = false, sortAZ = false;
+  <button class="theme-btn" id="themeToggle" title="Toggle theme">
+    ☀️
+  </button>
+  
+</div>
+      </div>
+      
+      <!-- POS filter bar — own scrollable row -->
+      <div class="pos-bar" id="posBar">
+        <div id="pos-container"></div>
+      </div>
 
-// ★ 分页
-let currentPage = 0;
-const PAGE_SIZE = 40;
-let filteredVocab = [];
+      <!-- A-Z bar -->
+      <div class="az-bar" id="azBar"></div>
 
-const isMobile = () => window.innerWidth <= 768;
+      <!-- Word grid -->
+      <div id="grid"></div>
 
-/* ═══════════════════════════════════════
-   SKELETON
-   ═══════════════════════════════════════ */
-function showSkeletons(n = 12) {
-    document.getElementById('grid').innerHTML = Array(n).fill(
-        `<div class="skeleton">
-            <div class="skeleton-line title"></div>
-            <div class="skeleton-line sub"></div>
-            <div class="skeleton-line sub2"></div>
-        </div>`
-    ).join('');
-}
+      <!-- Mobile bottom suffix nav -->
+      <div class="mobile-bottom-nav" id="mobileBottomNav"></div>
+    </div>
 
-/* ═══════════════════════════════════════
-   INIT
-   ═══════════════════════════════════════ */
-window.addEventListener('load', () => {
-    showSkeletons();
-    fetch('data/list.json')
-        .then(r => r.json())
-        .then(data => {
-            const sel = document.getElementById('vocabSelect');
-            sel.innerHTML = '';
-            data.vocabs.forEach(n => {
-                const o = document.createElement('option');
-                o.value = `data/${n}`; o.textContent = n.replace('.csv','');
-                sel.appendChild(o);
-            });
-            Promise.all([
-                data.vocabs[0]     ? loadVocab(`data/${data.vocabs[0]}`)    : Promise.resolve(),
-                data.suffixes?.[0] ? loadSuffix(`data/${data.suffixes[0]}`) : Promise.resolve()
-            ]);
-        })
-        .catch(() => showError('无法加载 data/list.json，请检查文件路径'));
-});
-
-/* ═══════════════════════════════════════
-   LOAD VOCAB / SUFFIX
-   ═══════════════════════════════════════ */
-function loadVocab(url) {
-    showSkeletons();
-    return fetch(url).then(r => r.text()).then(text => {
-        const { data } = Papa.parse(text.trim());
-        vocab = data.filter(r => r[0] && r[1]).map(r => ({
-            word: r[0].trim(), def: r[1].trim(), pos: r[1].match(/[a-z]+\./g) || []
-        }));
-        updatePOSMenu();
-        updateAZBar();
-        applyFilters();
-    }).catch(() => showError('词汇文件加载失败：' + url));
-}
-
-function loadSuffix(url) {
-    return fetch(url).then(r => r.text()).then(text => {
-        suffixList = [];
-        Papa.parse(text.trim()).data.forEach(r => {
-            if (!r[0]) return;
-            r[0].split('/').forEach(p => {
-                p = p.trim();
-                if (!p) return;
-                const isPrefix = p.endsWith('-') && !p.startsWith('-');
-                const type = isPrefix ? 'prefix' : 'suffix';
-                const s = p.replace(/-/g, '').trim();
-                if (s) suffixList.push({ suffix: s, meaning: r[1] || '', type });
-            });
-        });
-        renderSuffixControls();
-    });
-}
-
-/* ═══════════════════════════════════════
-   POS MENU
-   ═══════════════════════════════════════ */
-function updatePOSMenu() {
-    const box = document.getElementById('pos-container');
-    box.innerHTML = '';
-    ['All', ...new Set(vocab.flatMap(v => v.pos))].forEach(p => {
-        const btn = document.createElement('button');
-        btn.className = 'pos-btn' + (p === currentFilter.pos ? ' active' : '');
-        btn.textContent = p;
-        btn.onclick = () => { currentFilter.pos = p; updatePOSMenu(); applyFilters(); };
-        box.appendChild(btn);
-    });
-}
-
-/* ═══════════════════════════════════════
-   A-Z BAR  ★ 新增
-   ═══════════════════════════════════════ */
-function updateAZBar() {
-    const bar = document.getElementById('azBar');
-    bar.innerHTML = '';
-
-    // 统计每个首字母有多少词
-    const letterCounts = {};
-    vocab.forEach(v => {
-        const l = v.word[0]?.toUpperCase();
-        if (l && l >= 'A' && l <= 'Z') {
-            letterCounts[l] = (letterCounts[l] || 0) + 1;
-        }
-    });
-
-    // "All" 按钮
-    const allBtn = document.createElement('button');
-    allBtn.className = 'az-btn' + (currentFilter.letter === null ? ' active' : '');
-    allBtn.textContent = 'All';
-    allBtn.onclick = () => { currentFilter.letter = null; updateAZBar(); applyFilters(); };
-    bar.appendChild(allBtn);
-
-    // A-Z 按钮
-    for (let i = 65; i <= 90; i++) {
-        const letter = String.fromCharCode(i);
-        const count = letterCounts[letter] || 0;
-        const btn = document.createElement('button');
-        btn.className = 'az-btn'
-            + (currentFilter.letter === letter ? ' active' : '')
-            + (count === 0 ? ' has-no-data' : '');
-        btn.textContent = letter;
-        btn.onclick = () => {
-            currentFilter.letter = (currentFilter.letter === letter) ? null : letter;
-            updateAZBar(); applyFilters();
-        };
-        bar.appendChild(btn);
-    }
-}
-
-/* ═══════════════════════════════════════
-   SUFFIX CONTROLS
-   ═══════════════════════════════════════ */
-function renderSuffixControls() {
-    ['suffix-container','mobileBottomNav'].forEach(id => document.getElementById(id).innerHTML = '');
-    const items = [{ suffix: null, meaning: '' }, ...suffixList];
-    items.forEach(item => {
-        const isActive = currentFilter.suffix === item.suffix;
-        const label = item.suffix || 'All';
-
-        const btn = document.createElement('button');
-        btn.className = 'filter-btn' + (isActive ? ' active' : '');
-        const typeTag = item.type
-            ? `<span style="font-size:9px;opacity:.5;margin-left:auto">${item.type}</span>`
-            : '';
-        btn.innerHTML = `<span class="sfx">${label}</span><span class="meaning">${item.meaning}</span>${typeTag}`;
-        btn.onclick = () => toggleSuffix(item.suffix, item.type);
-        document.getElementById('suffix-container').appendChild(btn);
-
-        const pill = document.createElement('div');
-        pill.className = 'suffix-pill' + (isActive ? ' active' : '');
-        const pillTag = item.type === 'prefix' ? ' 前' : item.type === 'suffix' ? ' 后' : '';
-        pill.innerHTML = `<b>${label}</b>${item.meaning ? ` <span style="font-size:10px;opacity:.6">${item.meaning}</span>` : ''}${pillTag ? `<span style="font-size:9px;opacity:.4">${pillTag}</span>` : ''}`;
-        pill.onclick = () => toggleSuffix(item.suffix, item.type);
-        document.getElementById('mobileBottomNav').appendChild(pill);
-    });
-}
-
-function toggleSuffix(s, type) {
-    if (currentFilter.suffix === s) {
-        currentFilter.suffix = null;
-        currentFilter.suffixType = null;
-    } else {
-        currentFilter.suffix = s;
-        currentFilter.suffixType = type;
-    }
-    renderSuffixControls(); applyFilters();
-    if (isMobile()) window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-/* ═══════════════════════════════════════
-   IPA (音标)
-   ═══════════════════════════════════════ */
-function getIPACache() {
-    try { return JSON.parse(localStorage.getItem('ipa-cache') || '{}'); }
-    catch { return {}; }
-}
-function setIPACache(word, ipa) {
-    const cache = getIPACache();
-    cache[word] = ipa;
-    const keys = Object.keys(cache);
-    if (keys.length > 5000) keys.slice(0, keys.length - 5000).forEach(k => delete cache[k]);
-    localStorage.setItem('ipa-cache', JSON.stringify(cache));
-}
-
-async function fetchIPA(word, element) {
-    const cache = getIPACache();
-    if (cache[word]) {
-        element.textContent = cache[word];
-        if (cache[word]) element.style.opacity = '0.8';
-        return;
-    }
-    try {
-        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
-        if (!res.ok) { setIPACache(word, ''); return; }
-        const data = await res.json();
-        const ipa = data[0]?.phonetics?.find(p => p.text)?.text
-                 || data[0]?.phonetic || '';
-        setIPACache(word, ipa);
-        element.textContent = ipa;
-        if (ipa) element.style.opacity = '0.8';
-    } catch {
-        setIPACache(word, '');
-    }
-}
-
-const ipaObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            const card = entry.target;
-            const ipaEl = card.querySelector('.word-phonetic');
-            if (ipaEl && ipaEl.textContent === '...') {
-                fetchIPA(card.dataset.word, ipaEl);
-            }
-            ipaObserver.unobserve(card);
-        }
-    });
-}, { threshold: 0.1 });
-
-/* ═══════════════════════════════════════
-   FILTER + PAGINATION
-   ═══════════════════════════════════════ */
-function applyFilters() {
-    filteredVocab = vocab;
-
-    // POS filter
-    if (currentFilter.pos !== 'All')
-        filteredVocab = filteredVocab.filter(v => v.pos.includes(currentFilter.pos));
-
-    // Suffix filter
-    if (currentFilter.suffix) {
-        const s = currentFilter.suffix.toLowerCase();
-        const type = currentFilter.suffixType || 'suffix';
-        filteredVocab = filteredVocab.filter(v => {
-            const w = v.word.toLowerCase();
-            return type === 'prefix' ? w.startsWith(s) : w.endsWith(s);
-        });
-    }
-
-    // ★ A-Z filter
-    if (currentFilter.letter) {
-        const l = currentFilter.letter;
-        filteredVocab = filteredVocab.filter(v => v.word[0]?.toUpperCase() === l);
-    }
-
-    // Sort
-    if (sortAZ) filteredVocab = [...filteredVocab].sort((a, b) => a.word.localeCompare(b.word));
-
-    // Stats
-    document.getElementById('match-count').textContent   = filteredVocab.length;
-    document.getElementById('total-count').textContent   = vocab.length;
-    document.getElementById('match-percent').textContent =
-        vocab.length ? ((filteredVocab.length / vocab.length) * 100).toFixed(1) + '%' : '0%';
-
-    // Reset pagination
-    currentPage = 0;
-    document.getElementById('grid').innerHTML = '';
-
-    if (!filteredVocab.length) {
-        document.getElementById('grid').innerHTML =
-            `<div class="empty-state"><div class="icon">🔍</div><p>没有匹配的词汇<br>换个条件试试</p></div>`;
-        return;
-    }
-
-    renderNextPage();
-}
-
-function renderNextPage() {
-    const grid = document.getElementById('grid');
-
-    // Remove old load-more button
-    const oldBtn = grid.querySelector('.load-more-wrapper');
-    if (oldBtn) oldBtn.remove();
-
-    const start = currentPage * PAGE_SIZE;
-    const end = Math.min(start + PAGE_SIZE, filteredVocab.length);
-    const slice = filteredVocab.slice(start, end);
-
-    const frag = document.createDocumentFragment();
-    const sfxReg = currentFilter.suffix
-        ? new RegExp(
-            currentFilter.suffixType === 'prefix'
-                ? '^' + currentFilter.suffix
-                : currentFilter.suffix + '$', 'i')
-        : null;
-
-    let requestCount = grid.querySelectorAll('.card').length;
-    const MAX_IPA = 25;
-
-    slice.forEach(item => {
-        const card = createCard(item, sfxReg);
-        frag.appendChild(card);
-        if (requestCount < MAX_IPA) { ipaObserver.observe(card); requestCount++; }
-    });
-    grid.appendChild(frag);
-
-    // Load-more button
-    if (end < filteredVocab.length) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'load-more-wrapper';
-        wrapper.innerHTML = `<button class="load-more-btn">加载更多 (${end}/${filteredVocab.length})</button>`;
-        wrapper.querySelector('button').onclick = () => { currentPage++; renderNextPage(); };
-        grid.appendChild(wrapper);
-    }
-
-    if (showAllDef) grid.classList.add('show-all-def');
-}
-
-/* ═══════════════════════════════════════
-   CARD CREATION
-   ═══════════════════════════════════════ */
-const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-function createCard(item, sfxReg) {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.dataset.word = item.word;
-
-    let wordHTML = esc(item.word);
-    if (sfxReg) wordHTML = wordHTML.replace(sfxReg, m => `<span class="highlight">${m}</span>`);
-
-    const w = encodeURIComponent(item.word);
-    card.innerHTML = `
-    <div class="card-inner">
-        <div class="word-header">
-            <div class="word-text">${wordHTML}</div>
+    <!-- ══ ONBOARDING OVERLAY ══ -->
+    <div class="onboard-overlay" id="onboardOverlay" style="display: none">
+      <div class="onboard-card">
+        <h3>Welcome to Vocab Lab ✨</h3>
+        <div class="onboard-steps">
+          <div class="onboard-step">
+            <div class="onboard-step-icon">🔊</div>
+            <div>
+              <b>Tap any card</b> to hear the pronunciation. Viewed words get a
+              green border.
+            </div>
+          </div>
+          <div class="onboard-step">
+            <div class="onboard-step-icon">🔤</div>
+            <div><b>Bottom bar</b> — swipe to filter by suffix or prefix.</div>
+          </div>
+          <div class="onboard-step">
+            <div class="onboard-step-icon">🔡</div>
+            <div>
+              <b>A-Z bar</b> — tap a letter to jump to that section instantly.
+            </div>
+          </div>
         </div>
-        <div class="word-phonetic" data-word="${esc(item.word)}">...</div>
-        <div class="word-def">${esc(item.def)}</div>
-        <div class="card-links">
-            <a href="https://dict.eudic.net/dicts/en/${w}" target="_blank" class="dict-link en-cn" title="欧路词典">中文</a>
-            <a href="https://www.onelook.com/?w=${w}&phrases=1" target="_blank" class="dict-link en-en" title="OneLook">EN↗</a>
-            <a href="https://www.ldoceonline.com/dictionary/${w}" target="_blank" class="dict-link en-cn" title="朗文词典">lang</a>
+        <button class="onboard-dismiss" id="onboardDismiss">
+          Got it, let's go →
+        </button>
+      </div>
+    </div>
+
+<!-- ══ AUTO-PLAY PLAYER ══ -->
+<div class="player-bar" id="playerBar" style="display: none;">
+  <button class="player-btn" id="playerPrev" title="上一个">⏮</button>
+  <button class="player-btn player-play-btn" id="playerPlay" title="播放/暂停">▶</button>
+  <button class="player-btn" id="playerNext" title="下一个">⏭</button>
+  <span class="player-progress" id="playerProgress">0/0</span>
+  <div class="player-sep"></div>
+  <div class="player-opt">
+    <span class="player-opt-label">倍速</span>
+    <select id="playerSpeed" class="player-select">
+      <option value="0.75">0.75×</option>
+      <option value="1" selected>1×</option>
+      <option value="1.25">1.25×</option>
+      <option value="1.5">1.5×</option>
+      <option value="2">2×</option>
+    </select>
+  </div>
+  <div class="player-opt">
+    <span class="player-opt-label">间隔</span>
+    <select id="playerInterval" class="player-select">
+      <option value="0" selected>0s</option>
+      <option value="1">1s</option>
+      <option value="2">2s</option>
+      <option value="3">3s</option>
+      <option value="5">5s</option>
+    </select>
+  </div>
+  <div class="player-opt">
+    <span class="player-opt-label">重复</span>
+    <select id="playerRepeat" class="player-select">
+      <option value="1" selected>1×</option>
+      <option value="2">2×</option>
+      <option value="3">3×</option>
+      <option value="5">5×</option>
+    </select>
+  </div>
+  <div class="player-sep"></div>
+  <button class="player-btn" id="playerHide" title="隐藏单词">👁</button>
+  <button class="player-btn" id="playerClose" title="关闭">✕</button>
+</div>
+
+<!-- ══ SPELLING BAR ══ -->
+<div class="spelling-bar" id="spellingBar" style="display: none;">
+     <button id="spellShowWords" class="player-btn spell-show-btn" title="Show/Hide words" style="display:none">👁</button>
+  <button class="player-btn" id="spellSkip" title="跳过">⏭</button>
+  <button class="player-btn" id="spellListen" title="重听">🔊</button>
+  <div class="player-opt">
+    <span class="player-opt-label">倍速</span>
+    <select id="spellSpeed" class="player-select">
+      <option value="0.75">0.75×</option>
+      <option value="1" selected>1×</option>
+      <option value="1.5">1.5×</option>
+      <option value="2">2×</option>
+    </select>
+  </div>
+  <span class="player-progress" id="spellProgress">0/0</span>
+  <div class="player-sep"></div>
+  <button class="player-btn" id="spellExit" title="退出拼写">✕</button>
+    <span id="spellHints" class="spell-hints" style="display:none">Enter = next · Space = replay</span>
+</div>
+
+      <!-- ✅ 新增：拼写模式引导弹窗 -->
+      <div id="spellingIntro" class="spelling-intro" style="display:none">
+        <div class="spelling-intro-card">
+          <div class="spelling-intro-icon">✏️</div>
+          <h3>Spelling Mode</h3>
+          <p>Click any word to start<br>spelling from that position</p>
+          <button id="spellingIntroDismiss" class="stats-btn primary">Got it</button>
         </div>
-    </div>`;
+      </div>
 
-    card.addEventListener('click', e => {
-        if (e.target.closest('a')) return;
-        card.classList.add('speaking', 'viewed');
-        const audio = new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(item.word)}&type=2`);
-        audio.play();
-        audio.onended = () => card.classList.remove('speaking');
-    });
 
-    return card;
-}
+<!-- ══ SPELLING STATS ══ -->
+<div class="spelling-stats" id="spellingStats" style="display: none;">
+  <div class="spelling-stats-card">
+    <div class="stats-title">Spelling Complete</div>
+    <div class="stats-rate">
+      <b id="statsRate">0%</b>
+      <span>Accuracy</span>
+    </div>
+    <div class="stats-numbers">
+      <div class="stats-num correct">
+        <div class="stats-num-value" id="statsCorrect">0</div>
+        <div class="stats-num-label">Correct</div>
+      </div>
+      <div class="stats-num wrong">
+        <div class="stats-num-value" id="statsWrong">0</div>
+        <div class="stats-num-label">Wrong</div>
+      </div>
+      <div class="stats-num skipped">
+        <div class="stats-num-value" id="statsSkipped">0</div>
+        <div class="stats-num-label">Skipped</div>
+      </div>
+    </div>
+    <div class="stats-actions">
+      <button class="stats-btn primary" id="statsRetry">Retry Wrong</button>
+      <button class="stats-btn" id="statsClose">Close</button>
+    </div>
+  </div>
+</div>
 
-/* ═══════════════════════════════════════
-   UI EVENT HANDLERS
-   ═══════════════════════════════════════ */
-document.getElementById('toggleAllBtn').addEventListener('click', function() {
-    showAllDef = !showAllDef;
-    document.getElementById('grid').classList.toggle('show-all-def', showAllDef);
-    this.classList.toggle('active', showAllDef);
-    this.textContent = showAllDef ? '🙈 Hide All' : '👁 Show All';
-});
 
-document.getElementById('vocabSelect').addEventListener('change', e => loadVocab(e.target.value));
 
-// Scroll hide/show bars (mobile)
-let ticking = false;
-window.addEventListener('scroll', () => {
-    if (!isMobile() || ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => {
-        const st = window.pageYOffset;
-        const down = st > lastScrollTop && st > 60;
-        document.getElementById('topBar').classList.toggle('nav-hidden-top', down);
-        document.getElementById('azBar').classList.toggle('nav-hidden-top', down);
-        document.getElementById('mobileBottomNav').classList.toggle('nav-hidden-bottom', down);
-        lastScrollTop = Math.max(0, st);
-        ticking = false;
-    });
-}, { passive: true });
 
-function showError(msg) {
-    document.getElementById('grid').innerHTML =
-        `<div class="empty-state"><div class="icon">⚠️</div><p>${msg}</p></div>`;
-}
 
-/* ── View toggle ── */
-document.getElementById('viewToggleBtn').addEventListener('click', function () {
-    const grid = document.getElementById('grid');
-    const isList = grid.classList.toggle('list-view');
-    this.textContent = isList ? '⊞ Card' : '☰ List';
-    localStorage.setItem('vocab-view', isList ? 'list' : 'card');
-});
-if (localStorage.getItem('vocab-view') === 'list') {
-    document.getElementById('grid').classList.add('list-view');
-    document.getElementById('viewToggleBtn').textContent = '⊞ Card';
-}
-
-/* ── Sort toggle ── */
-document.getElementById('sortBtn').addEventListener('click', function() {
-    sortAZ = !sortAZ;
-    this.textContent = sortAZ ? 'Z→A' : 'A→Z';
-    this.classList.toggle('active', sortAZ);
-    applyFilters();
-});
-</script>
-</body>
+  <script src="script.js"></script>
+  </body>
 </html>
