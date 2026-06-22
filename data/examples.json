@@ -1,0 +1,3938 @@
+{
+  "resemble": {
+    "spoken": [
+      "You really resemble your sister — people always mix you two up."
+    ],
+    "written": [
+      "The fossil closely resembles a modern-day bird, suggesting an evolutionary link."
+    ]
+  },
+  "recognize": {
+    "spoken": [
+      "I didn't recognize you with your new haircut!"
+    ],
+    "written": [
+      "The government refused to recognize the newly formed independent state."
+    ]
+  },
+  "adjust": {
+    "spoken": [
+      "It took me a while to adjust to the time difference."
+    ],
+    "written": [
+      "Students must adjust their study strategies to meet the demands of higher education."
+    ]
+  },
+  "approach": {
+    "spoken": [
+      "We need a different approach — this method isn't working."
+    ],
+    "written": [
+      "The study adopts a multidisciplinary approach to understanding climate change."
+    ]
+  },
+  "fundamental": {
+    "spoken": [
+      "Trust is fundamental in any relationship."
+    ],
+    "written": [
+      "Access to clean water is a fundamental human right recognized by the United Nations."
+    ]
+  },
+  "rely on": {
+    "spoken": [
+      "You can always rely on me if you need help."
+    ],
+    "written": [
+      "Many developing nations rely on foreign aid to sustain their healthcare systems."
+    ]
+  },
+  "domestic": {
+    "spoken": [
+      "Domestic flights are usually cheaper than international ones."
+    ],
+    "written": [
+      "Domestic policy reforms have significantly reduced poverty rates in the region."
+    ]
+  },
+  "measure": {
+    "spoken": [
+      "We need to take some measures to cut costs."
+    ],
+    "written": [
+      "The government introduced new measures to curb inflation and stabilize the economy."
+    ]
+  },
+  "trait": {
+    "spoken": [
+      "Patience is a trait I really admire in people."
+    ],
+    "written": [
+      "Geneticists have identified a heritable trait associated with increased disease resistance."
+    ]
+  },
+  "coin": {
+    "spoken": [
+      "Who actually coined the term 'metaverse'?"
+    ],
+    "written": [
+      "The phrase was coined by the author in his seminal work on digital culture."
+    ]
+  },
+  "artificial": {
+    "spoken": [
+      "I prefer natural flavors over artificial ones."
+    ],
+    "written": [
+      "Artificial intelligence has transformed industries ranging from healthcare to finance."
+    ]
+  },
+  "prompt": {
+    "spoken": [
+      "What prompted you to change your mind?"
+    ],
+    "written": [
+      "The discovery prompted a major revision of the prevailing scientific theory."
+    ]
+  },
+  "exchange": {
+    "spoken": [
+      "Let's exchange numbers so we can stay in touch."
+    ],
+    "written": [
+      "Cultural exchange programs promote mutual understanding between nations."
+    ]
+  },
+  "underlie": {
+    "spoken": [
+      "What are the issues that underlie all this conflict?"
+    ],
+    "written": [
+      "The economic disparities that underlie social unrest must be addressed through policy reform."
+    ]
+  },
+  "ignore": {
+    "spoken": [
+      "You can't just ignore the problem and hope it goes away."
+    ],
+    "written": [
+      "Critics argue that the report ignores key demographic data that contradicts its conclusions."
+    ]
+  },
+  "fertiliser": {
+    "spoken": [
+      "We should use less fertiliser in the garden — it's bad for the soil."
+    ],
+    "written": [
+      "Excessive use of chemical fertiliser has led to widespread soil degradation."
+    ]
+  },
+  "rather than": {
+    "spoken": [
+      "I'd rather stay home than go out in this rain."
+    ],
+    "written": [
+      "The policy prioritizes prevention rather than treatment of chronic diseases."
+    ]
+  },
+  "thanks to": {
+    "spoken": [
+      "Thanks to your help, I finished on time."
+    ],
+    "written": [
+      "Thanks to advances in medical technology, life expectancy has increased dramatically."
+    ]
+  },
+  "diversity": {
+    "spoken": [
+      "I love the cultural diversity in this city."
+    ],
+    "written": [
+      "Biodiversity loss threatens the ecological diversity that sustains life on Earth."
+    ]
+  },
+  "detect": {
+    "spoken": [
+      "Did you detect any sarcasm in her voice?"
+    ],
+    "written": [
+      "The new screening method can detect cancer at significantly earlier stages."
+    ]
+  },
+  "isolate": {
+    "spoken": [
+      "It's hard to isolate the cause of the problem."
+    ],
+    "written": [
+      "Scientists were able to isolate the gene responsible for the hereditary condition."
+    ]
+  },
+  "avoid": {
+    "spoken": [
+      "Try to avoid eating too much sugar."
+    ],
+    "written": [
+      "Companies must take proactive steps to avoid environmental contamination."
+    ]
+  },
+  "budget": {
+    "spoken": [
+      "We need to stick to our budget this month."
+    ],
+    "written": [
+      "The annual budget allocation for education has declined steadily over the past decade."
+    ]
+  },
+  "adapt to": {
+    "spoken": [
+      "Animals have to adapt to changing environments to survive."
+    ],
+    "written": [
+      "Businesses must adapt to rapidly evolving consumer preferences to remain competitive."
+    ]
+  },
+  "alternative": {
+    "spoken": [
+      "Is there an alternative route? This road is packed."
+    ],
+    "written": [
+      "Renewable energy sources offer a viable alternative to fossil fuels."
+    ]
+  },
+  "compensate": {
+    "spoken": [
+      "The company compensated us for the delay with a free upgrade."
+    ],
+    "written": [
+      "Workers should be fairly compensated for the risks associated with hazardous occupations."
+    ]
+  },
+  "component": {
+    "spoken": [
+      "Trust is a key component of any good relationship."
+    ],
+    "written": [
+      "Each component of the system must function independently to ensure overall reliability."
+    ]
+  },
+  "military": {
+    "spoken": [
+      "My grandfather served in the military for twenty years."
+    ],
+    "written": [
+      "Military spending accounts for a significant portion of the national budget."
+    ]
+  },
+  "inevitable": {
+    "spoken": [
+      "Change is inevitable — you just have to deal with it."
+    ],
+    "written": [
+      "Climate scientists warn that rising sea levels are now inevitable without drastic intervention."
+    ]
+  },
+  "sustain": {
+    "spoken": [
+      "How do they sustain themselves on so little income?"
+    ],
+    "written": [
+      "It remains unclear whether the current economic growth can be sustained in the long term."
+    ]
+  },
+  "shift": {
+    "spoken": [
+      "There's been a big shift in public opinion lately."
+    ],
+    "written": [
+      "The paradigm shift in scientific thinking transformed the field of quantum mechanics."
+    ]
+  },
+  "elaborate": {
+    "spoken": [
+      "Could you elaborate a bit more on that idea?"
+    ],
+    "written": [
+      "The author elaborates on the socioeconomic factors that contributed to the revolution."
+    ]
+  },
+  "substantial": {
+    "spoken": [
+      "There's been a substantial improvement in air quality."
+    ],
+    "written": [
+      "The study found substantial variations in test scores across different regions."
+    ]
+  },
+  "reveal": {
+    "spoken": [
+      "The investigation revealed some shocking truths."
+    ],
+    "written": [
+      "Recent excavations have revealed artifacts dating back to the Bronze Age."
+    ]
+  },
+  "perspective": {
+    "spoken": [
+      "Travel really gives you a different perspective on life."
+    ],
+    "written": [
+      "The historical perspective offered in the book challenges conventional narratives."
+    ]
+  },
+  "decline": {
+    "spoken": [
+      "Sales have been declining for the past three months."
+    ],
+    "written": [
+      "The decline in biodiversity has accelerated due to habitat destruction and climate change."
+    ]
+  },
+  "enhance": {
+    "spoken": [
+      "This app really enhances the photo quality."
+    ],
+    "written": [
+      "Technological innovations continue to enhance the efficiency of renewable energy systems."
+    ]
+  },
+  "monitor": {
+    "spoken": [
+      "The doctor wants to monitor your blood pressure closely."
+    ],
+    "written": [
+      "Satellites are used to monitor deforestation patterns across the Amazon basin."
+    ]
+  },
+  "access": {
+    "spoken": [
+      "Do you have access to a computer at home?"
+    ],
+    "written": [
+      "Equal access to quality education remains a challenge in many rural communities."
+    ]
+  },
+  "contribute": {
+    "spoken": [
+      "Everyone should contribute to the team effort."
+    ],
+    "written": [
+      "Greenhouse gas emissions from transport contribute significantly to global warming."
+    ]
+  },
+  "perceive": {
+    "spoken": [
+      "People perceive risk differently depending on their experiences."
+    ],
+    "written": [
+      "How a brand is perceived by consumers directly influences purchasing decisions."
+    ]
+  },
+  "eliminate": {
+    "spoken": [
+      "We need to eliminate all the errors before submitting."
+    ],
+    "written": [
+      "The WHO aims to eliminate malaria in at least 35 countries by 2030."
+    ]
+  },
+  "survive": {
+    "spoken": [
+      "I don't know how she survives on four hours of sleep."
+    ],
+    "written": [
+      "Only the most adaptable species survive drastic environmental changes."
+    ]
+  },
+  "predict": {
+    "spoken": [
+      "It's hard to predict what will happen next."
+    ],
+    "written": [
+      "Climate models predict a significant rise in average global temperatures by 2100."
+    ]
+  },
+  "interpret": {
+    "spoken": [
+      "How do you interpret that dream?"
+    ],
+    "written": [
+      "The data can be interpreted in multiple ways depending on the theoretical framework used."
+    ]
+  },
+  "emerge": {
+    "spoken": [
+      "New details about the scandal keep emerging."
+    ],
+    "written": [
+      "A new generation of leaders emerged during the political upheaval of the 1960s."
+    ]
+  },
+  "revenue": {
+    "spoken": [
+      "The company's revenue doubled in just one year."
+    ],
+    "written": [
+      "Government revenue from taxation has failed to keep pace with public expenditure."
+    ]
+  },
+  "restrict": {
+    "spoken": [
+      "They're restricting access to the building for security reasons."
+    ],
+    "written": [
+      "Legislation was introduced to restrict the sale of firearms to civilians."
+    ]
+  },
+  "collaborate": {
+    "spoken": [
+      "Let's collaborate on this project — it'll be more fun."
+    ],
+    "written": [
+      "Universities and industry must collaborate more effectively to drive innovation."
+    ]
+  },
+  "inhabit": {
+    "spoken": [
+      "These birds inhabit the forests of Southeast Asia."
+    ],
+    "written": [
+      "The region has been inhabited by indigenous communities for thousands of years."
+    ]
+  },
+  "comprise": {
+    "spoken": [
+      "The team comprises experts from various fields."
+    ],
+    "written": [
+      "The exhibition comprises over 200 works from private and public collections."
+    ]
+  },
+  "exceed": {
+    "spoken": [
+      "The cost exceeded our budget by quite a bit."
+    ],
+    "written": [
+      "Demand for clean energy is expected to exceed supply within the next decade."
+    ]
+  },
+  "prevalent": {
+    "spoken": [
+      "Obesity is becoming more prevalent among young people."
+    ],
+    "written": [
+      "Malaria remains prevalent in sub-Saharan Africa despite decades of eradication efforts."
+    ]
+  },
+  "accumulate": {
+    "spoken": [
+      "Dust accumulates so quickly on these shelves."
+    ],
+    "written": [
+      "Over time, microplastics accumulate in marine organisms, entering the food chain."
+    ]
+  },
+  "transform": {
+    "spoken": [
+      "Technology has completely transformed the way we communicate."
+    ],
+    "written": [
+      "Urbanization has transformed rural landscapes into sprawling metropolitan areas."
+    ]
+  },
+  "allocate": {
+    "spoken": [
+      "How much time should we allocate for this task?"
+    ],
+    "written": [
+      "The government allocated additional funding to mental health services."
+    ]
+  },
+  "foster": {
+    "spoken": [
+      "We need to foster a culture of innovation in this company."
+    ],
+    "written": [
+      "Early childhood programs foster cognitive development and social skills."
+    ]
+  },
+  "substitute": {
+    "spoken": [
+      "You can substitute olive oil for butter if you prefer."
+    ],
+    "written": [
+      "There is no adequate substitute for rigorous experimental validation."
+    ]
+  },
+  "promote": {
+    "spoken": [
+      "She got promoted to senior manager last week."
+    ],
+    "written": [
+      "Policies that promote equal opportunity in the workplace benefit society as a whole."
+    ]
+  },
+  "constrain": {
+    "spoken": [
+      "I feel really constrained by all these rules."
+    ],
+    "written": [
+      "Limited funding constrains the scope of research in many developing countries."
+    ]
+  },
+  "obtain": {
+    "spoken": [
+      "Where did you obtain this information?"
+    ],
+    "written": [
+      "The data was obtained through a series of controlled experiments conducted over two years."
+    ]
+  },
+  "subsequent": {
+    "spoken": [
+      "The first attempt failed, and subsequent ones weren't much better."
+    ],
+    "written": [
+      "Subsequent studies confirmed the initial findings, strengthening the hypothesis."
+    ]
+  },
+  "profound": {
+    "spoken": [
+      "Travel can have a profound impact on how you see the world."
+    ],
+    "written": [
+      "The study reveals profound differences in how cultures conceptualize time."
+    ]
+  },
+  "acknowledge": {
+    "spoken": [
+      "You need to acknowledge that you made a mistake."
+    ],
+    "written": [
+      "The report acknowledges the limitations of the current methodology."
+    ]
+  },
+  "induce": {
+    "spoken": [
+      "Stress can induce all kinds of health problems."
+    ],
+    "written": [
+      "Exposure to certain chemicals has been shown to induce genetic mutations in laboratory animals."
+    ]
+  },
+  "initial": {
+    "spoken": [
+      "My initial reaction was surprise, but then I understood."
+    ],
+    "written": [
+      "Initial results from the clinical trial have been highly encouraging."
+    ]
+  },
+  "pursue": {
+    "spoken": [
+      "She decided to pursue a career in medicine."
+    ],
+    "written": [
+      "The university encourages students to pursue interdisciplinary research opportunities."
+    ]
+  },
+  "cease": {
+    "spoken": [
+      "They were told to cease all operations immediately."
+    ],
+    "written": [
+      "Hostilities ceased only after the signing of the peace agreement."
+    ]
+  },
+  "modify": {
+    "spoken": [
+      "We need to modify the plan a little bit."
+    ],
+    "written": [
+      "Engineers modified the design to improve fuel efficiency and reduce emissions."
+    ]
+  },
+  "compel": {
+    "spoken": [
+      "Nothing compels you to stay if you want to leave."
+    ],
+    "written": [
+      "International law compels member states to protect the rights of refugees."
+    ]
+  },
+  "acquire": {
+    "spoken": [
+      "She acquired a taste for coffee after moving to Italy."
+    ],
+    "written": [
+      "The company acquired three smaller firms to expand its market share."
+    ]
+  },
+  "compatible": {
+    "spoken": [
+      "Those two just aren't compatible as roommates."
+    ],
+    "written": [
+      "The proposed amendments are not compatible with the existing legal framework."
+    ]
+  },
+  "displace": {
+    "spoken": [
+      "The flood displaced thousands of families."
+    ],
+    "written": [
+      "Rising sea levels threaten to displace millions of people in low-lying coastal regions."
+    ]
+  },
+  "overlap": {
+    "spoken": [
+      "Our schedules overlap quite a bit."
+    ],
+    "written": [
+      "The responsibilities of the two departments often overlap, creating confusion."
+    ]
+  },
+  "withdraw": {
+    "spoken": [
+      "He decided to withdraw from the competition."
+    ],
+    "written": [
+      "The company announced its decision to withdraw from the European market."
+    ]
+  },
+  "controversy": {
+    "spoken": [
+      "The ruling sparked a lot of controversy in the media."
+    ],
+    "written": [
+      "Scientific controversy surrounding the study's methodology delayed its publication."
+    ]
+  },
+  "supplement": {
+    "spoken": [
+      "I supplement my income with freelance work."
+    ],
+    "written": [
+      "The textbook is supplemented by an extensive online resource library."
+    ]
+  },
+  "appreciate": {
+    "spoken": [
+      "I really appreciate your help with this."
+    ],
+    "written": [
+      "Few people fully appreciate the complexity of the global supply chain."
+    ]
+  },
+  "recover": {
+    "spoken": [
+      "It took her months to recover from the illness."
+    ],
+    "written": [
+      "The economy is expected to recover slowly following the recession."
+    ]
+  },
+  "perpetual": {
+    "spoken": [
+      "He's in a perpetual state of worry about his exams."
+    ],
+    "written": [
+      "The perpetual cycle of poverty remains difficult to break in developing regions."
+    ]
+  },
+  "elapse": {
+    "spoken": [
+      "Three hours elapsed before they finally arrived."
+    ],
+    "written": [
+      "A significant amount of time elapsed between the initial observation and the published findings."
+    ]
+  },
+  "phenomenon": {
+    "spoken": [
+      "Social media addiction is a real phenomenon these days."
+    ],
+    "written": [
+      "The greenhouse effect is a naturally occurring phenomenon amplified by human activity."
+    ]
+  },
+  "reside": {
+    "spoken": [
+      "She currently resides in London."
+    ],
+    "written": [
+      "The authority to make such decisions resides with the board of directors."
+    ]
+  },
+  "compensate for": {
+    "spoken": [
+      "Nothing can compensate for the loss of a loved one."
+    ],
+    "written": [
+      "Plants compensate for reduced sunlight by increasing chlorophyll production."
+    ]
+  },
+  "incur": {
+    "spoken": [
+      "You'll incur extra charges if you exceed the limit."
+    ],
+    "written": [
+      "Companies that violate environmental regulations incur substantial financial penalties."
+    ]
+  },
+  "optimum": {
+    "spoken": [
+      "What's the optimum temperature for growing tomatoes?"
+    ],
+    "written": [
+      "Researchers identified the optimum conditions for maximizing crop yield."
+    ]
+  },
+  "analogous": {
+    "spoken": [
+      "The human brain is often compared to a computer, which is somewhat analogous."
+    ],
+    "written": [
+      "The structure of the atom is analogous to the solar system, with electrons orbiting the nucleus."
+    ]
+  },
+  "integral": {
+    "spoken": [
+      "Music is an integral part of our culture."
+    ],
+    "written": [
+      "Technology has become an integral part of modern healthcare delivery."
+    ]
+  },
+  "mediate": {
+    "spoken": [
+      "A third party was brought in to mediate the dispute."
+    ],
+    "written": [
+      "International organizations play a crucial role in mediating conflicts between nations."
+    ]
+  },
+  "commence": {
+    "spoken": [
+      "The meeting will commence at nine sharp."
+    ],
+    "written": [
+      "Construction of the new bridge will commence in the spring of next year."
+    ]
+  },
+  "hazard": {
+    "spoken": [
+      "Smoking is a serious health hazard."
+    ],
+    "written": [
+      "Occupational hazards in the mining industry remain a significant cause of worker mortality."
+    ]
+  },
+  "detach": {
+    "spoken": [
+      "You need to detach the cable before pulling it out."
+    ],
+    "written": [
+      "The ability to detach emotionally from stressful situations is a valuable coping mechanism."
+    ]
+  },
+  "conceive": {
+    "spoken": [
+      "I can't conceive of a reason why she would do that."
+    ],
+    "written": [
+      "The project was conceived as a way to bridge the gap between theory and practice."
+    ]
+  },
+  "diminish": {
+    "spoken": [
+      "Nothing can diminish the importance of what you've achieved."
+    ],
+    "written": [
+      "The influence of traditional media has diminished significantly in the digital age."
+    ]
+  },
+  "approximate": {
+    "spoken": [
+      "Can you give me an approximate cost?"
+    ],
+    "written": [
+      "The approximate date of the settlement has been determined through carbon dating."
+    ]
+  },
+  "detach from": {
+    "spoken": [
+      "It's hard to detach from work when you work from home."
+    ],
+    "written": [
+      "The reform movement sought to detach education from religious influence."
+    ]
+  },
+  "incidence": {
+    "spoken": [
+      "The incidence of heart disease has gone up dramatically."
+    ],
+    "written": [
+      "The incidence of childhood obesity has risen sharply in developed countries over the past two decades."
+    ]
+  },
+  "notwithstanding": {
+    "spoken": [
+      "The weather was bad, but we went out notwithstanding."
+    ],
+    "written": [
+      "Notwithstanding the limitations of the study, the findings provide valuable insights."
+    ]
+  },
+  "invoke": {
+    "spoken": [
+      "The president invoked wartime powers during the crisis."
+    ],
+    "written": [
+      "Scientists invoked evolutionary theory to explain the observed patterns of adaptation."
+    ]
+  },
+  "adjacent": {
+    "spoken": [
+      "The hotel is adjacent to the train station."
+    ],
+    "written": [
+      "The building adjacent to the research facility was converted into a laboratory."
+    ]
+  },
+  "inclined": {
+    "spoken": [
+      "I'm inclined to agree with you on that."
+    ],
+    "written": [
+      "Participants were more inclined to cooperate when incentives were clearly communicated."
+    ]
+  },
+  "cessation": {
+    "spoken": [
+      "The cessation of hostilities brought relief to the region."
+    ],
+    "written": [
+      "Smoking cessation programs have proven effective in reducing lung cancer rates."
+    ]
+  },
+  "intact": {
+    "spoken": [
+      "Despite the earthquake, the building remained intact."
+    ],
+    "written": [
+      "The archaeological site was remarkably intact, offering a rare glimpse into ancient life."
+    ]
+  },
+  "dense": {
+    "spoken": [
+      "The forest was so dense we could barely see the sky."
+    ],
+    "written": [
+      "Dense urban populations require efficient public transportation systems."
+    ]
+  },
+  "overwhelm": {
+    "spoken": [
+      "The amount of homework just overwhelms me sometimes."
+    ],
+    "written": [
+      "Healthcare systems were overwhelmed during the peak of the pandemic."
+    ]
+  },
+  "provoke": {
+    "spoken": [
+      "His comments provoked a lot of angry reactions."
+    ],
+    "written": [
+      "Economic inequality can provoke social unrest and political instability."
+    ]
+  },
+  "friction": {
+    "spoken": [
+      "There's a lot of friction between the two departments."
+    ],
+    "written": [
+      "Trade friction between the two nations has escalated in recent months."
+    ]
+  },
+  "impede": {
+    "spoken": [
+      "Bureaucracy tends to impede progress."
+    ],
+    "written": [
+      "Lack of infrastructure continues to impede economic development in rural areas."
+    ]
+  },
+  "aggregate": {
+    "spoken": [
+      "When you look at the aggregate numbers, the trend is clear."
+    ],
+    "written": [
+      "Aggregate data from multiple studies supports the hypothesis."
+    ]
+  },
+  "conspicuous": {
+    "spoken": [
+      "His absence was conspicuous at the meeting."
+    ],
+    "written": [
+      "The conspicuous lack of evidence undermined the prosecution's argument."
+    ]
+  },
+  "disrupt": {
+    "spoken": [
+      "The construction noise really disrupts my concentration."
+    ],
+    "written": [
+      "Technological disruption has fundamentally altered traditional business models."
+    ]
+  },
+  "feasible": {
+    "spoken": [
+      "Is it feasible to finish the project by next week?"
+    ],
+    "written": [
+      "The study concludes that solar-powered desalination is technically feasible in arid regions."
+    ]
+  },
+  "negligible": {
+    "spoken": [
+      "The difference in price is negligible."
+    ],
+    "written": [
+      "The environmental impact of the project was deemed negligible by the review panel."
+    ]
+  },
+  "simultaneous": {
+    "spoken": [
+      "Both events happened almost simultaneous."
+    ],
+    "written": [
+      "The experiment required the simultaneous measurement of multiple variables."
+    ]
+  },
+  "complementary": {
+    "spoken": [
+      "Our skills are complementary — you're good at design, I'm good at coding."
+    ],
+    "written": [
+      "The two theories are complementary rather than contradictory in explaining the phenomenon."
+    ]
+  },
+  "disseminate": {
+    "spoken": [
+      "Social media helps disseminate information quickly."
+    ],
+    "written": [
+      "The organization works to disseminate research findings to policymakers worldwide."
+    ]
+  },
+  "explicit": {
+    "spoken": [
+      "The instructions need to be more explicit."
+    ],
+    "written": [
+      "The guidelines provide explicit criteria for evaluating research proposals."
+    ]
+  },
+  "undergo": {
+    "spoken": [
+      "The building is undergoing major renovations."
+    ],
+    "written": [
+      "Patients undergoing chemotherapy often experience significant side effects."
+    ]
+  },
+  "retention": {
+    "spoken": [
+      "Employee retention is a big issue for tech companies."
+    ],
+    "written": [
+      "Water retention in soil is critical for agricultural productivity in dry regions."
+    ]
+  },
+  "comply with": {
+    "spoken": [
+      "You have to comply with the safety regulations."
+    ],
+    "written": [
+      "All manufacturers must comply with the new environmental standards by 2025."
+    ]
+  },
+  "subordinate": {
+    "spoken": [
+      "Personal interests should be subordinate to the team's goals."
+    ],
+    "written": [
+      "Subordinate clauses provide additional information that supports the main clause."
+    ]
+  },
+  "prosperity": {
+    "spoken": [
+      "The country enjoyed a period of great prosperity."
+    ],
+    "written": [
+      "Economic prosperity depends on a stable political environment and sound institutions."
+    ]
+  },
+  "constraint": {
+    "spoken": [
+      "Budget constraints forced us to cut some features."
+    ],
+    "written": [
+      "Resource constraints limit the scope of clinical trials in developing countries."
+    ]
+  },
+  "nurture": {
+    "spoken": [
+      "It's important to nurture children's creativity."
+    ],
+    "written": [
+      "Schools should nurture critical thinking skills alongside academic knowledge."
+    ]
+  },
+  "resilient": {
+    "spoken": [
+      "Kids are more resilient than we think."
+    ],
+    "written": [
+      "Communities that invest in social infrastructure tend to be more resilient in the face of disasters."
+    ]
+  },
+  "radical": {
+    "spoken": [
+      "We need some radical changes to fix this system."
+    ],
+    "written": [
+      "Radical reforms in education policy are needed to address systemic inequalities."
+    ]
+  },
+  "rigorous": {
+    "spoken": [
+      "The selection process is very rigorous."
+    ],
+    "written": [
+      "The study followed a rigorous methodology to ensure the validity of its findings."
+    ]
+  },
+  "ambiguous": {
+    "spoken": [
+      "The wording of the contract is pretty ambiguous."
+    ],
+    "written": [
+      "Ambiguous regulations create uncertainty for businesses seeking to comply with the law."
+    ]
+  },
+  "coherent": {
+    "spoken": [
+      "Your argument needs to be more coherent."
+    ],
+    "written": [
+      "The report presents a coherent framework for addressing urban transportation challenges."
+    ]
+  },
+  "controversial": {
+    "spoken": [
+      "That's a really controversial topic — people get heated about it."
+    ],
+    "written": [
+      "The controversial decision to close the factory sparked widespread protests."
+    ]
+  },
+  "paradigm": {
+    "spoken": [
+      "AI is creating a new paradigm in how we work."
+    ],
+    "written": [
+      "The discovery represented a paradigm shift in our understanding of genetics."
+    ]
+  },
+  "discourse": {
+    "spoken": [
+      "Public discourse on climate change has intensified."
+    ],
+    "written": [
+      "Academic discourse on the topic has evolved considerably over the past decade."
+    ]
+  },
+  "inherent": {
+    "spoken": [
+      "There are inherent risks in any investment."
+    ],
+    "written": [
+      "The inherent limitations of the experimental design may have influenced the results."
+    ]
+  },
+  "scrutiny": {
+    "spoken": [
+      "The plan came under intense scrutiny from the public."
+    ],
+    "written": [
+      "Government spending is subject to increasing scrutiny from independent oversight bodies."
+    ]
+  },
+  "deteriorate": {
+    "spoken": [
+      "His health deteriorated rapidly after the diagnosis."
+    ],
+    "written": [
+      "Air quality in major cities continues to deteriorate despite regulatory efforts."
+    ]
+  },
+  "pragmatic": {
+    "spoken": [
+      "We need a more pragmatic approach to this problem."
+    ],
+    "written": [
+      "The government adopted a pragmatic stance on trade negotiations."
+    ]
+  },
+  "formidable": {
+    "spoken": [
+      "She's a formidable opponent in any debate."
+    ],
+    "written": [
+      "Climate change presents formidable challenges to global food security."
+    ]
+  },
+  "resurgence": {
+    "spoken": [
+      "There's been a resurgence of interest in vinyl records."
+    ],
+    "written": [
+      "The resurgence of nationalism in Europe has raised concerns among political analysts."
+    ]
+  },
+  "intricate": {
+    "spoken": [
+      "The plot of the movie is really intricate."
+    ],
+    "written": [
+      "The intricate web of international trade agreements shapes global economic policy."
+    ]
+  },
+  "authentic": {
+    "spoken": [
+      "This restaurant serves really authentic Thai food."
+    ],
+    "written": [
+      "The museum houses an authentic collection of Renaissance artwork."
+    ]
+  },
+  "vulnerable": {
+    "spoken": [
+      "Elderly people are particularly vulnerable to this virus."
+    ],
+    "written": [
+      "Coastal communities are increasingly vulnerable to the effects of rising sea levels."
+    ]
+  },
+  "stimulate": {
+    "spoken": [
+      "Coffee helps stimulate my brain in the morning."
+    ],
+    "written": [
+      "Government subsidies are designed to stimulate investment in renewable energy."
+    ]
+  },
+  "unprecedented": {
+    "spoken": [
+      "The level of demand was unprecedented."
+    ],
+    "written": [
+      "The pandemic caused an unprecedented disruption to the global economy."
+    ]
+  },
+  "comprehensive": {
+    "spoken": [
+      "We need a more comprehensive review of the situation."
+    ],
+    "written": [
+      "The report provides a comprehensive analysis of the factors contributing to urban sprawl."
+    ]
+  },
+  "implication": {
+    "spoken": [
+      "What are the implications of this decision?"
+    ],
+    "written": [
+      "The implications of artificial intelligence for employment are far-reaching and complex."
+    ]
+  },
+  "obstacle": {
+    "spoken": [
+      "Lack of funding is the biggest obstacle we face."
+    ],
+    "written": [
+      "Bureaucratic obstacles continue to hinder the implementation of reform policies."
+    ]
+  },
+  "thorough": {
+    "spoken": [
+      "The police conducted a thorough investigation."
+    ],
+    "written": [
+      "A thorough understanding of the literature is essential before undertaking new research."
+    ]
+  },
+  "prospect": {
+    "spoken": [
+      "The prospect of starting a new job is exciting."
+    ],
+    "written": [
+      "The prospect of achieving net-zero emissions by 2050 remains uncertain."
+    ]
+  },
+  "encompass": {
+    "spoken": [
+      "The course encompasses a wide range of topics."
+    ],
+    "written": [
+      "The study encompasses data from over 50 countries spanning three decades."
+    ]
+  },
+  "skeptical": {
+    "spoken": [
+      "I'm skeptical about whether this will actually work."
+    ],
+    "written": [
+      "Scientists remain skeptical of claims that lack empirical support."
+    ]
+  },
+  "empirical": {
+    "spoken": [
+      "Do we have any empirical evidence to back this up?"
+    ],
+    "written": [
+      "The hypothesis was tested using empirical data collected from field observations."
+    ]
+  },
+  "predominant": {
+    "spoken": [
+      "English is the predominant language in international business."
+    ],
+    "written": [
+      "Agriculture remains the predominant source of employment in rural areas."
+    ]
+  },
+  "scrutinize": {
+    "spoken": [
+      "The committee will scrutinize every detail of the proposal."
+    ],
+    "written": [
+      "Auditors scrutinize financial statements to detect irregularities and fraud."
+    ]
+  },
+  "disparity": {
+    "spoken": [
+      "There's a huge disparity in income between the rich and the poor."
+    ],
+    "written": [
+      "The report highlights the growing disparity in educational outcomes across socioeconomic groups."
+    ]
+  },
+  "consensus": {
+    "spoken": [
+      "We need to reach a consensus before moving forward."
+    ],
+    "written": [
+      "There is a growing scientific consensus that human activity is the primary driver of climate change."
+    ]
+  },
+  "sustainable": {
+    "spoken": [
+      "We need to find more sustainable ways of living."
+    ],
+    "written": [
+      "Sustainable development requires balancing economic growth with environmental protection."
+    ]
+  },
+  "exert": {
+    "spoken": [
+      "Parents exert a lot of influence on their children."
+    ],
+    "written": [
+      "Corporations exert considerable influence over public policy through lobbying."
+    ]
+  },
+  "residual": {
+    "spoken": [
+      "There's still some residual heat from the oven."
+    ],
+    "written": [
+      "Residual effects of the medication were observed weeks after treatment ended."
+    ]
+  },
+  "mandate": {
+    "spoken": [
+      "The government issued a mandate requiring masks in public."
+    ],
+    "written": [
+      "The new legislation mandates equal pay for equal work across all sectors."
+    ]
+  },
+  "coincide": {
+    "spoken": [
+      "Our vacations happen to coincide this year."
+    ],
+    "written": [
+      "The rise in urbanization coincided with significant improvements in public health infrastructure."
+    ]
+  },
+  "plausible": {
+    "spoken": [
+      "That sounds like a plausible explanation."
+    ],
+    "written": [
+      "The researchers proposed a plausible mechanism to explain the observed phenomenon."
+    ]
+  },
+  "derive": {
+    "spoken": [
+      "I derive a lot of satisfaction from helping others."
+    ],
+    "written": [
+      "Many English words are derived from Latin and Greek roots."
+    ]
+  },
+  "consecutive": {
+    "spoken": [
+      "She won three consecutive championships."
+    ],
+    "written": [
+      "The country experienced five consecutive quarters of economic growth."
+    ]
+  },
+  "overarching": {
+    "spoken": [
+      "What's the overarching goal of this project?"
+    ],
+    "written": [
+      "The report outlines an overarching strategy for sustainable urban development."
+    ]
+  },
+  "pervasive": {
+    "spoken": [
+      "Social media is pretty pervasive in our daily lives."
+    ],
+    "written": [
+      "The pervasive influence of technology on child development is a growing area of research."
+    ]
+  },
+  "prevailing": {
+    "spoken": [
+      "The prevailing opinion seems to be against the proposal."
+    ],
+    "written": [
+      "Prevailing economic theories failed to predict the severity of the financial crisis."
+    ]
+  },
+  "magnitude": {
+    "spoken": [
+      "I didn't realize the magnitude of the problem."
+    ],
+    "written": [
+      "The earthquake registered a magnitude of 7.8 on the Richter scale."
+    ]
+  },
+  "criteria": {
+    "spoken": [
+      "What are the criteria for getting selected?"
+    ],
+    "written": [
+      "The selection criteria were clearly outlined in the application guidelines."
+    ]
+  },
+  "curriculum": {
+    "spoken": [
+      "The school updated its curriculum this year."
+    ],
+    "written": [
+      "The curriculum should be designed to develop both academic and practical skills."
+    ]
+  },
+  "deficiency": {
+    "spoken": [
+      "A vitamin deficiency can cause all sorts of health problems."
+    ],
+    "written": [
+      "Iron deficiency is one of the most common nutritional disorders worldwide."
+    ]
+  },
+  "distinguish": {
+    "spoken": [
+      "It's hard to distinguish the real from the fake."
+    ],
+    "written": [
+      "Researchers must distinguish between correlation and causation in their analysis."
+    ]
+  },
+  "analyze": {
+    "spoken": [
+      "Let me analyze the data before we make a decision."
+    ],
+    "written": [
+      "The study analyzed the relationship between sleep patterns and academic performance."
+    ]
+  },
+  "emphasize": {
+    "spoken": [
+      "I can't emphasize enough how important this is."
+    ],
+    "written": [
+      "The report emphasizes the need for immediate action on climate change."
+    ]
+  },
+  "enormous": {
+    "spoken": [
+      "The project requires an enormous amount of time and effort."
+    ],
+    "written": [
+      "Enormous strides have been made in reducing child mortality over the past century."
+    ]
+  },
+  "imitate": {
+    "spoken": [
+      "Kids tend to imitate what they see on TV."
+    ],
+    "written": [
+      "Some animals imitate the appearance of more dangerous species to deter predators."
+    ]
+  },
+  "impair": {
+    "spoken": [
+      "Lack of sleep can impair your ability to concentrate."
+    ],
+    "written": [
+      "Chronic alcohol consumption impairs cognitive function and memory retention."
+    ]
+  },
+  "hinder": {
+    "spoken": [
+      "Bad weather hindered our progress on the project."
+    ],
+    "written": [
+      "Bureaucratic red tape continues to hinder economic development in the region."
+    ]
+  },
+  "legitimate": {
+    "spoken": [
+      "That's a legitimate concern — we should look into it."
+    ],
+    "written": [
+      "The court ruled that the company had a legitimate claim to the intellectual property."
+    ]
+  },
+  "limitation": {
+    "spoken": [
+      "Every method has its limitations."
+    ],
+    "written": [
+      "The study acknowledges several limitations that may affect the generalizability of its findings."
+    ]
+  },
+  "convention": {
+    "spoken": [
+      "By convention, the eldest speaks first in these meetings."
+    ],
+    "written": [
+      "International conventions on human rights have been ratified by the majority of nations."
+    ]
+  },
+  "demanding": {
+    "spoken": [
+      "This job is really demanding — I barely have time for myself."
+    ],
+    "written": [
+      "The demanding nature of the curriculum requires students to develop strong time-management skills."
+    ]
+  },
+  "determine": {
+    "spoken": [
+      "We need to determine the cause of the problem."
+    ],
+    "written": [
+      "Genetic factors largely determine an individual's susceptibility to certain diseases."
+    ]
+  },
+  "accelerate": {
+    "spoken": [
+      "The pandemic accelerated the shift to remote work."
+    ],
+    "written": [
+      "Government subsidies are designed to accelerate the adoption of renewable energy technologies."
+    ]
+  },
+  "ancient": {
+    "spoken": [
+      "These ruins are from an ancient civilization."
+    ],
+    "written": [
+      "Ancient Greek philosophy laid the foundations for Western intellectual tradition."
+    ]
+  },
+  "beneficial": {
+    "spoken": [
+      "Exercise is really beneficial for your mental health."
+    ],
+    "written": [
+      "Regular physical activity has been shown to be beneficial in preventing chronic diseases."
+    ]
+  },
+  "chronic": {
+    "spoken": [
+      "She suffers from chronic back pain."
+    ],
+    "written": [
+      "Chronic stress has been linked to a range of cardiovascular and metabolic disorders."
+    ]
+  },
+  "conscious": {
+    "spoken": [
+      "She made a conscious effort to eat healthier."
+    ],
+    "written": [
+      "Consumers are becoming increasingly conscious of the environmental impact of their purchases."
+    ]
+  },
+  "minimize": {
+    "spoken": [
+      "We need to minimize the risks as much as possible."
+    ],
+    "written": [
+      "The design aims to minimize energy consumption while maximizing output."
+    ]
+  },
+  "immunity": {
+    "spoken": [
+      "The vaccine helps build immunity against the virus."
+    ],
+    "written": [
+      "Diplomatic immunity protects foreign officials from prosecution in the host country."
+    ]
+  },
+  "imperative": {
+    "spoken": [
+      "It's imperative that we finish this before the deadline."
+    ],
+    "written": [
+      "Addressing income inequality is a moral and economic imperative for modern societies."
+    ]
+  },
+  "exaggerate": {
+    "spoken": [
+      "I think you're exaggerating a bit — it wasn't that bad."
+    ],
+    "written": [
+      "Media coverage tends to exaggerate the risks associated with air travel."
+    ]
+  },
+  "transmit": {
+    "spoken": [
+      "Mosquitoes can transmit diseases like malaria."
+    ],
+    "written": [
+      "The data is transmitted wirelessly to a central monitoring station."
+    ]
+  },
+  "extinct": {
+    "spoken": [
+      "Dinosaurs have been extinct for millions of years."
+    ],
+    "written": [
+      "Hundreds of species face extinction due to habitat loss and climate change."
+    ]
+  },
+  "exclusive": {
+    "spoken": [
+      "This offer is exclusive to members only."
+    ],
+    "written": [
+      "The club maintains an exclusive membership policy that limits access to the facilities."
+    ]
+  },
+  "guarantee": {
+    "spoken": [
+      "There's no guarantee that it will work, but it's worth a try."
+    ],
+    "written": [
+      "The new legislation guarantees equal access to healthcare for all citizens."
+    ]
+  },
+  "inherit": {
+    "spoken": [
+      "She inherited her mother's eyes and her father's smile."
+    ],
+    "written": [
+      "Children of wealthy families often inherit significant financial advantages."
+    ]
+  },
+  "witness": {
+    "spoken": [
+      "Did you witness the accident?"
+    ],
+    "written": [
+      "The twentieth century witnessed unprecedented technological advancement."
+    ]
+  },
+  "magnetic": {
+    "spoken": [
+      "The fridge has a magnetic strip for holding knives."
+    ],
+    "written": [
+      "The Earth's magnetic field protects the planet from harmful solar radiation."
+    ]
+  },
+  "loss": {
+    "spoken": [
+      "The loss of her pet really affected her deeply."
+    ],
+    "written": [
+      "Biodiversity loss poses a serious threat to ecosystem stability and food security."
+    ]
+  },
+  "option": {
+    "spoken": [
+      "We don't have many options at this point."
+    ],
+    "written": [
+      "Renewable energy sources provide a viable option for reducing carbon emissions."
+    ]
+  },
+  "prefer to": {
+    "spoken": [
+      "I prefer to walk rather than take the bus."
+    ],
+    "written": [
+      "Consumers increasingly prefer to shop online rather than visit physical stores."
+    ]
+  },
+  "priority": {
+    "spoken": [
+      "Safety should always be the top priority."
+    ],
+    "written": [
+      "The government has made education reform a national priority."
+    ]
+  },
+  "primary": {
+    "spoken": [
+      "What's the primary reason for the delay?"
+    ],
+    "written": [
+      "The primary objective of the study was to assess the effectiveness of the intervention."
+    ]
+  },
+  "principle": {
+    "spoken": [
+      "It's a matter of principle — I can't compromise on this."
+    ],
+    "written": [
+      "The principle of natural selection underpins modern evolutionary biology."
+    ]
+  },
+  "potential": {
+    "spoken": [
+      "This technology has huge potential."
+    ],
+    "written": [
+      "The potential applications of artificial intelligence in medicine are vast and still emerging."
+    ]
+  },
+  "quantity": {
+    "spoken": [
+      "We need a large quantity of materials for the project."
+    ],
+    "written": [
+      "The quantity of plastic waste entering the ocean each year is staggering."
+    ]
+  },
+  "settle": {
+    "spoken": [
+      "Let's settle this over a cup of coffee."
+    ],
+    "written": [
+      "The two countries settled their territorial dispute through diplomatic negotiations."
+    ]
+  },
+  "specific": {
+    "spoken": [
+      "Can you be more specific about what you need?"
+    ],
+    "written": [
+      "The study identifies specific risk factors associated with childhood obesity."
+    ]
+  },
+  "swift": {
+    "spoken": [
+      "We need a swift response to this crisis."
+    ],
+    "written": [
+      "Swift action by the central bank prevented a complete financial collapse."
+    ]
+  },
+  "unexpectedly": {
+    "spoken": [
+      "She showed up unexpectedly at the party."
+    ],
+    "written": [
+      "The results unexpectedly contradicted the initial hypothesis."
+    ]
+  },
+  "surrounding": {
+    "spoken": [
+      "The surrounding area is really beautiful."
+    ],
+    "written": [
+      "Urban sprawl has significantly altered the surrounding landscape."
+    ]
+  },
+  "attempt": {
+    "spoken": [
+      "I made an attempt to fix it myself, but it didn't work."
+    ],
+    "written": [
+      "The first attempt to climb Mount Everest ended in tragedy."
+    ]
+  },
+  "expertise": {
+    "spoken": [
+      "We need someone with expertise in this area."
+    ],
+    "written": [
+      "The project requires expertise in both data science and domain-specific knowledge."
+    ]
+  },
+  "faculty": {
+    "spoken": [
+      "The faculty at this university is world-class."
+    ],
+    "written": [
+      "The faculty of medicine has introduced a new program in public health."
+    ]
+  },
+  "donate": {
+    "spoken": [
+      "She decided to donate her old clothes to charity."
+    ],
+    "written": [
+      "Corporate donors contribute millions of dollars annually to educational institutions."
+    ]
+  },
+  "dynamics": {
+    "spoken": [
+      "The group dynamics changed after the new manager arrived."
+    ],
+    "written": [
+      "Understanding the dynamics of population growth is essential for urban planning."
+    ]
+  },
+  "incentive": {
+    "spoken": [
+      "What's the incentive for doing this?"
+    ],
+    "written": [
+      "Financial incentives have proven effective in encouraging the adoption of solar energy."
+    ]
+  },
+  "mortality": {
+    "spoken": [
+      "Infant mortality has dropped significantly in recent decades."
+    ],
+    "written": [
+      "Air pollution is a major contributor to cardiovascular mortality worldwide."
+    ]
+  },
+  "peripheral": {
+    "spoken": [
+      "That's a peripheral issue — let's focus on the main problem."
+    ],
+    "written": [
+      "Peripheral vision plays a crucial role in detecting movement in the visual field."
+    ]
+  },
+  "vicinity": {
+    "spoken": [
+      "There are several good restaurants in the vicinity."
+    ],
+    "written": [
+      "Industrial activity in the vicinity of residential areas poses health risks."
+    ]
+  },
+  "threaten": {
+    "spoken": [
+      "Climate change threatens our way of life."
+    ],
+    "written": [
+      "Rising sea levels threaten coastal communities and low-lying island nations."
+    ]
+  },
+  "practice": {
+    "spoken": [
+      "Practice makes perfect, as they say."
+    ],
+    "written": [
+      "Best practices in education are continually evolving based on new research."
+    ]
+  },
+  "bacteria": {
+    "spoken": [
+      "Washing your hands helps get rid of bacteria."
+    ],
+    "written": [
+      "Antibiotic-resistant bacteria pose a growing threat to global public health."
+    ]
+  },
+  "innate": {
+    "spoken": [
+      "She has an innate talent for music."
+    ],
+    "written": [
+      "The human brain has an innate capacity for language acquisition."
+    ]
+  },
+  "pattern": {
+    "spoken": [
+      "I've noticed a pattern in his behavior."
+    ],
+    "written": [
+      "Climate scientists have identified recurring weather patterns linked to El Nino events."
+    ]
+  },
+  "therapy": {
+    "spoken": [
+      "She's been going to therapy to deal with anxiety."
+    ],
+    "written": [
+      "Cognitive behavioral therapy has been shown to be effective in treating depression."
+    ]
+  },
+  "original": {
+    "spoken": [
+      "Is this painting an original or a copy?"
+    ],
+    "written": [
+      "The original manuscript was discovered in a private collection in Paris."
+    ]
+  },
+  "confidential": {
+    "spoken": [
+      "This information is strictly confidential."
+    ],
+    "written": [
+      "Patient records must be kept confidential in accordance with data protection laws."
+    ]
+  },
+  "cognitive": {
+    "spoken": [
+      "Puzzles are great for improving cognitive function."
+    ],
+    "written": [
+      "Cognitive development in children is heavily influenced by their early environment."
+    ]
+  },
+  "consult": {
+    "spoken": [
+      "You should consult a doctor about that."
+    ],
+    "written": [
+      "Students are encouraged to consult academic advisors before selecting their courses."
+    ]
+  },
+  "superior": {
+    "spoken": [
+      "This brand is clearly superior to the others."
+    ],
+    "written": [
+      "The study found no evidence that one teaching method was superior to another."
+    ]
+  },
+  "differ": {
+    "spoken": [
+      "Opinions differ on this topic."
+    ],
+    "written": [
+      "Cultural attitudes toward education differ significantly across societies."
+    ]
+  },
+  "cue": {
+    "spoken": [
+      "Take your cue from the conductor when to start playing."
+    ],
+    "written": [
+      "Visual cues in the environment help animals navigate and find food."
+    ]
+  },
+  "signal": {
+    "spoken": [
+      "The alarm was a signal that something was wrong."
+    ],
+    "written": [
+      "A strong economic signal indicates growing investor confidence in the market."
+    ]
+  },
+  "halt": {
+    "spoken": [
+      "Production was halted due to a safety concern."
+    ],
+    "written": [
+      "The government ordered an immediate halt to deforestation in the protected area."
+    ]
+  },
+  "fragile": {
+    "spoken": [
+      "Be careful — that box contains fragile items."
+    ],
+    "written": [
+      "The fragile ecosystem of the coral reef is highly sensitive to temperature changes."
+    ]
+  },
+  "retain": {
+    "spoken": [
+      "It's hard to retain information when you're tired."
+    ],
+    "written": [
+      "Companies must offer competitive salaries to retain top talent."
+    ]
+  },
+  "vanish": {
+    "spoken": [
+      "The magician made the coin vanish right before our eyes."
+    ],
+    "written": [
+      "Many traditional crafts have vanished as industrialization spreads."
+    ]
+  },
+  "delivery": {
+    "spoken": [
+      "The delivery should arrive by tomorrow morning."
+    ],
+    "written": [
+      "Improvements in healthcare delivery have reduced mortality rates in rural areas."
+    ]
+  },
+  "erode": {
+    "spoken": [
+      "Trust takes years to build but seconds to erode."
+    ],
+    "written": [
+      "Wind and rain gradually erode rock formations over thousands of years."
+    ]
+  },
+  "stable": {
+    "spoken": [
+      "The patient is now in stable condition."
+    ],
+    "written": [
+      "A stable political environment is essential for attracting foreign investment."
+    ]
+  },
+  "integrate": {
+    "spoken": [
+      "It took time to integrate into the new team."
+    ],
+    "written": [
+      "Schools must integrate technology into the curriculum to prepare students for the digital age."
+    ]
+  },
+  "equal": {
+    "spoken": [
+      "Everyone deserves to be treated as an equal."
+    ],
+    "written": [
+      "The principle of equal opportunity underpins democratic societies."
+    ]
+  },
+  "grant": {
+    "spoken": [
+      "The university received a large research grant."
+    ],
+    "written": [
+      "Government grants are available for small businesses adopting green technologies."
+    ]
+  },
+  "addictive": {
+    "spoken": [
+      "These phone games are so addictive."
+    ],
+    "written": [
+      "The addictive nature of social media has raised concerns among psychologists."
+    ]
+  },
+  "adversity": {
+    "spoken": [
+      "She showed incredible strength in the face of adversity."
+    ],
+    "written": [
+      "Adversity in early childhood can have lasting effects on mental health."
+    ]
+  },
+  "aggression": {
+    "spoken": [
+      "There's no place for aggression in the workplace."
+    ],
+    "written": [
+      "Studies link exposure to violent media with increased aggression in adolescents."
+    ]
+  },
+  "agreeable": {
+    "spoken": [
+      "He seemed quite agreeable to the proposal."
+    ],
+    "written": [
+      "Both parties reached an agreeable compromise on the terms of the contract."
+    ]
+  },
+  "altitude": {
+    "spoken": [
+      "At high altitude, the air gets much thinner."
+    ],
+    "written": [
+      "Crop yields decrease significantly at higher altitudes due to lower oxygen levels."
+    ]
+  },
+  "application": {
+    "spoken": [
+      "Have you submitted your application yet?"
+    ],
+    "written": [
+      "The practical application of this theory has revolutionized modern engineering."
+    ]
+  },
+  "approve": {
+    "spoken": [
+      "The board approved the new budget unanimously."
+    ],
+    "written": [
+      "Parliament approved the bill after months of intense debate."
+    ]
+  },
+  "array": {
+    "spoken": [
+      "There's a whole array of options to choose from."
+    ],
+    "written": [
+      "The experiment utilized an array of sensors to collect environmental data."
+    ]
+  },
+  "assign": {
+    "spoken": [
+      "The teacher assigned us a lot of homework."
+    ],
+    "written": [
+      "Participants were randomly assigned to either the control or experimental group."
+    ]
+  },
+  "association": {
+    "spoken": [
+      "She has a strong association with the charity."
+    ],
+    "written": [
+      "The association between smoking and lung cancer is well documented."
+    ]
+  },
+  "attitude": {
+    "spoken": [
+      "His attitude towards work has really improved."
+    ],
+    "written": [
+      "Public attitudes toward renewable energy have shifted dramatically in recent years."
+    ]
+  },
+  "authority": {
+    "spoken": [
+      "Who's the authority on this subject?"
+    ],
+    "written": [
+      "The central bank has the authority to set interest rates."
+    ]
+  },
+  "bear": {
+    "spoken": [
+      "I can't bear the noise anymore."
+    ],
+    "written": [
+      "The costs of the project will be borne entirely by the private sector."
+    ]
+  },
+  "boundary": {
+    "spoken": [
+      "The river forms the boundary between the two countries."
+    ],
+    "written": [
+      "Advances in technology continue to push the boundaries of what is possible."
+    ]
+  },
+  "burden": {
+    "spoken": [
+      "The tax burden on small businesses is too heavy."
+    ],
+    "written": [
+      "The burden of proof lies with the prosecution in criminal cases."
+    ]
+  },
+  "capacity": {
+    "spoken": [
+      "The stadium has a capacity of 80,000."
+    ],
+    "written": [
+      "The country's healthcare capacity was severely tested during the pandemic."
+    ]
+  },
+  "catastrophic": {
+    "spoken": [
+      "The earthquake had catastrophic consequences."
+    ],
+    "written": [
+      "A catastrophic failure of the dam would endanger thousands of downstream residents."
+    ]
+  },
+  "cater": {
+    "spoken": [
+      "The restaurant caters to all dietary needs."
+    ],
+    "written": [
+      "The program is designed to cater to students with diverse learning styles."
+    ]
+  },
+  "certify": {
+    "spoken": [
+      "The product is certified organic."
+    ],
+    "written": [
+      "Independent auditors certify that the company meets international safety standards."
+    ]
+  },
+  "civic": {
+    "spoken": [
+      "Civic engagement is important for a healthy democracy."
+    ],
+    "written": [
+      "Civic education programs aim to increase voter participation among young people."
+    ]
+  },
+  "commitment": {
+    "spoken": [
+      "I admire your commitment to the project."
+    ],
+    "written": [
+      "The government reaffirmed its commitment to reducing carbon emissions by 2030."
+    ]
+  },
+  "communal": {
+    "spoken": [
+      "The building has a communal kitchen and living area."
+    ],
+    "written": [
+      "Communal living arrangements can foster a strong sense of community and cooperation."
+    ]
+  },
+  "commute": {
+    "spoken": [
+      "My commute to work takes about an hour."
+    ],
+    "written": [
+      "Long commutes have been linked to increased stress and reduced life satisfaction."
+    ]
+  },
+  "conceal": {
+    "spoken": [
+      "He tried to conceal his disappointment."
+    ],
+    "written": [
+      "The company was accused of attempting to conceal evidence of environmental damage."
+    ]
+  },
+  "concentrate": {
+    "spoken": [
+      "I can't concentrate with all this noise."
+    ],
+    "written": [
+      "The population is concentrated along the coastal regions of the country."
+    ]
+  },
+  "concur": {
+    "spoken": [
+      "I concur with your assessment of the situation."
+    ],
+    "written": [
+      "Most experts concur that early intervention is key to treating the condition."
+    ]
+  },
+  "confer": {
+    "spoken": [
+      "The committee will confer before making a decision."
+    ],
+    "written": [
+      "The university confers honorary degrees on individuals who have made outstanding contributions."
+    ]
+  },
+  "conflict": {
+    "spoken": [
+      "There's a conflict between what he says and what he does."
+    ],
+    "written": [
+      "Armed conflict in the region has displaced millions of civilians."
+    ]
+  },
+  "confuse": {
+    "spoken": [
+      "People often confuse these two terms."
+    ],
+    "written": [
+      "Conflicting reports confuse the public and undermine trust in institutions."
+    ]
+  },
+  "conservative": {
+    "spoken": [
+      "She has a conservative approach to investing."
+    ],
+    "written": [
+      "Conservative estimates suggest the project will take at least three years to complete."
+    ]
+  },
+  "considerable": {
+    "spoken": [
+      "There's been a considerable improvement in air quality."
+    ],
+    "written": [
+      "The study required considerable resources and the collaboration of multiple institutions."
+    ]
+  },
+  "contingent": {
+    "spoken": [
+      "Our plans are contingent on the weather."
+    ],
+    "written": [
+      "Funding for the project is contingent on the approval of the board of directors."
+    ]
+  },
+  "correlation": {
+    "spoken": [
+      "There seems to be a correlation between diet and energy levels."
+    ],
+    "written": [
+      "A positive correlation was found between study hours and exam performance."
+    ]
+  },
+  "crash": {
+    "spoken": [
+      "The stock market crashed last week."
+    ],
+    "written": [
+      "The plane crash was attributed to a combination of mechanical failure and human error."
+    ]
+  },
+  "credibility": {
+    "spoken": [
+      "That source has a lot of credibility in the field."
+    ],
+    "written": [
+      "The credibility of the research was questioned due to methodological flaws."
+    ]
+  },
+  "criminal": {
+    "spoken": [
+      "Criminal activity in the area has decreased."
+    ],
+    "written": [
+      "Criminal justice reform aims to reduce recidivism and promote rehabilitation."
+    ]
+  },
+  "crisis": {
+    "spoken": [
+      "The company is going through a financial crisis."
+    ],
+    "written": [
+      "The humanitarian crisis in the region has drawn international attention and aid."
+    ]
+  },
+  "criticism": {
+    "spoken": [
+      "The policy faced a lot of criticism from the public."
+    ],
+    "written": [
+      "Constructive criticism is essential for intellectual growth and academic improvement."
+    ]
+  },
+  "curb": {
+    "spoken": [
+      "We need to curb our spending."
+    ],
+    "written": [
+      "New regulations aim to curb the spread of misinformation on social media platforms."
+    ]
+  },
+  "deadline": {
+    "spoken": [
+      "The deadline for submissions is next Friday."
+    ],
+    "written": [
+      "Missing the funding deadline could jeopardize the entire research program."
+    ]
+  },
+  "delay": {
+    "spoken": [
+      "We apologize for the delay in responding."
+    ],
+    "written": [
+      "Delays in implementing the reform have cost the economy billions."
+    ]
+  },
+  "democratic": {
+    "spoken": [
+      "Democratic elections are the foundation of a free society."
+    ],
+    "written": [
+      "Democratic governance requires active participation from an informed citizenry."
+    ]
+  },
+  "demographic": {
+    "spoken": [
+      "The demographic of the area has changed a lot."
+    ],
+    "written": [
+      "Demographic shifts toward an aging population have implications for healthcare policy."
+    ]
+  },
+  "depression": {
+    "spoken": [
+      "Many people suffer from depression without even knowing it."
+    ],
+    "written": [
+      "Clinical depression is a serious mental health condition that requires professional treatment."
+    ]
+  },
+  "designate": {
+    "spoken": [
+      "This area has been designated as a national park."
+    ],
+    "written": [
+      "The building was designated a UNESCO World Heritage Site in 1987."
+    ]
+  },
+  "detain": {
+    "spoken": [
+      "The police detained him for questioning."
+    ],
+    "written": [
+      "Authorities detained several suspects in connection with the fraud investigation."
+    ]
+  },
+  "devastate": {
+    "spoken": [
+      "The hurricane devastated the entire coastal region."
+    ],
+    "written": [
+      "The pandemic devastated global supply chains and trade networks."
+    ]
+  },
+  "disclose": {
+    "spoken": [
+      "He refused to disclose the details of the agreement."
+    ],
+    "written": [
+      "Companies are required to disclose financial information to shareholders."
+    ]
+  },
+  "display": {
+    "spoken": [
+      "The museum has a stunning display of ancient artifacts."
+    ],
+    "written": [
+      "The data is displayed graphically to facilitate interpretation."
+    ]
+  },
+  "distract": {
+    "spoken": [
+      "Stop distracting me — I'm trying to study."
+    ],
+    "written": [
+      "Mobile phone use in class distracts students and reduces learning outcomes."
+    ]
+  },
+  "distribute": {
+    "spoken": [
+      "They distributed food and water to the refugees."
+    ],
+    "written": [
+      "The organization distributes educational materials to schools in underserved communities."
+    ]
+  },
+  "domain": {
+    "spoken": [
+      "This is outside my domain of expertise."
+    ],
+    "written": [
+      "The internet has become the primary domain for commercial activity."
+    ]
+  },
+  "dominant": {
+    "spoken": [
+      "English is the dominant language in international business."
+    ],
+    "written": [
+      "A few dominant corporations control the majority of the market share."
+    ]
+  },
+  "dramatic": {
+    "spoken": [
+      "There's been a dramatic increase in house prices."
+    ],
+    "written": [
+      "The dramatic decline in biodiversity has alarmed conservation biologists."
+    ]
+  },
+  "durable": {
+    "spoken": [
+      "This material is very durable and lasts for years."
+    ],
+    "written": [
+      "Durable goods account for a significant portion of consumer spending."
+    ]
+  },
+  "elderly": {
+    "spoken": [
+      "We should take better care of the elderly."
+    ],
+    "written": [
+      "The elderly population is particularly vulnerable to the effects of air pollution."
+    ]
+  },
+  "elusive": {
+    "spoken": [
+      "Success has been elusive for the team this season."
+    ],
+    "written": [
+      "An elusive cure for the disease continues to frustrate medical researchers."
+    ]
+  },
+  "entrepreneur": {
+    "spoken": [
+      "She's a successful entrepreneur who started her own company."
+    ],
+    "written": [
+      "Entrepreneurs play a vital role in driving innovation and economic growth."
+    ]
+  },
+  "established": {
+    "spoken": [
+      "He's an established expert in the field."
+    ],
+    "written": [
+      "The established methodology has been validated through extensive peer review."
+    ]
+  },
+  "ethical": {
+    "spoken": [
+      "Is it ethical to test on animals?"
+    ],
+    "written": [
+      "Ethical considerations must be central to the design of any clinical trial."
+    ]
+  },
+  "eventually": {
+    "spoken": [
+      "He eventually found a job after months of searching."
+    ],
+    "written": [
+      "The species eventually adapted to the changing environment over several generations."
+    ]
+  },
+  "evidence": {
+    "spoken": [
+      "There's no evidence to support that claim."
+    ],
+    "written": [
+      "The evidence suggests that early intervention significantly improves outcomes."
+    ]
+  },
+  "evolve": {
+    "spoken": [
+      "Languages evolve over time."
+    ],
+    "written": [
+      "The theory of evolution explains how species evolve through natural selection."
+    ]
+  },
+  "exceptional": {
+    "spoken": [
+      "The food at that restaurant is exceptional."
+    ],
+    "written": [
+      "Exceptional students may be offered accelerated learning opportunities."
+    ]
+  },
+  "exhausted": {
+    "spoken": [
+      "I'm completely exhausted after that workout."
+    ],
+    "written": [
+      "Natural resources are being exhausted at an unsustainable rate."
+    ]
+  },
+  "experiment": {
+    "spoken": [
+      "The experiment didn't go as planned."
+    ],
+    "written": [
+      "The experiment was conducted under tightly controlled laboratory conditions."
+    ]
+  },
+  "exploit": {
+    "spoken": [
+      "Companies shouldn't exploit their workers."
+    ],
+    "written": [
+      "Some firms exploit regulatory loopholes to gain an unfair competitive advantage."
+    ]
+  },
+  "extend": {
+    "spoken": [
+      "Can we extend the deadline by a few days?"
+    ],
+    "written": [
+      "The government plans to extend the program for an additional two years."
+    ]
+  },
+  "extract": {
+    "spoken": [
+      "They extract oil from the ground."
+    ],
+    "written": [
+      "The company uses advanced techniques to extract rare minerals from the ore."
+    ]
+  },
+  "famine": {
+    "spoken": [
+      "The famine killed thousands of people."
+    ],
+    "written": [
+      "Prolonged drought has led to widespread famine across the region."
+    ]
+  },
+  "finite": {
+    "spoken": [
+      "Our time on this earth is finite."
+    ],
+    "written": [
+      "Finite resources must be managed carefully to ensure long-term sustainability."
+    ]
+  },
+  "format": {
+    "spoken": [
+      "What format should I save the file in?"
+    ],
+    "written": [
+      "The new exam format includes both written and oral components."
+    ]
+  },
+  "fragment": {
+    "spoken": [
+      "I only heard a fragment of the conversation."
+    ],
+    "written": [
+      "Archaeologists discovered fragments of pottery dating back to the Neolithic period."
+    ]
+  },
+  "fulfill": {
+    "spoken": [
+      "I feel like I've finally fulfilled my potential."
+    ],
+    "written": [
+      "The organization works to fulfill its mission of providing education to all children."
+    ]
+  },
+  "gene": {
+    "spoken": [
+      "Certain genes can increase the risk of disease."
+    ],
+    "written": [
+      "Gene therapy offers promising treatment options for previously incurable genetic disorders."
+    ]
+  },
+  "graphic": {
+    "spoken": [
+      "The graphic design of the app is really impressive."
+    ],
+    "written": [
+      "Graphic representations of data can reveal patterns not immediately apparent in raw numbers."
+    ]
+  },
+  "habitat": {
+    "spoken": [
+      "Deforestation is destroying the habitat of many species."
+    ],
+    "written": [
+      "Habitat fragmentation is one of the leading causes of biodiversity loss worldwide."
+    ]
+  },
+  "harbour": {
+    "spoken": [
+      "Some people still harbour resentment over the decision."
+    ],
+    "written": [
+      "The city's harbour has been a hub of maritime trade for centuries."
+    ]
+  },
+  "hardship": {
+    "spoken": [
+      "The family faced many hardships after losing their home."
+    ],
+    "written": [
+      "Economic hardship is a major factor driving migration from developing countries."
+    ]
+  },
+  "harsh": {
+    "spoken": [
+      "The winters here can be really harsh."
+    ],
+    "written": [
+      "Harsh penalties for environmental violations have been introduced to deter pollution."
+    ]
+  },
+  "hypothesis": {
+    "spoken": [
+      "My hypothesis is that people prefer shorter work weeks."
+    ],
+    "written": [
+      "The hypothesis was tested through a series of controlled experiments."
+    ]
+  },
+  "impact": {
+    "spoken": [
+      "The new law will have a huge impact on small businesses."
+    ],
+    "written": [
+      "The environmental impact of industrial activity extends far beyond the immediate area."
+    ]
+  },
+  "impressive": {
+    "spoken": [
+      "Her resume is really impressive."
+    ],
+    "written": [
+      "The country has made impressive progress in reducing poverty over the past decade."
+    ]
+  },
+  "inaccurate": {
+    "spoken": [
+      "The report was full of inaccurate information."
+    ],
+    "written": [
+      "Inaccurate data can lead to flawed conclusions and misguided policy decisions."
+    ]
+  },
+  "inappropriate": {
+    "spoken": [
+      "That comment was completely inappropriate."
+    ],
+    "written": [
+      "The use of inappropriate statistical methods undermined the study's validity."
+    ]
+  },
+  "indulge": {
+    "spoken": [
+      "I like to indulge in a bit of chocolate now and then."
+    ],
+    "written": [
+      "Consumers who indulge in luxury spending tend to cut back during economic downturns."
+    ]
+  },
+  "intelligence": {
+    "spoken": [
+      "Emotional intelligence is just as important as IQ."
+    ],
+    "written": [
+      "Artificial intelligence is transforming industries from healthcare to finance."
+    ]
+  },
+  "intense": {
+    "spoken": [
+      "The competition for the job was intense."
+    ],
+    "written": [
+      "Intense solar radiation can cause significant damage to exposed skin."
+    ]
+  },
+  "interaction": {
+    "spoken": [
+      "Social interaction is important for children's development."
+    ],
+    "written": [
+      "The interaction between genetics and environment shapes individual behavior."
+    ]
+  },
+  "interference": {
+    "spoken": [
+      "I don't appreciate your interference in my personal affairs."
+    ],
+    "written": [
+      "Government interference in the free market can lead to inefficiencies."
+    ]
+  },
+  "interior": {
+    "spoken": [
+      "The interior of the house is beautifully decorated."
+    ],
+    "written": [
+      "The interior regions of the continent receive significantly less rainfall than the coast."
+    ]
+  },
+  "interrupt": {
+    "spoken": [
+      "Sorry to interrupt, but I have a question."
+    ],
+    "written": [
+      "Frequent interruptions during class negatively affect student concentration."
+    ]
+  },
+  "involve": {
+    "spoken": [
+      "This project involves a lot of teamwork."
+    ],
+    "written": [
+      "The treatment involves a combination of medication and behavioral therapy."
+    ]
+  },
+  "keen": {
+    "spoken": [
+      "She's really keen on learning Japanese."
+    ],
+    "written": [
+      "There is keen interest among investors in the emerging technology sector."
+    ]
+  },
+  "label": {
+    "spoken": [
+      "Don't judge people by the label society puts on them."
+    ],
+    "written": [
+      "Products must carry a label indicating their country of origin."
+    ]
+  },
+  "lack": {
+    "spoken": [
+      "The project failed due to a lack of funding."
+    ],
+    "written": [
+      "A lack of qualified teachers remains a significant barrier to educational improvement."
+    ]
+  },
+  "landscape": {
+    "spoken": [
+      "The landscape around here is stunning."
+    ],
+    "written": [
+      "The political landscape has shifted dramatically in the past decade."
+    ]
+  },
+  "likelihood": {
+    "spoken": [
+      "What's the likelihood of that happening?"
+    ],
+    "written": [
+      "The likelihood of developing heart disease increases with age and sedentary lifestyle."
+    ]
+  },
+  "linguistic": {
+    "spoken": [
+      "She has amazing linguistic abilities."
+    ],
+    "written": [
+      "Linguistic diversity is a hallmark of multicultural societies."
+    ]
+  },
+  "mainly": {
+    "spoken": [
+      "The delay was mainly due to bad weather."
+    ],
+    "written": [
+      "The region's economy depends mainly on agriculture and tourism."
+    ]
+  },
+  "mammal": {
+    "spoken": [
+      "Whales are the largest mammals on Earth."
+    ],
+    "written": [
+      "Marine mammals are particularly vulnerable to ocean pollution and noise."
+    ]
+  },
+  "manifest": {
+    "spoken": [
+      "The symptoms manifest differently in each person."
+    ],
+    "written": [
+      "Cultural values manifest in everyday behaviors and social interactions."
+    ]
+  },
+  "manufacture": {
+    "spoken": [
+      "The company manufactures electronic components."
+    ],
+    "written": [
+      "The manufacture of pharmaceutical products requires strict quality control."
+    ]
+  },
+  "marine": {
+    "spoken": [
+      "Marine life is incredibly diverse."
+    ],
+    "written": [
+      "Marine ecosystems are under increasing threat from plastic pollution."
+    ]
+  },
+  "mechanism": {
+    "spoken": [
+      "What's the mechanism behind this process?"
+    ],
+    "written": [
+      "The brain has a remarkable mechanism for repairing damaged neural connections."
+    ]
+  },
+  "mental": {
+    "spoken": [
+      "Mental health is just as important as physical health."
+    ],
+    "written": [
+      "Mental health services are critically underfunded in many developing countries."
+    ]
+  },
+  "migrate": {
+    "spoken": [
+      "Many birds migrate south for the winter."
+    ],
+    "written": [
+      "Millions of people migrate from rural to urban areas in search of better opportunities."
+    ]
+  },
+  "moisture": {
+    "spoken": [
+      "The soil needs more moisture for the plants to grow."
+    ],
+    "written": [
+      "Atmospheric moisture levels play a critical role in weather patterns."
+    ]
+  },
+  "native": {
+    "spoken": [
+      "She's a native speaker of Mandarin."
+    ],
+    "written": [
+      "Native species are being displaced by invasive organisms introduced through trade."
+    ]
+  },
+  "nocturnal": {
+    "spoken": [
+      "Owls are nocturnal — they hunt at night."
+    ],
+    "written": [
+      "Nocturnal animals have evolved specialized adaptations for life in darkness."
+    ]
+  },
+  "norm": {
+    "spoken": [
+      "Working from home has become the new norm."
+    ],
+    "written": [
+      "Social norms governing gender roles have evolved significantly over the past century."
+    ]
+  },
+  "objective": {
+    "spoken": [
+      "Our main objective is to increase sales."
+    ],
+    "written": [
+      "The objective of the study was to evaluate the efficacy of the new treatment."
+    ]
+  },
+  "obligation": {
+    "spoken": [
+      "I feel an obligation to help."
+    ],
+    "written": [
+      "Legal obligations require companies to report environmental compliance."
+    ]
+  },
+  "obscure": {
+    "spoken": [
+      "The meaning of the poem is a bit obscure."
+    ],
+    "written": [
+      "The origins of the tradition remain obscure and are debated by historians."
+    ]
+  },
+  "odd": {
+    "spoken": [
+      "That's an odd thing to say."
+    ],
+    "written": [
+      "The odd behavior of the particles puzzled physicists for decades."
+    ]
+  },
+  "offensive": {
+    "spoken": [
+      "His remarks were really offensive."
+    ],
+    "written": [
+      "The military launched a major offensive against the rebel-held territory."
+    ]
+  },
+  "official": {
+    "spoken": [
+      "Is this the official version of the document?"
+    ],
+    "written": [
+      "The official death toll from the disaster was significantly lower than independent estimates."
+    ]
+  },
+  "ordinary": {
+    "spoken": [
+      "It looked like an ordinary day, but everything changed."
+    ],
+    "written": [
+      "Ordinary citizens played a crucial role in the success of the movement."
+    ]
+  },
+  "overcome": {
+    "spoken": [
+      "She overcame many obstacles to get where she is today."
+    ],
+    "written": [
+      "Overcoming poverty requires sustained investment in education and infrastructure."
+    ]
+  },
+  "participate": {
+    "spoken": [
+      "Everyone is encouraged to participate in the discussion."
+    ],
+    "written": [
+      "Women are increasingly participating in the workforce in traditionally male-dominated fields."
+    ]
+  },
+  "peak": {
+    "spoken": [
+      "Tourist season reaches its peak in August."
+    ],
+    "written": [
+      "The peak of the epidemic was reached in early March before declining."
+    ]
+  },
+  "permit": {
+    "spoken": [
+      "The weather didn't permit us to go outside."
+    ],
+    "written": [
+      "Regulations permit the use of certain chemicals only under strict conditions."
+    ]
+  },
+  "persuade": {
+    "spoken": [
+      "I tried to persuade him to stay, but he left anyway."
+    ],
+    "written": [
+      "Advertising is designed to persuade consumers to purchase products."
+    ]
+  },
+  "pessimistic": {
+    "spoken": [
+      "Don't be so pessimistic — things will work out."
+    ],
+    "written": [
+      "The pessimistic outlook for the economy has dampened consumer spending."
+    ]
+  },
+  "phase": {
+    "spoken": [
+      "We're entering a new phase of the project."
+    ],
+    "written": [
+      "The experiment is currently in the second phase of clinical trials."
+    ]
+  },
+  "physical": {
+    "spoken": [
+      "The exam has both a written and a physical component."
+    ],
+    "written": [
+      "Physical activity has been shown to reduce symptoms of anxiety and depression."
+    ]
+  },
+  "plot": {
+    "spoken": [
+      "The plot of the novel is really complex."
+    ],
+    "written": [
+      "The plot to overthrow the government was uncovered by intelligence services."
+    ]
+  },
+  "pose": {
+    "spoken": [
+      "Climate change poses a serious threat to humanity."
+    ],
+    "written": [
+      "The discovery poses fundamental questions about our understanding of the universe."
+    ]
+  },
+  "poverty": {
+    "spoken": [
+      "Millions of people still live in poverty."
+    ],
+    "written": [
+      "Poverty remains one of the most significant barriers to educational attainment."
+    ]
+  },
+  "prohibit": {
+    "spoken": [
+      "Smoking is prohibited in all public buildings."
+    ],
+    "written": [
+      "The law prohibits the sale of alcohol to minors."
+    ]
+  },
+  "prolong": {
+    "spoken": [
+      "The doctor said the treatment might prolong his life."
+    ],
+    "written": [
+      "Prolonged negotiations failed to produce a satisfactory agreement."
+    ]
+  },
+  "prosper": {
+    "spoken": [
+      "The business has prospered under new management."
+    ],
+    "written": [
+      "Nations that invest in education tend to prosper economically."
+    ]
+  },
+  "qualify": {
+    "spoken": [
+      "Do I qualify for the scholarship?"
+    ],
+    "written": [
+      "To qualify for the study, participants had to meet specific health criteria."
+    ]
+  },
+  "range": {
+    "spoken": [
+      "The store offers a wide range of products."
+    ],
+    "written": [
+      "The temperature range in the region varies from below freezing to over 40 degrees."
+    ]
+  },
+  "rare": {
+    "spoken": [
+      "It's rare to see snow in this part of the country."
+    ],
+    "written": [
+      "Rare earth minerals are essential components in modern electronic devices."
+    ]
+  },
+  "rate": {
+    "spoken": [
+      "What's the exchange rate today?"
+    ],
+    "written": [
+      "The unemployment rate fell to its lowest level in over a decade."
+    ]
+  },
+  "react": {
+    "spoken": [
+      "How did she react to the news?"
+    ],
+    "written": [
+      "The body's immune system reacts to foreign substances by producing antibodies."
+    ]
+  },
+  "recreation": {
+    "spoken": [
+      "The park is great for outdoor recreation."
+    ],
+    "written": [
+      "Urban planners must allocate sufficient space for recreation and green areas."
+    ]
+  },
+  "reduction": {
+    "spoken": [
+      "There's been a significant reduction in crime."
+    ],
+    "written": [
+      "A reduction in greenhouse gas emissions is essential to meet climate targets."
+    ]
+  },
+  "reject": {
+    "spoken": [
+      "The proposal was rejected by the committee."
+    ],
+    "written": [
+      "The court rejected the appeal on the grounds of insufficient evidence."
+    ]
+  },
+  "relevant": {
+    "spoken": [
+      "Is this information relevant to the discussion?"
+    ],
+    "written": [
+      "Only studies published within the last five years were deemed relevant to the review."
+    ]
+  },
+  "reluctant": {
+    "spoken": [
+      "He was reluctant to admit his mistake."
+    ],
+    "written": [
+      "Investors remain reluctant to commit capital to the volatile market."
+    ]
+  },
+  "responsible": {
+    "spoken": [
+      "Who's responsible for this mess?"
+    ],
+    "written": [
+      "Corporations must be held responsible for their environmental impact."
+    ]
+  },
+  "revive": {
+    "spoken": [
+      "The government is trying to revive the economy."
+    ],
+    "written": [
+      "Efforts to revive the endangered species have shown promising results."
+    ]
+  },
+  "ruin": {
+    "spoken": [
+      "The rain completely ruined our picnic."
+    ],
+    "written": [
+      "Deforestation can ruin entire ecosystems and displace indigenous communities."
+    ]
+  },
+  "soar": {
+    "spoken": [
+      "House prices have soared in recent years."
+    ],
+    "written": [
+      "Global temperatures are expected to soar beyond the 1.5-degree threshold."
+    ]
+  },
+  "solely": {
+    "spoken": [
+      "The decision was based solely on merit."
+    ],
+    "written": [
+      "Success in the field depends solely on the quality of the research."
+    ]
+  },
+  "steer": {
+    "spoken": [
+      "He steered the conversation away from politics."
+    ],
+    "written": [
+      "The central bank steered the economy through the financial crisis."
+    ]
+  },
+  "subtle": {
+    "spoken": [
+      "There's a subtle difference between the two words."
+    ],
+    "written": [
+      "The study revealed subtle but significant changes in brain activity."
+    ]
+  },
+  "substance": {
+    "spoken": [
+      "The article lacks substance — it's all fluff."
+    ],
+    "written": [
+      "Banned substances are regularly tested for in professional sports."
+    ]
+  },
+  "suppress": {
+    "spoken": [
+      "He tried to suppress a laugh."
+    ],
+    "written": [
+      "The government was accused of attempting to suppress freedom of the press."
+    ]
+  },
+  "suspicious": {
+    "spoken": [
+      "The whole situation seems suspicious to me."
+    ],
+    "written": [
+      "Suspicious transactions must be reported to the relevant financial authorities."
+    ]
+  },
+  "symptom": {
+    "spoken": [
+      "Fever is a common symptom of the flu."
+    ],
+    "written": [
+      "Early symptoms of the disease are often mistaken for common illnesses."
+    ]
+  },
+  "tension": {
+    "spoken": [
+      "There's a lot of tension between the two groups."
+    ],
+    "written": [
+      "Trade tensions between the two nations have disrupted global supply chains."
+    ]
+  },
+  "throughout": {
+    "spoken": [
+      "It rained throughout the entire day."
+    ],
+    "written": [
+      "The tradition has been practiced throughout the region for centuries."
+    ]
+  },
+  "toll": {
+    "spoken": [
+      "The death toll from the earthquake continues to rise."
+    ],
+    "written": [
+      "The toll of climate change on vulnerable populations is becoming increasingly apparent."
+    ]
+  },
+  "trace": {
+    "spoken": [
+      "I couldn't trace the source of the problem."
+    ],
+    "written": [
+      "Scientists traced the outbreak to contaminated water supplies."
+    ]
+  },
+  "transit": {
+    "spoken": [
+      "The city needs better public transit."
+    ],
+    "written": [
+      "Mass transit systems reduce urban congestion and lower carbon emissions."
+    ]
+  },
+  "tremendous": {
+    "spoken": [
+      "We've made tremendous progress this year."
+    ],
+    "written": [
+      "The discovery had a tremendous impact on the field of molecular biology."
+    ]
+  },
+  "trigger": {
+    "spoken": [
+      "What triggered the argument?"
+    ],
+    "written": [
+      "Rising food prices can trigger social unrest and political instability."
+    ]
+  },
+  "tropical": {
+    "spoken": [
+      "I love tropical weather — warm and sunny."
+    ],
+    "written": [
+      "Tropical rainforests contain more than half of the world's plant and animal species."
+    ]
+  },
+  "uniform": {
+    "spoken": [
+      "The students all wear school uniform."
+    ],
+    "written": [
+      "A uniform standard for data collection ensures comparability across studies."
+    ]
+  },
+  "valuable": {
+    "spoken": [
+      "Your feedback is really valuable to us."
+    ],
+    "written": [
+      "The findings provide valuable insights into the mechanisms of drug resistance."
+    ]
+  },
+  "versatile": {
+    "spoken": [
+      "This tool is really versatile — you can use it for so many things."
+    ],
+    "written": [
+      "The versatile nature of the material makes it suitable for a wide range of applications."
+    ]
+  },
+  "violent": {
+    "spoken": [
+      "The protest turned violent after dark."
+    ],
+    "written": [
+      "Violent crime rates have declined steadily in most major cities."
+    ]
+  },
+  "visible": {
+    "spoken": [
+      "The results are already visible after just one week."
+    ],
+    "written": [
+      "The effects of pollution are visible in the deteriorating quality of the water supply."
+    ]
+  },
+  "visual": {
+    "spoken": [
+      "I'm more of a visual learner."
+    ],
+    "written": [
+      "Visual aids significantly enhance the presentation of complex data."
+    ]
+  },
+  "well-being": {
+    "spoken": [
+      "Exercise is great for your overall well-being."
+    ],
+    "written": [
+      "The well-being of employees is increasingly recognized as a factor in workplace productivity."
+    ]
+  },
+  "blight": {
+    "spoken": [
+      "Poverty is a blight on society."
+    ],
+    "written": [
+      "The blight destroyed a significant portion of the potato crop."
+    ]
+  },
+  "bungle": {
+    "spoken": [
+      "The government completely bungled the response."
+    ],
+    "written": [
+      "The bungled investigation led to the release of the suspect."
+    ]
+  },
+  "calamity": {
+    "spoken": [
+      "The earthquake was a terrible calamity."
+    ],
+    "written": [
+      "Natural calamities such as floods and earthquakes disproportionately affect developing nations."
+    ]
+  },
+  "comment": {
+    "spoken": [
+      "Do you have any comment on this?"
+    ],
+    "written": [
+      "The minister declined to comment on the allegations."
+    ]
+  },
+  "compare": {
+    "spoken": [
+      "You can't compare apples and oranges."
+    ],
+    "written": [
+      "The study compares the effectiveness of two different teaching methods."
+    ]
+  },
+  "courtship": {
+    "spoken": [
+      "Birds have fascinating courtship displays."
+    ],
+    "written": [
+      "The courtship rituals of certain species involve elaborate visual and vocal signals."
+    ]
+  },
+  "damp": {
+    "spoken": [
+      "The clothes are still a bit damp."
+    ],
+    "written": [
+      "Damp conditions promote the growth of mold and mildew in buildings."
+    ]
+  },
+  "dazzle": {
+    "spoken": [
+      "The fireworks absolutely dazzled the audience."
+    ],
+    "written": [
+      "The artist's use of color and light continues to dazzle critics and audiences alike."
+    ]
+  },
+  "dental": {
+    "spoken": [
+      "I have a dental appointment tomorrow."
+    ],
+    "written": [
+      "Access to dental care remains limited in many rural communities."
+    ]
+  },
+  "disparate": {
+    "spoken": [
+      "The two groups come from very disparate backgrounds."
+    ],
+    "written": [
+      "The study integrates disparate data sources to form a comprehensive picture."
+    ]
+  },
+  "documentation": {
+    "spoken": [
+      "You'll need to bring all the relevant documentation."
+    ],
+    "written": [
+      "Proper documentation is essential for the reproducibility of scientific experiments."
+    ]
+  },
+  "drought": {
+    "spoken": [
+      "The drought has lasted for months."
+    ],
+    "written": [
+      "Prolonged drought has devastated agricultural production across the region."
+    ]
+  },
+  "eco-friendly": {
+    "spoken": [
+      "We should all try to use more eco-friendly products."
+    ],
+    "written": [
+      "Eco-friendly building materials are becoming increasingly popular in the construction industry."
+    ]
+  },
+  "encyclopaedia": {
+    "spoken": [
+      "I used to read the encyclopaedia as a kid."
+    ],
+    "written": [
+      "The encyclopaedia remains a valuable reference resource for students and researchers."
+    ]
+  },
+  "equator": {
+    "spoken": [
+      "Countries near the equator have tropical climates."
+    ],
+    "written": [
+      "The Coriolis effect is most pronounced at the equator and diminishes toward the poles."
+    ]
+  },
+  "erratically": {
+    "spoken": [
+      "The car was moving erratically on the road."
+    ],
+    "written": [
+      "The stock market has been behaving erratically in response to political uncertainty."
+    ]
+  },
+  "estate": {
+    "spoken": [
+      "She invested in real estate."
+    ],
+    "written": [
+      "The estate includes a main house, several outbuildings, and extensive grounds."
+    ]
+  },
+  "foe": {
+    "spoken": [
+      "He turned out to be a foe, not a friend."
+    ],
+    "written": [
+      "Disease remains humanity's greatest foe, claiming millions of lives each year."
+    ]
+  },
+  "fitness": {
+    "spoken": [
+      "She's really into fitness and goes to the gym every day."
+    ],
+    "written": [
+      "Physical fitness is a key predictor of overall health and longevity."
+    ]
+  },
+  "freeze": {
+    "spoken": [
+      "It's so cold the pipes might freeze."
+    ],
+    "written": [
+      "The government announced a freeze on public sector hiring."
+    ]
+  },
+  "gifted": {
+    "spoken": [
+      "She's a gifted musician — she can play anything by ear."
+    ],
+    "written": [
+      "Gifted students often require specialized educational programs to reach their potential."
+    ]
+  },
+  "look-in": {
+    "spoken": [
+      "The smaller companies don't even get a look-in."
+    ],
+    "written": [
+      "Without adequate funding, the project barely gets a look-in among competing priorities."
+    ]
+  },
+  "lopsided": {
+    "spoken": [
+      "The vote was completely lopsided."
+    ],
+    "written": [
+      "The lopsided distribution of wealth has fueled social discontent."
+    ]
+  },
+  "malfunction": {
+    "spoken": [
+      "The system experienced a malfunction."
+    ],
+    "written": [
+      "A malfunction in the safety equipment contributed to the industrial accident."
+    ]
+  },
+  "manage to do": {
+    "spoken": [
+      "I managed to finish just in time."
+    ],
+    "written": [
+      "The team managed to complete the project despite significant resource constraints."
+    ]
+  },
+  "mate": {
+    "spoken": [
+      "He's my best mate from school."
+    ],
+    "written": [
+      "Many bird species mate for life, returning to the same nesting site annually."
+    ]
+  },
+  "mercury": {
+    "spoken": [
+      "Mercury levels in the fish are dangerously high."
+    ],
+    "written": [
+      "Mercury contamination in waterways poses a serious risk to human health."
+    ]
+  },
+  "meteorological": {
+    "spoken": [
+      "The meteorological forecast predicts heavy rain."
+    ],
+    "written": [
+      "Meteorological data is essential for understanding and predicting weather patterns."
+    ]
+  },
+  "motif": {
+    "spoken": [
+      "The butterfly is a recurring motif in her paintings."
+    ],
+    "written": [
+      "The motif of death and rebirth appears throughout the literary work."
+    ]
+  },
+  "mould": {
+    "spoken": [
+      "The bread has gone mouldy."
+    ],
+    "written": [
+      "Excessive moisture encourages the growth of mould in residential buildings."
+    ]
+  },
+  "notoriety": {
+    "spoken": [
+      "He gained notoriety for his controversial statements."
+    ],
+    "written": [
+      "The city achieved notoriety as a center of organized crime during the Prohibition era."
+    ]
+  },
+  "odour": {
+    "spoken": [
+      "There's a strange odour coming from the kitchen."
+    ],
+    "written": [
+      "Industrial emissions often produce unpleasant odours that affect nearby residents."
+    ]
+  },
+  "overtake": {
+    "spoken": [
+      "China has overtaken Japan as the world's second-largest economy."
+    ],
+    "written": [
+      "Renewable energy sources are expected to overtake fossil fuels within the next two decades."
+    ]
+  },
+  "paralyse": {
+    "spoken": [
+      "The strike paralysed the entire transport system."
+    ],
+    "written": [
+      "Cyberattacks can paralyse critical infrastructure and disrupt essential services."
+    ]
+  },
+  "paramount": {
+    "spoken": [
+      "Safety is of paramount importance."
+    ],
+    "written": [
+      "Patient safety is of paramount importance in clinical practice."
+    ]
+  },
+  "patient": {
+    "spoken": [
+      "You need to be patient — good things take time."
+    ],
+    "written": [
+      "Patient outcomes improve significantly when treatment begins in the early stages."
+    ]
+  },
+  "plagiarise": {
+    "spoken": [
+      "You'll get expelled if you plagiarise."
+    ],
+    "written": [
+      "Students who plagiarise academic work face severe disciplinary consequences."
+    ]
+  },
+  "portable": {
+    "spoken": [
+      "This speaker is really portable — take it anywhere."
+    ],
+    "written": [
+      "Portable water purification devices are essential in disaster relief operations."
+    ]
+  },
+  "praise": {
+    "spoken": [
+      "She received a lot of praise for her work."
+    ],
+    "written": [
+      "The report was praised for its thoroughness and objectivity."
+    ]
+  },
+  "pressing": {
+    "spoken": [
+      "This is a pressing issue that needs immediate attention."
+    ],
+    "written": [
+      "Climate change remains the most pressing global challenge of our time."
+    ]
+  },
+  "private": {
+    "spoken": [
+      "I'd rather keep that information private."
+    ],
+    "written": [
+      "Private investment in renewable energy has increased dramatically."
+    ]
+  },
+  "purify": {
+    "spoken": [
+      "The filter purifies the water before you drink it."
+    ],
+    "written": [
+      "New technologies can purify contaminated water at a fraction of the traditional cost."
+    ]
+  },
+  "refer to": {
+    "spoken": [
+      "What does that term refer to?"
+    ],
+    "written": [
+      "The term 'sustainable development' refers to meeting present needs without compromising future generations."
+    ]
+  },
+  "rehearsal": {
+    "spoken": [
+      "The band has a rehearsal tonight."
+    ],
+    "written": [
+      "Dress rehearsals are essential for identifying technical issues before the live performance."
+    ]
+  },
+  "reproduce": {
+    "spoken": [
+      "These findings are difficult to reproduce."
+    ],
+    "written": [
+      "The ability to reproduce experimental results is a cornerstone of the scientific method."
+    ]
+  },
+  "revision": {
+    "spoken": [
+      "The document needs a thorough revision."
+    ],
+    "written": [
+      "A major revision of the curriculum was undertaken to incorporate new pedagogical approaches."
+    ]
+  },
+  "scenic": {
+    "spoken": [
+      "The drive along the coast is really scenic."
+    ],
+    "written": [
+      "The scenic beauty of the region attracts millions of tourists annually."
+    ]
+  },
+  "shade": {
+    "spoken": [
+      "Let's sit in the shade — it's too hot in the sun."
+    ],
+    "written": [
+      "Urban green spaces provide shade, reduce heat islands, and improve air quality."
+    ]
+  },
+  "skepticism": {
+    "spoken": [
+      "There's a lot of skepticism about the new policy."
+    ],
+    "written": [
+      "Healthy skepticism is a valuable trait in scientific inquiry."
+    ]
+  },
+  "solicitor": {
+    "spoken": [
+      "You should consult a solicitor before signing the contract."
+    ],
+    "written": [
+      "The solicitor advised the client on the legal implications of the agreement."
+    ]
+  },
+  "stride": {
+    "spoken": [
+      "We've made great strides in reducing poverty."
+    ],
+    "written": [
+      "Significant strides have been made in renewable energy technology."
+    ]
+  },
+  "succumb": {
+    "spoken": [
+      "He succumbed to pressure and changed his decision."
+    ],
+    "written": [
+      "Many traditional businesses have succumbed to the competition from online retailers."
+    ]
+  },
+  "subdivide": {
+    "spoken": [
+      "The land was subdivided into smaller plots."
+    ],
+    "written": [
+      "The study was subdivided into three distinct phases."
+    ]
+  },
+  "supersede": {
+    "spoken": [
+      "The new version supersedes all previous editions."
+    ],
+    "written": [
+      "Digital communication has largely superseded traditional letter writing."
+    ]
+  },
+  "supremacy": {
+    "spoken": [
+      "The debate over technological supremacy continues."
+    ],
+    "written": [
+      "The struggle for naval supremacy shaped the geopolitics of the nineteenth century."
+    ]
+  },
+  "term": {
+    "spoken": [
+      "In simple terms, it means we have to start over."
+    ],
+    "written": [
+      "The president served two terms in office."
+    ]
+  },
+  "transcend": {
+    "spoken": [
+      "Music transcends language barriers."
+    ],
+    "written": [
+      "The artist's work transcends cultural boundaries and speaks to universal human experience."
+    ]
+  },
+  "unbiased": {
+    "spoken": [
+      "We need an unbiased opinion on this matter."
+    ],
+    "written": [
+      "The judiciary must remain unbiased and free from political influence."
+    ]
+  },
+  "view": {
+    "spoken": [
+      "What's your view on this issue?"
+    ],
+    "written": [
+      "The panoramic view from the summit attracts hikers from around the world."
+    ]
+  },
+  "secrete": {
+    "spoken": [
+      "Some animals secrete venom as a defense mechanism."
+    ],
+    "written": [
+      "The glands secrete hormones that regulate metabolism and growth."
+    ]
+  },
+  "sophisticate": {
+    "spoken": [
+      "The technology is more sophisticated than it looks."
+    ],
+    "written": [
+      "Sophisticated analytical techniques are required to interpret the complex data."
+    ]
+  },
+  "be subject to": {
+    "spoken": [
+      "All proposals are subject to approval by the board."
+    ],
+    "written": [
+      "Imported goods are subject to tariffs and customs regulations."
+    ]
+  },
+  "be liable to": {
+    "spoken": [
+      "The company could be liable for damages."
+    ],
+    "written": [
+      "Employers are liable to prosecution if they fail to comply with safety regulations."
+    ]
+  },
+  "co-operation": {
+    "spoken": [
+      "We need more co-operation between the departments."
+    ],
+    "written": [
+      "International co-operation is essential for addressing global challenges such as climate change."
+    ]
+  },
+  "co-ordinate": {
+    "spoken": [
+      "Let's co-ordinate our efforts to avoid duplication."
+    ],
+    "written": [
+      "The agency was established to co-ordinate disaster relief efforts across the region."
+    ]
+  },
+  "abandon": {
+    "spoken": [
+      "They had to abandon the car in the flood."
+    ],
+    "written": [
+      "The government abandoned the controversial policy after widespread public opposition."
+    ]
+  },
+  "allergic": {
+    "spoken": [
+      "I'm allergic to nuts — I can't eat that."
+    ],
+    "written": [
+      "Allergic reactions to the medication are rare but can be severe."
+    ]
+  },
+  "be consistent with": {
+    "spoken": [
+      "Your actions should be consistent with your words."
+    ],
+    "written": [
+      "The findings are consistent with previous research in the field."
+    ]
+  },
+  "in accordance with": {
+    "spoken": [
+      "Everything was done in accordance with the rules."
+    ],
+    "written": [
+      "The project was completed in accordance with international safety standards."
+    ]
+  },
+  "inactive": {
+    "spoken": [
+      "The account has been inactive for over a year."
+    ],
+    "written": [
+      "Inactive volcanoes can still pose a significant risk of eruption."
+    ]
+  },
+  "infest": {
+    "spoken": [
+      "The garden is infested with aphids."
+    ],
+    "written": [
+      "Rat-infested buildings pose serious health risks to their occupants."
+    ]
+  },
+  "installment": {
+    "spoken": [
+      "I'm paying for the phone in monthly installments."
+    ],
+    "written": [
+      "The final installment of the loan is due at the end of the fiscal year."
+    ]
+  },
+  "introverted": {
+    "spoken": [
+      "She's quite introverted and prefers to be alone."
+    ],
+    "written": [
+      "Introverted students may perform better in smaller, more intimate learning environments."
+    ]
+  },
+  "limb": {
+    "spoken": [
+      "He broke a limb falling from the tree."
+    ],
+    "written": [
+      "The loss of a limb can have profound psychological as well as physical consequences."
+    ]
+  },
+  "log": {
+    "spoken": [
+      "You need to log in to access the system."
+    ],
+    "written": [
+      "Researchers log experimental data meticulously to ensure reproducibility."
+    ]
+  },
+  "organ": {
+    "spoken": [
+      "The heart is a vital organ."
+    ],
+    "written": [
+      "Organ transplantation has saved millions of lives worldwide."
+    ]
+  },
+  "out of the question": {
+    "spoken": [
+      "Going without insurance? That's out of the question."
+    ],
+    "written": [
+      "Budget cuts have made further expansion out of the question for the foreseeable future."
+    ]
+  },
+  "plenty of": {
+    "spoken": [
+      "There's plenty of time — no need to rush."
+    ],
+    "written": [
+      "The region has plenty of natural resources but lacks the infrastructure to exploit them."
+    ]
+  },
+  "religious": {
+    "spoken": [
+      "Religious beliefs vary widely across cultures."
+    ],
+    "written": [
+      "Religious institutions have historically played a significant role in education and social welfare."
+    ]
+  },
+  "sufficiency": {
+    "spoken": [
+      "The sufficiency of the evidence is questionable."
+    ],
+    "written": [
+      "The sufficiency of current reserves to meet future demand remains a concern."
+    ]
+  }
+}

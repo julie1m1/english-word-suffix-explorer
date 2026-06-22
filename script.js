@@ -132,12 +132,19 @@ window.addEventListener("load", () => {
         }
       });
 
-      // 3. 初始加载第一个有效的词库和后缀
+      // 3. 确定初始加载的词库
+      const savedBook = localStorage.getItem("vocab-selected-book");
       const firstValidVocab = data.vocabs.find(v => v.endsWith(".csv"));
+      const initialVocab = (savedBook && data.vocabs.some(v => `data/${v}` === savedBook))
+        ? savedBook
+        : (firstValidVocab ? `data/${firstValidVocab}` : null);
+
+      if (initialVocab) sel.value = initialVocab;
+
       const firstSuffix = data.suffixes ? data.suffixes[0] : null;
 
       Promise.all([
-        firstValidVocab ? loadVocab(`data/${firstValidVocab}`) : Promise.resolve(),
+        initialVocab ? loadVocab(initialVocab) : Promise.resolve(),
         firstSuffix ? loadSuffix(`data/${firstSuffix}`) : Promise.resolve(),
       ]);
     })
@@ -338,8 +345,30 @@ function renderSuffixControls(filterText = "") {
       }
 
       /* ═══════════════════════════════════════
-   IPA
+   IPA + EXAMPLES
 ═══════════════════════════════════════ */
+      let staticExamples = {};
+      let ecdictExamples = {};
+
+      // 加载例句数据，完成后刷新已渲染卡片
+      Promise.all([
+        fetch("data/examples.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
+        fetch("data/ecdict-examples.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      ]).then(([ex, ec]) => {
+        staticExamples = ex;
+        ecdictExamples = ec;
+        // 刷新已渲染卡片的例句（不检查 IPA 状态）
+        document.querySelectorAll(".card[data-word]").forEach(card => {
+          const exEl = card.querySelector(".card-examples");
+          if (!exEl) return;
+          const word = card.dataset.word;
+          const cached = getIPACache()[word];
+          const apiEx = (cached && typeof cached === "object" && cached.examples) ? cached.examples : [];
+          const merged = mergeExamples(word, apiEx);
+          renderExamples(exEl, word, merged, false);
+        });
+      });
+
       function getIPACache() {
         try {
           return JSON.parse(localStorage.getItem("ipa-cache") || "{}");
@@ -347,28 +376,67 @@ function renderSuffixControls(filterText = "") {
           return {};
         }
       }
-      function setIPACache(word, ipa) {
+      function setIPACache(word, ipa, examples) {
         const cache = getIPACache();
-        cache[word] = ipa;
+        cache[word] = { ipa: ipa || "", examples: examples || [] };
         const keys = Object.keys(cache);
         if (keys.length > 5000)
           keys.slice(0, keys.length - 5000).forEach((k) => delete cache[k]);
         localStorage.setItem("ipa-cache", JSON.stringify(cache));
       }
-      async function fetchIPA(word, element) {
-        const cache = getIPACache();
-        if (word in cache) {
-          element.textContent = cache[word];
-          if (cache[word]) element.style.opacity = "0.8";
+      async function fetchIPA(word, element, exampleEl) {
+        let cache = getIPACache();
+        let cached = cache[word];
+
+        // 兼容旧格式（纯字符串）→ 保留 IPA，删除旧条目，重新获取
+        if (typeof cached === "string") {
+          element.textContent = cached;
+          if (cached) element.style.opacity = "0.8";
+          delete cache[word];
+          localStorage.setItem("ipa-cache", JSON.stringify(cache));
+          cached = null; // 标记为需要重新获取
+          // 静态例句先展示
+          const staticEx = staticExamples[word.toLowerCase()];
+          if (staticEx) {
+            renderExamples(exampleEl, word, normalizeStatic(staticEx).map(t => ({ text: t, source: "ai" })), false);
+          }
+        }
+
+        if (cached && typeof cached === "object") {
+          element.textContent = cached.ipa || "";
+          if (cached.ipa) element.style.opacity = "0.8";
+          const merged = mergeExamples(word, cached.examples || []);
+          renderExamples(exampleEl, word, merged, false);
+          // 异步补充 Tatoeba2
+          getTatoeba(word).then(tatoebaEx => {
+            if (tatoebaEx.length) {
+              tatoebaEx.forEach(t => {
+                if (!merged.some(m => m.text.toLowerCase() === t.toLowerCase()))
+                  merged.push({ text: t, source: "tatoeba" });
+              });
+              renderExamples(exampleEl, word, merged, false);
+            }
+          });
           return;
         }
+
+        // 静态例句先展示
+        const staticEx = staticExamples[word.toLowerCase()];
+        if (staticEx) {
+          renderExamples(exampleEl, word, normalizeStatic(staticEx).map(t => ({ text: t, source: "ai" })), false);
+        } else {
+          renderExamples(exampleEl, word, [], true); // loading
+        }
+
         try {
           const res = await fetch(
             `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
           );
           if (!res.ok) {
-            setIPACache(word, "");
+            setIPACache(word, "", []);
             element.textContent = "";
+            const fallback = staticEx ? normalizeStatic(staticEx).map(t => ({ text: t, source: "ai" })) : [];
+            renderExamples(exampleEl, word, fallback, false);
             return;
           }
           const data = await res.json();
@@ -376,13 +444,147 @@ function renderSuffixControls(filterText = "") {
             data[0]?.phonetics?.find((p) => p.text)?.text ||
             data[0]?.phonetic ||
             "";
-          setIPACache(word, ipa);
+          const apiExamples = [];
+          data.forEach(entry => {
+            entry.meanings?.forEach(m => {
+              m.definitions?.forEach(d => {
+                if (d.example && !apiExamples.includes(d.example)) {
+                  apiExamples.push(d.example);
+                }
+              });
+            });
+          });
+          setIPACache(word, ipa, apiExamples);
           element.textContent = ipa;
           if (ipa) element.style.opacity = "0.8";
+          const merged = mergeExamples(word, apiExamples);
+          renderExamples(exampleEl, word, merged, false);
+
+          // 异步补充 Tatoeba2
+          getTatoeba(word).then(tatoebaEx => {
+            if (tatoebaEx.length) {
+              tatoebaEx.forEach(t => {
+                if (!merged.some(m => m.text.toLowerCase() === t.toLowerCase()))
+                  merged.push({ text: t, source: "tatoeba" });
+              });
+              renderExamples(exampleEl, word, merged, false);
+            }
+          });
         } catch {
-          setIPACache(word, "");
+          setIPACache(word, "", []);
           element.textContent = "";
+          renderExamples(exampleEl, word, staticEx ? normalizeStatic(staticEx).map(t => ({ text: t, source: "ai" })) : [], false);
         }
+      }
+
+      function normalizeStatic(ex) {
+        const arr = [];
+        if (ex.spoken) arr.push(...(Array.isArray(ex.spoken) ? ex.spoken : [ex.spoken]));
+        if (ex.written) arr.push(...(Array.isArray(ex.written) ? ex.written : [ex.written]));
+        return arr;
+      }
+
+      // Tatoeba2 API（通过 CORS 代理）
+      async function fetchTatoeba(word) {
+        const baseUrl = `https://tatoeba.org/en/api_v0/search?query=${encodeURIComponent(word)}&from=eng&orphans=no&unapproved=no&sort=relevance&limit=10`;
+        const proxies = [
+          url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+          url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+          url => url, // 直连（如果服务端允许 CORS）
+        ];
+        for (const proxy of proxies) {
+          try {
+            const res = await fetch(proxy(baseUrl), { signal: AbortSignal.timeout(4000) });
+            if (!res.ok) continue;
+            const data = await res.json();
+            return (data.results || [])
+              .map(r => r.text)
+              .filter(t => t.length > 15 && t.toLowerCase().includes(word.toLowerCase()))
+              .slice(0, 3);
+          } catch { continue; }
+        }
+        return [];
+      }
+
+      // ECDICT 缓存（避免重复请求 Tatoeba）
+      const tatoebaCache = {};
+      function getTatoeba(word) {
+        const key = word.toLowerCase();
+        if (key in tatoebaCache) return Promise.resolve(tatoebaCache[key]);
+        return fetchTatoeba(word).then(r => { tatoebaCache[key] = r; return r; });
+      }
+
+      function mergeExamples(word, apiExamples) {
+        const key = word.toLowerCase();
+        const staticEx = staticExamples[key];
+        const staticArr = staticEx ? normalizeStatic(staticEx) : [];
+        const ecArr = ecdictExamples[key]?.ec || [];
+
+        // 标记来源：{ text, source }
+        const result = [];
+        // 1. ECDICT
+        ecArr.forEach(t => {
+          if (!result.some(r => r.text.toLowerCase() === t.toLowerCase()))
+            result.push({ text: t, source: "ecdict" });
+        });
+        // 2. AI 静态
+        staticArr.forEach(t => {
+          if (!result.some(r => r.text.toLowerCase() === t.toLowerCase())) {
+            const isSpoken = staticEx?.spoken?.includes(t);
+            result.push({ text: t, source: isSpoken ? "ai-spoken" : "ai-written" });
+          }
+        });
+        // 3. Free Dictionary API
+        apiExamples.forEach(t => {
+          if (!result.some(r => r.text.toLowerCase() === t.toLowerCase()))
+            result.push({ text: t, source: "dictapi" });
+        });
+        return result;
+      }
+
+      function renderExamples(el, word, examples, loading) {
+        if (!el) return;
+        el.innerHTML = "";
+        const isList = document.getElementById("grid").classList.contains("list-view");
+
+        if (loading && isList) {
+          el.style.display = "";
+          el.innerHTML = '<div class="example-skeleton"></div>';
+          return;
+        }
+
+        if (!examples.length) {
+          if (isList) {
+            el.style.display = "";
+            el.innerHTML = '<span class="example-placeholder">...</span>';
+          } else {
+            el.style.display = "none";
+          }
+          return;
+        }
+
+        el.style.display = "";
+        const escWord = esc(word);
+        const wordRegex = new RegExp(`(${escWord.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+
+        examples.forEach(({ text, source }) => {
+          const div = document.createElement("div");
+          div.className = "example-sentence";
+          const highlighted = esc(text).replace(wordRegex, '<span class="example-hl">$1</span>');
+
+          let icon = "•";
+          let iconClass = "";
+          if (source === "ai-spoken") { icon = "💬"; iconClass = "spoken"; }
+          else if (source === "ai-written") { icon = "📝"; iconClass = "written"; }
+          else if (source === "ecdict") { icon = "📗"; iconClass = "ecdict"; }
+          else if (source === "tatoeba") { icon = "🌐"; iconClass = "tatoeba"; }
+          else if (source === "dictapi") { icon = "📘"; iconClass = "dictapi"; }
+
+          div.innerHTML =
+            `<span class="example-icon ${iconClass}">${icon}</span>` +
+            `<span>${highlighted}</span>`;
+          el.appendChild(div);
+        });
       }
 
       // IntersectionObserver-based IPA — no hard cap, loads as cards enter viewport
@@ -392,8 +594,9 @@ function renderSuffixControls(filterText = "") {
             if (entry.isIntersecting) {
               const card = entry.target;
               const ipaEl = card.querySelector(".word-phonetic");
+              const exEl = card.querySelector(".card-examples");
               if (ipaEl && ipaEl.textContent === "...")
-                fetchIPA(card.dataset.word, ipaEl);
+                fetchIPA(card.dataset.word, ipaEl, exEl);
               ipaObserver.unobserve(card);
             }
           });
@@ -535,6 +738,9 @@ function renderSuffixControls(filterText = "") {
         </div>
         <div class="word-phonetic" data-word="${esc(item.word)}">...</div>
         <div class="word-def">${esc(item.def)}</div>
+        <div class="card-examples" style="display:none">
+          <div class="example-skeleton"></div>
+        </div>
         <div class="card-links">
             <a href="https://dict.eudic.net/dicts/en/${w}" target="_blank" class="dict-link en-cn" title="Eudic">中文</a>
             <a href="https://www.onelook.com/?w=${w}&phrases=1" target="_blank" class="dict-link en-en" title="OneLook">EN↗</a>
@@ -543,8 +749,8 @@ function renderSuffixControls(filterText = "") {
     </div>`;
         let cardAudio = null;
         function playWord() {
-          // 播放器运行中时不重复播放音频，避免冲突
-          if (playerState && playerState.active && playerState.playing) {
+          // 播放器激活时不播放单独音频，避免冲突
+          if (playerState && playerState.active) {
             card.classList.add("viewed");
             return;
           }
@@ -617,6 +823,21 @@ function renderSuffixControls(filterText = "") {
             if (card === activeCard) return;
           }
 
+          if (playerState && playerState.active) {
+            e.preventDefault();
+            if (e.key === " ") {
+              if (playerState.playing) {
+                playerState.playing = false;
+                clearTimeout(playerState.timer);
+                if (playerState.audio) playerState.audio.pause();
+                document.getElementById("playerPlay").textContent = "▶";
+              } else {
+                playCurrentWord();
+              }
+            }
+            return;
+          }
+
           if (e.key === " " || e.key === "Enter") {
 
             e.preventDefault();
@@ -644,6 +865,7 @@ function renderSuffixControls(filterText = "") {
   } else {
     showAllDef = !showAllDef;
     grid.classList.toggle("show-all-def", showAllDef);
+    grid.classList.toggle("show-all-examples", showAllDef);
     this.classList.toggle("active", showAllDef);
     label.textContent = showAllDef ? "Hide All" : "Show All";
     icon.textContent = showAllDef ? "🙈" : "👁";
@@ -652,7 +874,10 @@ function renderSuffixControls(filterText = "") {
 
       document
         .getElementById("vocabSelect")
-        .addEventListener("change", (e) => loadVocab(e.target.value));
+        .addEventListener("change", (e) => {
+          localStorage.setItem("vocab-selected-book", e.target.value);
+          loadVocab(e.target.value);
+        });
 
       document.getElementById("viewToggleBtn").addEventListener("click", function () {
   const grid = document.getElementById("grid");
@@ -660,10 +885,21 @@ function renderSuffixControls(filterText = "") {
   const icon = this.querySelector('.icon');
   
   const isList = grid.classList.toggle("list-view");
-  label.textContent = isList ? "Card" : "List";
-  icon.textContent = isList ? "⊞" : "☰";
+  icon.textContent = isList ? "☰" : "⊞";
+  label.textContent = isList ? "List" : "Card";
   localStorage.setItem("vocab-view", isList ? "list" : "card");
 });
+
+// ── 初始化恢复视图状态 ──
+(function initView() {
+  const saved = localStorage.getItem("vocab-view");
+  if (saved === "list") {
+    document.getElementById("grid").classList.add("list-view");
+    const btn = document.getElementById("viewToggleBtn");
+    btn.querySelector('.icon').textContent = "☰";
+    btn.querySelector('.label').textContent = "List";
+  }
+})();
 
 
 /* ═══════════════════════════════════════
@@ -1416,6 +1652,26 @@ function updateSpellProgress() {
 
 // ── Document-level: Enter/Space when input is removed (wrong answer) ──
 document.addEventListener("keydown", (e) => {
+  const tag = document.activeElement?.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+  if (playerState && playerState.active) {
+    if (e.key === " ") {
+      e.preventDefault();
+      if (playerState.playing) {
+        playerState.playing = false;
+        clearTimeout(playerState.timer);
+        if (playerState.audio) playerState.audio.pause();
+        document.getElementById("playerPlay").textContent = "▶";
+      } else {
+        playCurrentWord();
+      }
+    }
+    if (e.key === "ArrowLeft") { e.preventDefault(); goToPrev(); }
+    if (e.key === "ArrowRight") { e.preventDefault(); document.getElementById("playerNext").click(); }
+    return;
+  }
+
   if (!spellingState.active || !spellingState.started) return;
   if (e.key === "Enter" && spellingState.waitingForEnter) {
     e.preventDefault();

@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vocab Lab</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='2' y='2' width='12' height='12' rx='3' fill='%23D0BCFF'/><rect x='18' y='2' width='12' height='12' rx='3' fill='%23D0BCFF' opacity='.6'/><rect x='2' y='18' width='12' height='12' rx='3' fill='%23D0BCFF' opacity='.6'/><rect x='18' y='18' width='12' height='12' rx='3' fill='%23D0BCFF' opacity='.3'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0b0f;
+      --surface: rgba(255,255,255,.04);
+      --surface-hover: rgba(255,255,255,.07);
+      --glass: rgba(255,255,255,.03);
+      --glass-border: rgba(255,255,255,.06);
+      --border: rgba(255,255,255,.06);
+      --text-1: #f1f1f3;
+      --text-2: rgba(255,255,255,.55);
+      --text-3: rgba(255,255,255,.3);
+      --accent: #b794f6;
+      --accent-2: #9f7aea;
+      --gradient-1: linear-gradient(135deg, #b794f6 0%, #667eea 50%, #764ba2 100%);
+      --gradient-2: linear-gradient(135deg, rgba(183,148,246,.12) 0%, rgba(102,126,234,.08) 100%);
+      --glow: rgba(183,148,246,.15);
+    }
+
+    html {
+      font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Ambient background ── */
+    .bg-glow {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      overflow: hidden;
+    }
+    .bg-glow::before {
+      content: "";
+      position: absolute;
+      width: 600px; height: 600px;
+      top: -200px; left: -100px;
+      background: radial-gradient(circle, rgba(183,148,246,.08) 0%, transparent 70%);
+      animation: float 20s ease-in-out infinite;
+    }
+    .bg-glow::after {
+      content: "";
+      position: absolute;
+      width: 500px; height: 500px;
+      bottom: -150px; right: -100px;
+      background: radial-gradient(circle, rgba(102,126,234,.06) 0%, transparent 70%);
+      animation: float 25s ease-in-out infinite reverse;
+    }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(40px, 30px); }
+    }
+
+    /* ── Layout ── */
+    .wrapper {
+      position: relative; z-index: 1;
+      max-width: 960px; margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── Header ── */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      padding: 20px 0;
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      background: rgba(11,11,15,.7);
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .header-inner {
+      max-width: 960px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 18px; font-weight: 700; letter-spacing: -.3px;
+    }
+    .logo-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--gradient-1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: #fff; font-weight: 700;
+    }
+    .header-actions { display: flex; gap: 8px; }
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 10px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass);
+      color: var(--text-2); cursor: pointer;
+      font-size: 15px; display: flex; align-items: center; justify-content: center;
+      transition: all .2s;
+    }
+    .icon-btn:hover { background: var(--surface-hover); color: var(--text-1); }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 64px 0 40px;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 100px;
+      background: var(--gradient-2);
+      border: 1px solid rgba(183,148,246,.15);
+      font-size: 12px; font-weight: 600; color: var(--accent);
+      margin-bottom: 20px;
+      letter-spacing: .5px; text-transform: uppercase;
+    }
+    .hero h1 {
+      font-size: 40px; font-weight: 700; letter-spacing: -1px;
+      line-height: 1.15; margin-bottom: 14px;
+      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,.7) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 16px; color: var(--text-2); max-width: 480px;
+      margin: 0 auto; line-height: 1.6;
+    }
+
+    /* ── Search ── */
+    .search-section {
+      padding: 0 0 32px;
+      max-width: 520px; margin: 0 auto;
+    }
+    .search-box {
+      position: relative;
+    }
+    .search-icon {
+      position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+      color: var(--text-3); font-size: 14px; pointer-events: none;
+    }
+    .search-input {
+      width: 100%; padding: 13px 16px 13px 42px;
+      border-radius: 14px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      color: var(--text-1); font-size: 14px;
+      font-family: inherit; outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .search-input::placeholder { color: var(--text-3); }
+    .search-input:focus {
+      border-color: rgba(183,148,246,.35);
+      box-shadow: 0 0 0 3px rgba(183,148,246,.08);
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: flex; gap: 12px; padding-bottom: 32px;
+      justify-content: center; flex-wrap: wrap;
+    }
+    .stat-chip {
+      padding: 8px 16px; border-radius: 10px;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      font-size: 13px; color: var(--text-2);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .stat-chip b { color: var(--text-1); font-weight: 600; }
+
+    /* ── Category ── */
+    .category { margin-bottom: 36px; }
+    .category-head {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 14px; padding: 0 4px;
+    }
+    .category-name {
+      font-size: 14px; font-weight: 700; color: var(--text-1);
+      letter-spacing: -.2px;
+    }
+    .category-count {
+      font-size: 11px; font-weight: 600; color: var(--accent);
+      background: rgba(183,148,246,.1);
+      padding: 2px 8px; border-radius: 6px;
+    }
+    .category-line {
+      flex: 1; height: 1px;
+      background: var(--glass-border);
+    }
+
+    .book-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 10px;
+    }
+
+    /* ── Book Card ── */
+    .book-card {
+      position: relative;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      cursor: pointer;
+      text-decoration: none; color: inherit;
+      display: flex; align-items: center; gap: 14px;
+      transition: all .22s cubic-bezier(.4,0,.2,1);
+      overflow: hidden;
+    }
+    .book-card::before {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(183,148,246,.06) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity .25s;
+    }
+    .book-card:hover {
+      border-color: rgba(183,148,246,.2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,.3), 0 0 0 1px rgba(183,148,246,.08);
+    }
+    .book-card:hover::before { opacity: 1; }
+    .book-card:active { transform: translateY(0); }
+
+    .book-icon {
+      width: 42px; height: 42px; border-radius: 11px;
+      background: var(--gradient-2);
+      border: 1px solid rgba(183,148,246,.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+      position: relative; z-index: 1;
+    }
+    .book-info {
+      flex: 1; min-width: 0;
+      position: relative; z-index: 1;
+    }
+    .book-name {
+      font-size: 14px; font-weight: 600; line-height: 1.35;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .book-arrow {
+      color: var(--text-3); font-size: 14px; flex-shrink: 0;
+      position: relative; z-index: 1;
+      transition: color .2s, transform .2s;
+    }
+    .book-card:hover .book-arrow {
+      color: var(--accent); transform: translateX(3px);
+    }
+
+    /* ── Empty / Loading ── */
+    .loading, .no-result {
+      text-align: center; padding: 80px 20px;
+      color: var(--text-3); font-size: 14px;
+    }
+    .loading::after {
+      content: ""; display: block;
+      width: 28px; height: 28px; margin: 16px auto 0;
+      border: 2px solid var(--glass-border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Mobile ── */
+    @media (max-width: 640px) {
+      .hero { padding: 40px 0 28px; }
+      .hero h1 { font-size: 28px; }
+      .hero p { font-size: 14px; }
+      .book-grid { grid-template-columns: 1fr; }
+      .stats-row { gap: 8px; }
+      .stat-chip { font-size: 12px; padding: 6px 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">V</div>
+        <span>Vocab Lab</span>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="themeToggle">☀️</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrapper">
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-badge">📖 Choose Your Book</div>
+      <h1>选择你的单词书</h1>
+      <p>从分类中选择一本单词书，开始高效记忆之旅</p>
+    </div>
+
+    <!-- Search -->
+    <div class="search-section">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="searchInput" placeholder="搜索单词书或分类…" autocomplete="off" />
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow"></div>
+
+    <!-- Content -->
+    <div id="content">
+      <div class="loading">Loading</div>
+    </div>
+  </div>
+
+  <script>
+    /* ══ Theme ══ */
+    const THEME_KEY = "vocab-theme";
+    function applyTheme(t) {
+      document.documentElement.setAttribute("data-theme", t);
+      localStorage.setItem(THEME_KEY, t);
+      document.getElementById("themeToggle").textContent = t === "light" ? "🌙" : "☀️";
+    }
+    applyTheme(localStorage.getItem(THEME_KEY) || "dark");
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+    });
+
+    /* ══ Data ══ */
+    let categories = [];
+
+    fetch("data/list.json")
+      .then(r => r.json())
+      .then(data => {
+        let cur = { name: "", books: [] };
+        data.vocabs.forEach(n => {
+          if (n === "---") return;
+          if (n.endsWith(".csv")) {
+            cur.books.push(n);
+          } else {
+            if (cur.books.length) categories.push(cur);
+            cur = { name: n, books: [] };
+          }
+        });
+        if (cur.books.length) categories.push(cur);
+
+        const totalBooks = categories.reduce((s, c) => s + c.books.length, 0);
+        document.getElementById("statsRow").innerHTML =
+          `<div class="stat-chip"><b>${categories.length}</b> 分类</div>` +
+          `<div class="stat-chip"><b>${totalBooks}</b> 本单词书</div>`;
+
+        render(categories);
+      })
+      .catch(() => {
+        document.getElementById("content").innerHTML = '<div class="no-result">无法加载词库列表</div>';
+      });
+
+    function render(list, q = "") {
+      const content = document.getElementById("content");
+      content.innerHTML = "";
+      const query = q.toLowerCase().trim();
+      let shown = 0;
+
+      list.forEach(cat => {
+        const filtered = query
+          ? cat.books.filter(b =>
+              b.toLowerCase().includes(query) ||
+              cat.name.toLowerCase().includes(query))
+          : cat.books;
+        if (!filtered.length) return;
+        shown += filtered.length;
+
+        const section = document.createElement("div");
+        section.className = "category";
+
+        const head = document.createElement("div");
+        head.className = "category-head";
+        head.innerHTML =
+          `<span class="category-name">${esc(cat.name)}</span>` +
+          `<span class="category-count">${filtered.length}</span>` +
+          `<span class="category-line"></span>`;
+        section.appendChild(head);
+
+        const grid = document.createElement("div");
+        grid.className = "book-grid";
+
+        filtered.forEach(book => {
+          const card = document.createElement("a");
+          card.className = "book-card";
+          card.href = "index.html";
+          card.innerHTML =
+            `<div class="book-icon">📖</div>` +
+            `<div class="book-info"><div class="book-name">${esc(book.replace(".csv",""))}</div></div>` +
+            `<div class="book-arrow">→</div>`;
+          card.addEventListener("click", e => {
+            e.preventDefault();
+            localStorage.setItem("vocab-selected-book", "data/" + book);
+            window.location.href = "index.html";
+          });
+          grid.appendChild(card);
+        });
+
+        section.appendChild(grid);
+        content.appendChild(section);
+      });
+
+      if (!shown) {
+        content.innerHTML = '<div class="no-result">没有找到匹配的单词书</div>';
+      }
+    }
+
+    function esc(s) {
+      return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+
+    /* ══ Search ══ */
+    document.getElementById("searchInput").addEventListener("input", e => {
+      render(categories, e.target.value);
+    });
+  </script>
+</body>
+</html>

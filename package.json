@@ -1,0 +1,11 @@
+{
+  "name": "vocab-lab",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "extract-ecdict": "node scripts/extract-ecdict.js"
+  },
+  "dependencies": {
+    "sql.js": "^1.14.1"
+  }
+}
