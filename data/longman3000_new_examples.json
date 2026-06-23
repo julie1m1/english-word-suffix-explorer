@@ -1,0 +1,354 @@
+{
+  "squeeze": {
+    "spoken": ["Squeeze the lemon into the glass."],
+    "written": ["She squeezed through the narrow gap."]
+  },
+  "stake": {
+    "spoken": ["There's a lot at stake in this decision."],
+    "written": ["The company has a stake in the new venture."]
+  },
+  "stall": {
+    "spoken": ["The market stall sells fresh fruit."],
+    "written": ["The car stalled in the middle of the road."]
+  },
+  "starve": {
+    "spoken": ["I'm starving — let's eat!"],
+    "written": ["The plants will starve without sunlight."]
+  },
+  "statistic": {
+    "spoken": ["The statistic shows a clear improvement."],
+    "written": ["The statistic was reported in the news."]
+  },
+  "steak": {
+    "spoken": ["I'd like a medium-rare steak, please."],
+    "written": ["The steak was cooked to perfection."]
+  },
+  "stir": {
+    "spoken": ["Stir the soup so it doesn't burn."],
+    "written": ["She stirred the paint before using it."]
+  },
+  "straightforward": {
+    "spoken": ["The instructions are pretty straightforward."],
+    "written": ["The process is straightforward and quick."]
+  },
+  "strategic": {
+    "spoken": ["The company made a strategic decision."],
+    "written": ["The strategic plan was approved by the board."]
+  },
+  "straw": {
+    "spoken": ["Can I have a straw for my drink?"],
+    "written": ["The farmer baled the straw after harvest."]
+  },
+  "strawberry": {
+    "spoken": ["I love strawberry ice cream."],
+    "written": ["The strawberry season is short but sweet."]
+  },
+  "stretch": {
+    "spoken": ["I need to stretch after sitting all day."],
+    "written": ["The beach stretches for miles."]
+  },
+  "submit": {
+    "spoken": ["Please submit your homework by Friday."],
+    "written": ["The application must be submitted online."]
+  },
+  "subsequently": {
+    "spoken": ["He subsequently moved to London."],
+    "written": ["The company subsequently changed its policy."]
+  },
+  "suck": {
+    "spoken": ["This vacuum cleaner really sucks — in a good way."],
+    "written": ["The experience was not great — it sucked."]
+  },
+  "sudden": {
+    "spoken": ["There was a sudden change in the weather."],
+    "written": ["The sudden noise scared everyone."]
+  },
+  "super": {
+    "spoken": ["That was a super performance!"],
+    "written": ["The new phone is super fast."]
+  },
+  "supper": {
+    "spoken": ["What's for supper tonight?"],
+    "written": ["We had supper at a small restaurant."]
+  },
+  "surprisingly": {
+    "spoken": ["The exam was surprisingly easy."],
+    "written": ["Surprisingly, the results were very good."]
+  },
+  "survey": {
+    "spoken": ["We did a survey to find out what people think."],
+    "written": ["The survey showed that most people agree."]
+  },
+  "suspicion": {
+    "spoken": ["I have a suspicion that he's lying."],
+    "written": ["The police acted on suspicion."]
+  },
+  "swap": {
+    "spoken": ["Let's swap seats."],
+    "written": ["They swapped their lunches."]
+  },
+  "sweep": {
+    "spoken": ["Can you sweep the floor?"],
+    "written": ["She swept the leaves off the porch."]
+  },
+  "tablet": {
+    "spoken": ["I use a tablet for reading books."],
+    "written": ["The doctor prescribed a tablet for the headache."]
+  },
+  "teaching": {
+    "spoken": ["Teaching is a rewarding career."],
+    "written": ["Her teaching style is very engaging."]
+  },
+  "telly": {
+    "spoken": ["What's on the telly tonight?"],
+    "written": ["He spent the whole evening watching telly."]
+  },
+  "tent": {
+    "spoken": ["We set up the tent near the river."],
+    "written": ["The tent kept us dry during the rain."]
+  },
+  "terribly": {
+    "spoken": ["I'm terribly sorry about that."],
+    "written": ["The weather was terribly hot."]
+  },
+  "terror": {
+    "spoken": ["She screamed in terror."],
+    "written": ["The terror attack shocked the nation."]
+  },
+  "terrorist": {
+    "spoken": ["The terrorist was arrested by police."],
+    "written": ["The government increased security against terrorist threats."]
+  },
+  "theirs": {
+    "spoken": ["Is this bag theirs?"],
+    "written": ["The victory was theirs to celebrate."]
+  },
+  "three": {
+    "spoken": ["I'll be there in three minutes."],
+    "written": ["Three students were absent today."]
+  },
+  "tile": {
+    "spoken": ["The bathroom floor has white tiles."],
+    "written": ["The tile roof of the house needs repair."]
+  },
+  "tin": {
+    "spoken": ["I bought a tin of beans."],
+    "written": ["The tin of biscuits was a gift."]
+  },
+  "toast": {
+    "spoken": ["I had toast and jam for breakfast."],
+    "written": ["She made toast with butter and honey."]
+  },
+  "ton": {
+    "spoken": ["I have a ton of homework to do."],
+    "written": ["The truck was carrying a ton of bricks."]
+  },
+  "towel": {
+    "spoken": ["Can you pass me a towel?"],
+    "written": ["She dried her hair with a towel."]
+  },
+  "trailer": {
+    "spoken": ["Have you seen the trailer for the new movie?"],
+    "written": ["The trailer was parked behind the house."]
+  },
+  "trainer": {
+    "spoken": ["My personal trainer is really strict."],
+    "written": ["The trainer taught the dog new tricks."]
+  },
+  "transaction": {
+    "spoken": ["The transaction was completed in seconds."],
+    "written": ["Each transaction is recorded in the system."]
+  },
+  "tray": {
+    "spoken": ["Put the cups on the tray."],
+    "written": ["She carried the food on a tray."]
+  },
+  "treaty": {
+    "spoken": ["The two countries signed a treaty."],
+    "written": ["The treaty was signed after years of negotiation."]
+  },
+  "trick": {
+    "spoken": ["That's a cool trick! How do you do it?"],
+    "written": ["The magician performed an amazing trick."]
+  },
+  "tricky": {
+    "spoken": ["This question is really tricky."],
+    "written": ["The situation is tricky and needs careful handling."]
+  },
+  "trousers": {
+    "spoken": ["These trousers are too long for me."],
+    "written": ["He wore black trousers to the interview."]
+  },
+  "tune": {
+    "spoken": ["That's a catchy tune — I can't get it out of my head."],
+    "written": ["She hummed a familiar tune."]
+  },
+  "tunnel": {
+    "spoken": ["The tunnel goes under the river."],
+    "written": ["The tunnel was built in the 19th century."]
+  },
+  "twist": {
+    "spoken": ["Give the lid a twist to open it."],
+    "written": ["The story has an unexpected twist at the end."]
+  },
+  "tyre": {
+    "spoken": ["I got a flat tyre on the way here."],
+    "written": ["The tyres need to be replaced."]
+  },
+  "ultimately": {
+    "spoken": ["Ultimately, it's your decision."],
+    "written": ["The project was ultimately successful."]
+  },
+  "underneath": {
+    "spoken": ["The cat is hiding underneath the bed."],
+    "written": ["Underneath the calm surface, there was tension."]
+  },
+  "undertake": {
+    "spoken": ["Are you willing to undertake this project?"],
+    "written": ["The company undertook a major renovation."]
+  },
+  "unemployed": {
+    "spoken": ["He's been unemployed for six months."],
+    "written": ["The number of unemployed people has risen."]
+  },
+  "unfair": {
+    "spoken": ["That's so unfair!"],
+    "written": ["The unfair treatment caused a lot of anger."]
+  },
+  "unfortunate": {
+    "spoken": ["It's unfortunate that you can't come."],
+    "written": ["The unfortunate event affected many people."]
+  },
+  "unhappy": {
+    "spoken": ["She's unhappy with her current job."],
+    "written": ["The unhappy customer left a bad review."]
+  },
+  "unity": {
+    "spoken": ["Unity is strength."],
+    "written": ["The unity of the team was their greatest asset."]
+  },
+  "unusual": {
+    "spoken": ["That's an unusual name — I like it."],
+    "written": ["The unusual weather pattern worried scientists."]
+  },
+  "urban": {
+    "spoken": ["I prefer urban life to rural life."],
+    "written": ["Urban areas have more job opportunities."]
+  },
+  "urgent": {
+    "spoken": ["This is urgent — call me back immediately."],
+    "written": ["The patient needed urgent medical attention."]
+  },
+  "used to": {
+    "spoken": ["I used to play football when I was young."],
+    "written": ["She used to live in Paris before moving to London."]
+  },
+  "vacation": {
+    "spoken": ["We're going on vacation next month."],
+    "written": ["She took a two-week vacation in Italy."]
+  },
+  "vague": {
+    "spoken": ["His instructions were really vague."],
+    "written": ["The memory of that day is vague."]
+  },
+  "vary": {
+    "spoken": ["Prices vary depending on the season."],
+    "written": ["Opinions vary on this topic."]
+  },
+  "vegetable": {
+    "spoken": ["Eat your vegetables — they're good for you."],
+    "written": ["Fresh vegetables are an important part of a healthy diet."]
+  },
+  "vet": {
+    "spoken": ["We took the dog to the vet."],
+    "written": ["The vet said the puppy is healthy."]
+  },
+  "via": {
+    "spoken": ["I'll send it to you via email."],
+    "written": ["The message was sent via text."]
+  },
+  "village": {
+    "spoken": ["She grew up in a small village."],
+    "written": ["The village has a population of about 500."]
+  },
+  "virtually": {
+    "spoken": ["The project is virtually finished."],
+    "written": ["Virtually everyone agreed with the plan."]
+  },
+  "wander": {
+    "spoken": ["Let's wander around the old town."],
+    "written": ["She wandered through the forest."]
+  },
+  "ward": {
+    "spoken": ["He's in the hospital ward on the third floor."],
+    "written": ["The ward was full of patients."]
+  },
+  "wardrobe": {
+    "spoken": ["I need a bigger wardrobe for all my clothes."],
+    "written": ["She organized her wardrobe by color."]
+  },
+  "washing": {
+    "spoken": ["I need to do the washing before dinner."],
+    "written": ["The washing machine takes about an hour."]
+  },
+  "web": {
+    "spoken": ["I found the information on the web."],
+    "written": ["The web has changed how we access information."]
+  },
+  "weekly": {
+    "spoken": ["The magazine comes out weekly."],
+    "written": ["The weekly meeting is on Mondays."]
+  },
+  "weird": {
+    "spoken": ["That's a weird noise — what is it?"],
+    "written": ["The dream was really weird."]
+  },
+  "whatsoever": {
+    "spoken": ["I have no idea whatsoever."],
+    "written": ["There is no evidence whatsoever."]
+  },
+  "whereas": {
+    "spoken": ["He likes coffee, whereas she prefers tea."],
+    "written": ["The north is cold, whereas the south is warm."]
+  },
+  "whisky": {
+    "spoken": ["Would you like a whisky?"],
+    "written": ["The whisky was aged for twelve years."]
+  },
+  "whoever": {
+    "spoken": ["Whoever did this should be proud."],
+    "written": ["Whoever arrives first gets the best seat."]
+  },
+  "wicked": {
+    "spoken": ["That was a wicked performance!"],
+    "written": ["The wicked witch in the story scared the children."]
+  },
+  "widespread": {
+    "spoken": ["There's widespread agreement on this issue."],
+    "written": ["The disease caused widespread panic."]
+  },
+  "windy": {
+    "spoken": ["It's really windy outside today."],
+    "written": ["The windy weather made it hard to walk."]
+  },
+  "wipe": {
+    "spoken": ["Wipe the table after dinner."],
+    "written": ["She wiped the dust off the shelf."]
+  },
+  "workshop": {
+    "spoken": ["I'm attending a writing workshop this weekend."],
+    "written": ["The workshop teaches basic coding skills."]
+  },
+  "worried": {
+    "spoken": ["I'm worried about the exam results."],
+    "written": ["She was worried about her friend's health."]
+  },
+  "worrying": {
+    "spoken": ["The situation is really worrying."],
+    "written": ["The worrying trend needs to be addressed."]
+  },
+  "yep": {
+    "spoken": ["Yep, I'll be there at seven."],
+    "written": ["Yep, that's exactly what happened."]
+  }
+}

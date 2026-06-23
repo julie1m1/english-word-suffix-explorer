@@ -30,13 +30,41 @@
       };
 
       /* ═══════════════════════════════════════
+   ICON SYSTEM — Heroicons 24/Outline
+═══════════════════════════════════════ */
+      const ICONS = {
+        'eye': '<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>',
+        'eye-slash': '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c1.691 0 3.318-.42 4.754-1.173M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/>',
+        'squares-2x2': '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z"/>',
+        'list-bullet': '<path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12M8.25 17.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>',
+        'play': '<path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/>',
+        'pause': '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5"/>',
+        'forward': '<path stroke-linecap="round" stroke-linejoin="round" d="M3 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 0 1 0 1.954l-7.108 4.061A1.125 1.125 0 0 1 3 16.811V8.69ZM12.75 8.689c0-.864.933-1.406 1.683-.977l7.108 4.061a1.125 1.125 0 0 1 0 1.954l-7.108 4.061a1.125 1.125 0 0 1-1.683-.977V8.69Z"/>',
+        'backward': '<path stroke-linecap="round" stroke-linejoin="round" d="M21 16.811c0 .864-.933 1.406-1.683.977l-7.108-4.061a1.125 1.125 0 0 1 0-1.954l7.108-4.061A1.125 1.125 0 0 1 21 8.189v8.622ZM11.25 16.811c0 .864-.933 1.406-1.683.977l-7.108-4.061a1.125 1.125 0 0 1 0-1.954l7.108-4.061a1.125 1.125 0 0 1 1.683.977v8.622Z"/>',
+        'pencil-square': '<path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/>',
+        'sun': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/>',
+        'moon': '<path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/>',
+        'x-mark': '<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>',
+        'speaker-wave': '<path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>',
+        'sparkles': '<path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"/>',
+        'funnel': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"/>',
+        'magnifying-glass': '<path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>',
+        'exclamation-triangle': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>',
+      };
+
+      function icon(name, size = 20) {
+        const paths = ICONS[name] || ICONS['eye'];
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">${paths}</svg>`;
+      }
+
+      /* ═══════════════════════════════════════
    THEME — Material Design 3
 ═══════════════════════════════════════ */
       function applyTheme(t) {
         document.documentElement.setAttribute("data-theme", t);
         localStorage.setItem("vocab-theme", t);
-        document.getElementById("themeToggle").textContent =
-          t === "light" ? "🌙" : "☀️";
+        document.getElementById("themeToggle").innerHTML =
+          t === "light" ? icon("moon") : icon("sun");
         document.getElementById("themeToggle").title =
           t === "light" ? "Switch to Dark" : "Switch to Light";
       }
@@ -554,12 +582,7 @@ function renderSuffixControls(filterText = "") {
         }
 
         if (!examples.length) {
-          if (isList) {
-            el.style.display = "";
-            el.innerHTML = '<span class="example-placeholder">...</span>';
-          } else {
-            el.style.display = "none";
-          }
+          el.style.display = "none";
           return;
         }
 
@@ -574,11 +597,11 @@ function renderSuffixControls(filterText = "") {
 
           let icon = "•";
           let iconClass = "";
-          if (source === "ai-spoken") { icon = "💬"; iconClass = "spoken"; }
-          else if (source === "ai-written") { icon = "📝"; iconClass = "written"; }
-          else if (source === "ecdict") { icon = "📗"; iconClass = "ecdict"; }
-          else if (source === "tatoeba") { icon = "🌐"; iconClass = "tatoeba"; }
-          else if (source === "dictapi") { icon = "📘"; iconClass = "dictapi"; }
+          if (source === "ai-spoken") { icon = "口语"; iconClass = "spoken"; }
+          else if (source === "ai-written") { icon = "书面"; iconClass = "written"; }
+          else if (source === "ecdict") { icon = "ECD"; iconClass = "ecdict"; }
+          else if (source === "tatoeba") { icon = "Tat"; iconClass = "tatoeba"; }
+          else if (source === "dictapi") { icon = "API"; iconClass = "dictapi"; }
 
           div.innerHTML =
             `<span class="example-icon ${iconClass}">${icon}</span>` +
@@ -661,7 +684,7 @@ function renderSuffixControls(filterText = "") {
 
         if (!filteredVocab.length) {
           document.getElementById("grid").innerHTML =
-            `<div class="empty-state"><div class="icon">🔍</div><p>No words match this filter.<br>Try a different combination.</p></div>`;
+            `<div class="empty-state"><div class="icon">${icon("magnifying-glass", 40)}</div><p>No words match this filter.<br>Try a different combination.</p></div>`;
           return;
         }
         renderNextPage();
@@ -743,8 +766,8 @@ function renderSuffixControls(filterText = "") {
         </div>
         <div class="card-links">
             <a href="https://dict.eudic.net/dicts/en/${w}" target="_blank" class="dict-link en-cn" title="Eudic">中文</a>
-            <a href="https://www.onelook.com/?w=${w}&phrases=1" target="_blank" class="dict-link en-en" title="OneLook">EN↗</a>
-            <a href="https://www.ldoceonline.com/dictionary/${w}" target="_blank" class="dict-link en-cn" title="Longman">Lang</a>
+            <a href="https://www.onelook.com/?w=${w}&phrases=1" target="_blank" class="dict-link en-en" title="OneLook">EN</a>
+            <a href="https://www.ldoceonline.com/dictionary/${w}" target="_blank" class="dict-link en-cn" title="Longman">Longman</a>
         </div>
     </div>`;
         let cardAudio = null;
@@ -830,7 +853,7 @@ function renderSuffixControls(filterText = "") {
                 playerState.playing = false;
                 clearTimeout(playerState.timer);
                 if (playerState.audio) playerState.audio.pause();
-                document.getElementById("playerPlay").textContent = "▶";
+                document.getElementById("playerPlay").innerHTML = icon("play", 18);
               } else {
                 playCurrentWord();
               }
@@ -855,20 +878,20 @@ function renderSuffixControls(filterText = "") {
      document.getElementById("toggleAllBtn").addEventListener("click", function () {
   const grid = document.getElementById("grid");
   const label = this.querySelector('.label');
-  const icon = this.querySelector('.icon');
+  const iconEl = this.querySelector('.icon');
 
   if (isMobile()) {
     const hiding = grid.classList.toggle("hide-all-def");
     this.classList.toggle("active", hiding);
     label.textContent = hiding ? "Show All" : "Hide All";
-    icon.textContent = hiding ? "👁" : "🙈";
+    iconEl.innerHTML = hiding ? icon("eye") : icon("eye-slash");
   } else {
     showAllDef = !showAllDef;
     grid.classList.toggle("show-all-def", showAllDef);
     grid.classList.toggle("show-all-examples", showAllDef);
     this.classList.toggle("active", showAllDef);
     label.textContent = showAllDef ? "Hide All" : "Show All";
-    icon.textContent = showAllDef ? "🙈" : "👁";
+    iconEl.innerHTML = showAllDef ? icon("eye-slash") : icon("eye");
   }
 });
 
@@ -882,11 +905,11 @@ function renderSuffixControls(filterText = "") {
       document.getElementById("viewToggleBtn").addEventListener("click", function () {
   const grid = document.getElementById("grid");
   const label = this.querySelector('.label');
-  const icon = this.querySelector('.icon');
-  
+  const iconEl = this.querySelector('.icon');
+
   const isList = grid.classList.toggle("list-view");
-  icon.textContent = isList ? "☰" : "⊞";
-  label.textContent = isList ? "List" : "Card";
+  iconEl.innerHTML = isList ? icon("squares-2x2") : icon("list-bullet");
+  label.textContent = isList ? "Card" : "List";
   localStorage.setItem("vocab-view", isList ? "list" : "card");
 });
 
@@ -896,8 +919,8 @@ function renderSuffixControls(filterText = "") {
   if (saved === "list") {
     document.getElementById("grid").classList.add("list-view");
     const btn = document.getElementById("viewToggleBtn");
-    btn.querySelector('.icon').textContent = "☰";
-    btn.querySelector('.label').textContent = "List";
+    btn.querySelector('.icon').innerHTML = icon("squares-2x2");
+    btn.querySelector('.label').textContent = "Card";
   }
 })();
 
@@ -936,7 +959,7 @@ lastScrollTop = 0; // ✅ 新增：重置滚动方向判断
   document.getElementById("playerBar").style.display = "flex";
   document.body.classList.add("player-active");
   document.getElementById("playModeBtn").classList.add("active");
-  document.getElementById("playModeBtn").querySelector(".icon").textContent = "⏹";
+  document.getElementById("playModeBtn").querySelector(".icon").innerHTML = icon("pause");
   updatePlayerProgress();
   playCurrentWord();
 }
@@ -966,8 +989,8 @@ function stopPlayer() {
           lastScrollTop = 0;
 
   document.getElementById("playModeBtn").classList.remove("active");
-  document.getElementById("playModeBtn").querySelector(".icon").textContent = "▶";
-  document.getElementById("playerPlay").textContent = "▶";
+  document.getElementById("playModeBtn").querySelector(".icon").innerHTML = icon("play");
+  document.getElementById("playerPlay").innerHTML = icon("play", 18);
 }
 
 function playCurrentWord() {
@@ -975,7 +998,7 @@ function playCurrentWord() {
   if (playerState.currentIndex >= filteredVocab.length) { stopPlayer(); return; }
 
   playerState.playing = true;
-  document.getElementById("playerPlay").textContent = "⏸";
+  document.getElementById("playerPlay").innerHTML = icon("pause", 18);
 
   // 清除旧高亮
   document.querySelectorAll(".card.now-playing").forEach(c => c.classList.remove("now-playing"));
@@ -1084,7 +1107,7 @@ function goToNext() {
       playerState.audio = null;
     }
     document.querySelectorAll(".card.now-playing").forEach(c => c.classList.remove("now-playing"));
-    document.getElementById("playerPlay").textContent = "▶";
+    document.getElementById("playerPlay").innerHTML = icon("play", 18);
     return;
   }
   playCurrentWord();
@@ -1118,7 +1141,7 @@ document.getElementById("playerPlay").addEventListener("click", () => {
     playerState.playing = false;
     clearTimeout(playerState.timer);
     if (playerState.audio) playerState.audio.pause();
-    document.getElementById("playerPlay").textContent = "▶";
+    document.getElementById("playerPlay").innerHTML = icon("play", 18);
   } else {
     playCurrentWord();
   }
@@ -1228,7 +1251,7 @@ document.getElementById("spellShowWords").addEventListener("click", () => {
   spellingState.showWords = !spellingState.showWords;
   document.body.classList.toggle("spelling-show-words", spellingState.showWords);
   const btn = document.getElementById("spellShowWords");
-  btn.textContent = spellingState.showWords ? "🙈" : "👁";
+  btn.innerHTML = spellingState.showWords ? icon("eye-slash") : icon("eye");
   btn.title = spellingState.showWords ? "Hide words" : "Show words";
   btn.classList.toggle("active", spellingState.showWords);
 });
@@ -1317,7 +1340,7 @@ document.getElementById("spellHints").style.display = "none";      // ✅ 新增
   document.body.classList.remove("spelling-started", "spelling-show-words"); // ✅ 确保干净
   // 注意：不加 spelling-started，所以单词全部可见
   document.getElementById("spellingModeBtn").classList.add("active");
-  document.getElementById("spellingModeBtn").querySelector(".icon").textContent = "⏹";
+  document.getElementById("spellingModeBtn").querySelector(".icon").innerHTML = icon("pause");
    // ✅ 新增：显示引导弹窗
   document.getElementById("spellingIntro").style.display = "flex";
 }
@@ -1346,12 +1369,12 @@ function exitSpellingMode(rerender) {
    document.body.classList.remove("spelling-show-words"); // ✅ 新增
   spellingState.finished = false;                        // ✅ 新增
   spellingState.showWords = false;                       // ✅ 新增
-  document.getElementById("spellShowWords").textContent = "👁"; // ✅ 重置图标
+  document.getElementById("spellShowWords").innerHTML = icon("eye"); // ✅ 重置图标
   document.getElementById("spellShowWords").classList.remove("active");
   document.getElementById("spellingIntro").style.display = "none"; // ✅ 关闭弹窗
   document.body.classList.remove("spelling-mode");
   document.getElementById("spellingModeBtn").classList.remove("active");
-  document.getElementById("spellingModeBtn").querySelector(".icon").textContent = "✏️";
+  document.getElementById("spellingModeBtn").querySelector(".icon").innerHTML = icon("pencil-square");
 
   if (rerender) {
     currentPage = 0;
@@ -1613,7 +1636,7 @@ function retryWrongWords() {
   spellingState.finished = false;                    // ✅ 新增
   spellingState.showWords = false;                   // ✅ 新增
   document.body.classList.remove("spelling-show-words"); // ✅ 新增
-   document.getElementById("spellShowWords").textContent = "👁";       // ✅ 新增
+   document.getElementById("spellShowWords").innerHTML = icon("eye");       // ✅ 新增
   document.getElementById("spellShowWords").classList.remove("active"); // ✅ 新增
     document.body.classList.remove("spelling-started"); // ✅ 新增：重试时单词重新可见
 
@@ -1662,7 +1685,7 @@ document.addEventListener("keydown", (e) => {
         playerState.playing = false;
         clearTimeout(playerState.timer);
         if (playerState.audio) playerState.audio.pause();
-        document.getElementById("playerPlay").textContent = "▶";
+        document.getElementById("playerPlay").innerHTML = icon("play", 18);
       } else {
         playCurrentWord();
       }
@@ -1721,6 +1744,6 @@ document.addEventListener("keydown", (e) => {
 
       function showError(msg) {
         document.getElementById("grid").innerHTML =
-          `<div class="empty-state"><div class="icon">⚠️</div><p>${msg}</p></div>`;
+          `<div class="empty-state"><div class="icon">${icon("exclamation-triangle", 40)}</div><p>${msg}</p></div>`;
       }
  
