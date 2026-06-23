@@ -7,12 +7,12 @@
 ## 截图预览
 
 <!-- 添加截图：将图片放入 assets/ 文件夹，取消注释下方行 -->
-<!-- ![主页 - 卡片视图](assets/screenshot-card.png) -->
+![主页 - 卡片视图](assets/screenshot-card.png)
 <!-- ![主页 - 列表视图](assets/screenshot-list.png) -->
 <!-- ![拼写模式](assets/screenshot-spelling.png) -->
 <!-- ![单词书选择](assets/screenshot-book-select.png) -->
 
-> 💡 运行项目后截图，放入 `assets/` 文件夹即可展示
+ 
 
 ---
 
@@ -119,36 +119,7 @@
 
 **总计**：56 词库，50,000+ 单词
 
----
-
-## 快速开始
-
-### 本地运行
-
-```bash
-# 克隆仓库
-git clone https://github.com/julie1m1/english-word-suffix-explorer.git
-cd english-word-suffix-explorer
-
-# 启动本地服务器（需要 HTTP 服务器加载 JSON/CSV）
-# 方法 1：Python
-python -m http.server 8080
-
-# 方法 2：Node.js
-npx serve .
-
-# 方法 3：VS Code Live Server 扩展
-# 右键 index.html → Open with Live Server
-
-# 访问 http://localhost:8080
-```
-
-### GitHub Pages 部署
-
-1. 进入仓库 Settings → Pages
-2. Source 选择 `master` 分支，目录选 `/ (root)`
-3. 保存后等待几分钟即可访问
-
+ 
 ---
 
 ## 技术栈
@@ -182,14 +153,6 @@ npx serve .
 
 欢迎提交 Issue 和 Pull Request！
 
-1. Fork 本仓库
-2. 创建特性分支：`git checkout -b feature/amazing-feature`
-3. 提交更改：`git commit -m 'Add amazing feature'`
-4. 推送分支：`git push origin feature/amazing-feature`
-5. 开启 Pull Request
+ 
 
----
-
-## License
-
-MIT
+ 
