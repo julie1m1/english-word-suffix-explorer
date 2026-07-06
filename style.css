@@ -396,6 +396,14 @@
         pointer-events: none;
       }
 
+      .az-sort-btn {
+        margin-left: auto;
+        min-width: 32px;
+      }
+      .az-sort-btn svg {
+        vertical-align: middle;
+      }
+
       /* ── STATS BADGE ── */
       .stats-badge {
        height: 34px;

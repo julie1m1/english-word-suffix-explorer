@@ -58,8 +58,53 @@
       }
 
       /* ═══════════════════════════════════════
+   AUDIO CACHE — 预加载 + 复用
+══════════════════════════════════════ */
+      const AudioCache = {
+        _map: new Map(),
+        _MAX: 10,
+        _url(w) {
+          return `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(w)}&type=2`;
+        },
+        get(word) {
+          return this._map.get(word) || null;
+        },
+        set(word, audio) {
+          if (this._map.size >= this._MAX) {
+            const first = this._map.keys().next().value;
+            const old = this._map.get(first);
+            if (old) { old.pause(); old.src = ''; }
+            this._map.delete(first);
+          }
+          this._map.set(word, audio);
+        },
+        preload(word) {
+          if (this._map.has(word)) return;
+          const audio = new Audio(this._url(word));
+          audio.preload = 'auto';
+          audio.addEventListener('canplaythrough', () => {
+            this.set(word, audio);
+          }, { once: true });
+          audio.addEventListener('error', () => {
+            audio.src = '';
+          }, { once: true });
+          audio.load();
+        },
+        preloadAhead(words, startIdx, count) {
+          for (let i = 1; i <= count; i++) {
+            const idx = startIdx + i;
+            if (idx < words.length) this.preload(words[idx].word);
+          }
+        },
+        clear() {
+          this._map.forEach(a => { a.pause(); a.src = ''; });
+          this._map.clear();
+        }
+      };
+
+      /* ═══════════════════════════════════════
    THEME — Material Design 3
-═══════════════════════════════════════ */
+══════════════════════════════════════ */
       function applyTheme(t) {
         document.documentElement.setAttribute("data-theme", t);
         localStorage.setItem("vocab-theme", t);
@@ -90,6 +135,7 @@
       };
       let lastScrollTop = 0,
         showAllDef = false;
+      let azSortOrder = null; // null = 不排序, 'asc' = A→Z, 'desc' = Z→A
       let currentPage = 0;
       const PAGE_SIZE = 40;
       let filteredVocab = [];
@@ -186,6 +232,7 @@ window.addEventListener("load", () => {
 ═══════════════════════════════════════ */
       function loadVocab(url) {
         showSkeletons();
+        AudioCache.clear(); // 切换词库时清空缓存
         return fetch(url)
           .then((r) => r.text())
           .then((text) => {
@@ -289,6 +336,23 @@ window.addEventListener("load", () => {
           };
           bar.appendChild(btn);
         }
+
+        // 排序按钮：正序 / 倒序
+        const sortBtn = document.createElement("button");
+        sortBtn.className = "az-btn az-sort-btn" + (azSortOrder ? " active" : "");
+        sortBtn.title = azSortOrder === 'asc' ? 'A→Z 正序' : azSortOrder === 'desc' ? 'Z→A 倒序' : '排序 A↔Z';
+        const sortIcon = azSortOrder === 'desc'
+          ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9M3 12h5m8 0v8m0 0-3-3m3 3 3-3"/></svg>'
+          : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9M3 12h5m8 0V4m0 0-3 3m3-3 3 3"/></svg>';
+        sortBtn.innerHTML = sortIcon;
+        sortBtn.onclick = () => {
+          if (azSortOrder === null) azSortOrder = 'asc';
+          else if (azSortOrder === 'asc') azSortOrder = 'desc';
+          else azSortOrder = null;
+          updateAZBar();
+          applyFilters();
+        };
+        bar.appendChild(sortBtn);
       }
 
       /* ═══════════════════════════════════════
@@ -669,6 +733,14 @@ function renderSuffixControls(filterText = "") {
           );
         }
 
+        // 排序
+        if (azSortOrder) {
+          filteredVocab = [...filteredVocab].sort((a, b) => {
+            const cmp = a.word.localeCompare(b.word, undefined, { sensitivity: 'base' });
+            return azSortOrder === 'asc' ? cmp : -cmp;
+          });
+        }
+
         document.getElementById("match-count").textContent =
           filteredVocab.length;
         document.getElementById("total-count").textContent = vocab.length;
@@ -788,9 +860,8 @@ function renderSuffixControls(filterText = "") {
           }
           card.classList.add("speaking", "viewed");
 
-          const audio = new Audio(
-            `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(item.word)}&type=2`,
-          );
+          const cached = AudioCache.get(item.word);
+          const audio = cached ? cached : new Audio(AudioCache._url(item.word));
           cardAudio = audio;
           audio.play().catch(() => {});
           audio.onended = () => { card.classList.remove("speaking"); cardAudio = null; };
@@ -977,6 +1048,7 @@ function stopPlayer() {
     playerState.audio.onerror = null;
     playerState.audio = null;
   }
+  AudioCache.clear(); // 清空预加载缓存
   document.querySelectorAll(".card.now-playing").forEach(c => c.classList.remove("now-playing"));
   document.querySelectorAll(".card.revealed").forEach(c => c.classList.remove("revealed"));
   document.getElementById("playerBar").style.display = "none";
@@ -1030,6 +1102,9 @@ function playCurrentWord() {
       setTimeout(() => targetCard.classList.remove("no-audio"), 2000);
     }
   });
+
+  // 预加载后面 5 个词的音频
+  AudioCache.preloadAhead(filteredVocab, playerState.currentIndex, 5);
 }
 
 function playWordAudio(word, onSkip) {
@@ -1053,9 +1128,46 @@ function playWordAudio(word, onSkip) {
     scheduleNext();
   }
 
-  const audio = new Audio(
-    `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`
-  );
+  // 重试逻辑：失败后等 500ms 重试一次，还失败才跳过
+  let retried = false;
+  function retryOrSkip() {
+    if (retried) {
+      if (typeof onSkip === 'function') onSkip();
+      safeNext();
+      return;
+    }
+    retried = true;
+    setTimeout(() => {
+      if (!playerState.active) return;
+      // 重新尝试：新建 Audio 再试一次
+      const retryAudio = new Audio(AudioCache._url(word));
+      retryAudio.playbackRate = parseFloat(document.getElementById("playerSpeed").value) || 1;
+      retryAudio.onerror = () => {
+        if (typeof onSkip === 'function') onSkip();
+        safeNext();
+      };
+      retryAudio.onended = () => {
+        if (moved) return;
+        playerState.repeatIndex++;
+        if (playerState.repeatIndex < playerState.repeatCount) {
+          setTimeout(() => {
+            if (playerState.active) playWordAudio(word, onSkip);
+          }, 600);
+        } else {
+          safeNext();
+        }
+      };
+      playerState.audio = retryAudio;
+      retryAudio.play().catch(() => {
+        if (typeof onSkip === 'function') onSkip();
+        safeNext();
+      });
+    }, 500);
+  }
+
+  // 优先从缓存获取
+  const cached = AudioCache.get(word);
+  const audio = cached ? cached : new Audio(AudioCache._url(word));
   audio.playbackRate = parseFloat(document.getElementById("playerSpeed").value) || 1;
   playerState.audio = audio;
 
@@ -1063,12 +1175,12 @@ function playWordAudio(word, onSkip) {
   audio.addEventListener("loadedmetadata", () => {
     if (!audio.duration || isNaN(audio.duration) || audio.duration < 0.1) {
       audio.pause();
-      if (typeof onSkip === "function") onSkip();
-      safeNext();
+      retryOrSkip();
     }
   }, { once: true });
 
-  audio.play().catch(() => safeNext());
+  // 播放失败 → 重试
+  audio.play().catch(() => retryOrSkip());
 
   audio.onended = () => {
     if (moved) return;
@@ -1076,13 +1188,16 @@ function playWordAudio(word, onSkip) {
     if (playerState.repeatIndex < playerState.repeatCount) {
       setTimeout(() => {
         if (playerState.active) playWordAudio(word, onSkip);
-      }, 400);
+      }, 600);
     } else {
+      // 预加载后面 5 个词
+      AudioCache.preloadAhead(filteredVocab, playerState.currentIndex, 5);
       safeNext();
     }
   };
 
-  audio.onerror = () => safeNext();
+  // 网络错误 → 重试
+  audio.onerror = () => retryOrSkip();
 }
 
 
@@ -1586,7 +1701,8 @@ function playSpellingAudio(word) {
     spellingState.audio.onended = null;
     spellingState.audio.onerror = null;
   }
-  const audio = new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`);
+  const cached = AudioCache.get(word);
+  const audio = cached ? cached : new Audio(AudioCache._url(word));
   audio.playbackRate = parseFloat(document.getElementById("spellSpeed").value) || 1;
   spellingState.audio = audio;
   audio.play().catch(() => {});
