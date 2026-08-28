@@ -127,6 +127,32 @@
       <!-- A-Z bar -->
       <div class="az-bar" id="azBar"></div>
 
+      <!-- ══ PHONICS · Letter-Combination Panel (draggable floating) ══ -->
+      <div class="phonics-bar" id="phonicsBar">
+        <div class="phonics-panel-head" id="phonicsPanelHead">
+          <span class="phonics-panel-title">Aa Phonics</span>
+          <button class="phonics-panel-close" id="phonicsPanelClose" title="Close panel">✕</button>
+        </div>
+        <div class="phonics-panel-body" id="phonicsPanelBody"></div>
+        <!-- 8-way resize handles: data-dir sets direction -->
+        <div class="ph-resize ph-resize-n" data-dir="n" title="Resize height"></div>
+        <div class="ph-resize ph-resize-s" data-dir="s" title="Resize height"></div>
+        <div class="ph-resize ph-resize-e" data-dir="e" title="Resize width"></div>
+        <div class="ph-resize ph-resize-w" data-dir="w" title="Resize width"></div>
+        <div class="ph-resize ph-resize-ne" data-dir="ne" title="Resize"></div>
+        <div class="ph-resize ph-resize-nw" data-dir="nw" title="Resize"></div>
+        <div class="ph-resize ph-resize-se" data-dir="se" title="Resize"></div>
+        <div class="ph-resize ph-resize-sw" data-dir="sw" title="Resize"></div>
+      </div>
+
+      <!-- Phonics panel toggle button -->
+      <button class="phonics-fab" id="phonicsFab" title="Open/close phonics panel">
+        <span class="fab-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 9.75h15M4.5 14.25h15"/></svg>
+        </span>
+        <span class="fab-label">Phonics</span>
+      </button>
+
       <!-- Word grid -->
       <div id="grid"></div>
 

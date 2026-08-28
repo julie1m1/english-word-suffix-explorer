@@ -1,6 +1,6 @@
 # Vocab Lab Omni
 
-一个功能丰富的英语单词学习工具，支持 56+ 词库浏览、自动播放、拼写测试和多源例句系统。
+一个功能丰富的英语单词学习工具，支持 56+ 词库浏览、自动播放、拼写测试、多源例句系统、双音标显示与自然发音（Phonics）筛选。
 
 > 🔗 **在线体验**：[https://julie1m1.github.io/english-word-suffix-explorer](https://julie1m1.github.io/english-word-suffix-explorer)
 
@@ -64,10 +64,20 @@
 - **骨架屏加载**：API 请求中显示动画占位
 
 ### 音标系统
-- 自动加载 IPA 音标（dictionaryapi.dev）
+- **双音标显示**：本地音标（主题强调色）+ 远程音标（灰色），用颜色区分来源；两者相同则自动去重只显示一个
+- **本地优先**：启动时一次性加载 `data/ipa.json`（由 ECDICT `stardict.db` 提取，22,779 条，覆盖词库约 96%），离线也能秒显、永不空白
+- **远程兜底**：仍请求 dictionaryapi.dev，成功时用远程结果覆盖显示；网络失败/超时时本地音标继续顶住
+- **缓存修复**：远程失败或查无此词不再把空音标写入 localStorage 缓存（旧逻辑会导致部分词永久不显示），保留重试机会
+- **音标规范化**：生成脚本统一老式 DJ 记法为现代 IPA（ә→ə、g→ɡ、ei→eɪ、əu→əʊ 等），并过滤垃圾数据
 - localStorage 缓存（最多 5000 词）
 - IntersectionObserver 视口懒加载
-- 异步补充 Tatoeba2 例句
+
+### 自然发音面板（Phonics）
+- **浮动面板**：右下角 FAB 开关，可拖动、可 8 向 resize，位置与尺寸记忆到 localStorage
+- **发音组合分类**：Vowels / Consonants / Special Vowel Forms 等分组，含 Short Vowels、Long Vowels 等子类，各带匹配计数
+- **按发音筛选**：点组合按钮按自然发音规则筛选单词（支持魔法 e `a_e` 与连续子串两种匹配规则）
+- **卡片高亮**：命中的发音组合在单词内高亮；整类筛选时卡片右上角显示子类名角标
+- **实时计数**：加载 / 切换词库时自动刷新每个组合的匹配数量
 
 ### 主题
 - Material Design 3 设计语言
@@ -94,11 +104,14 @@
 │   ├── list.json             # 词库列表 + 分类配置
 │   ├── examples.json         # AI 生成例句（口语/书面）
 │   ├── ecdict-examples.json  # ECDICT 提取例句
+│   ├── ipa.json              # 本地音标数据（ECDICT 提取，22,779 条）
 │   ├── longman3000_missing.json    # 朗文 3000 补充数据
 │   ├── longman3000_new_examples.json # 朗文 3000 新例句
 │   ├── Suffix_Ref.csv        # 后缀/前缀参考数据
+│   ├── stardict.db           # ECDICT 词典数据库（本地音标数据源）
 │   └── *.csv                 # 56 个词库 CSV 文件
 └── scripts/                  # 数据处理脚本（开发用）
+    └── gen_ipa_json.py       # 从 stardict.db 生成 data/ipa.json
 ```
 
 ---
@@ -128,9 +141,9 @@
 |------|------|
 | HTML/CSS/JS | 纯前端，零框架依赖 |
 | Material Design 3 | 设计语言与配色 |
-| dictionaryapi.dev | IPA 音标 + API 例句 |
+| dictionaryapi.dev | 远程 IPA 音标 + API 例句（兜底） |
 | Tatoeba2 | 社区多语言例句 |
-| ECDICT | 本地词典例句数据 |
+| ECDICT (stardict.db) | 本地词典例句数据 + 本地音标数据 (ipa.json) |
 | IntersectionObserver | 音标/分页懒加载 |
 | localStorage | 音标缓存 + 用户偏好 |
 | Web Audio API | 单词发音（有道词典） |

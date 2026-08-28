@@ -132,6 +132,7 @@
         suffixType: null,
         pos: "All",
         letter: null,
+        phonics: null,
       };
       let lastScrollTop = 0,
         showAllDef = false;
@@ -140,6 +141,535 @@
       const PAGE_SIZE = 40;
       let filteredVocab = [];
       const isMobile = () => window.innerWidth <= 1024;
+
+      /* ═══════════════════════════════════════
+   PHONICS · Letter-Combination Classification
+═══════════════════════════════════════ */
+      const PHONICS_GROUPS = [
+        {
+          id: "short-vowel", label: "Short Vowels", rows: [
+            ["[æ]", ["a"]],
+            ["[ɛ]", ["e", "ea"]],
+            ["[ɪ]", ["i", "y"]],
+            ["[ɒ]", ["o"]],
+            ["[ə]", ["o", "u"]],
+          ],
+        },
+        {
+          id: "long-vowel", label: "Long Vowels", rows: [
+            ["[ɑ]", ["o"]],
+            ["[ʌ]", ["u", "o", "oo", "ou"]],
+            ["[ʊ]", ["u", "oo"]],
+            ["[ɔ]", ["al", "au", "aw"]],
+            ["[e]", ["a_e", "ai", "ay", "eigh"]],
+            ["[i]", ["ea", "e_e", "ee", "ei", "ie", "ey"]],
+            ["[aɪ]", ["i_e", "ie", "igh", "y"]],
+            ["[o]", ["oa", "oe", "o_e", "ow"]],
+            ["[u]", ["ew", "ue", "u_e", "ui", "oo"]],
+          ],
+        },
+        {
+          id: "voiced", label: "Voiced Consonants", rows: [
+            ["[b]", ["b", "bb"]],
+            ["[d]", ["d", "dd"]],
+            ["[g]", ["g", "gg", "gh", "gu"]],
+            ["[dʒ]", ["j", "ge", "gi", "gy", "dge"]],
+            ["[ʒ]", ["si", "su"]],
+            ["[v]", ["v", "ve", "f"]],
+            ["[l]", ["l", "ll"]],
+            ["[m]", ["m", "mm"]],
+            ["[n]", ["n", "nn"]],
+            ["[ŋ]", ["ng", "nk"]],
+            ["[r]", ["r", "rr", "wr", "rh"]],
+            ["[w]", ["w", "wh"]],
+            ["[j]", ["y"]],
+            ["[z]", ["z", "zz", "s", "se", "ss"]],
+            ["[h]", ["h"]],
+          ],
+        },
+        {
+          id: "voiceless", label: "Voiceless Consonants", rows: [
+            ["[p]", ["p", "pp"]],
+            ["[t]", ["t", "tt", "ed"]],
+            ["[k]", ["c", "k", "ck", "ch", "que"]],
+            ["[f]", ["f", "ff"]],
+            ["[s]", ["s", "ss", "se", "sc", "ce", "ci", "cy"]],
+            ["[tʃ]", ["ch", "tch", "tu"]],
+            ["[ʃ]", ["sh", "ti", "c", "s", "ss", "ch"]],
+            ["[θ]", ["th"]],
+          ],
+        },
+        {
+          id: "vowel-r", label: "Vowel + r", rows: [
+            ["[ɑr]", ["ar"]],
+            ["[ɜ]", ["er", "ir", "or", "ur"]],
+            ["[ɒr]", ["ar", "er"]],
+            ["[ɔr]", ["ar"]],
+          ],
+        },
+        {
+          id: "other-vowel-r", label: "Other Vowel + r", rows: [
+            ["[ɛr]", ["air", "are", "ear", "ere"]],
+            ["[ɪr]", ["ear", "ere", "eer"]],
+            ["[or]", ["oor", "ore", "our"]],
+          ],
+        },
+        {
+          id: "special", label: "Special Vowel Combos", rows: [
+            ["[aʊ]", ["ou", "ow"]],
+            ["[ɔɪ]", ["oi", "oy"]],
+          ],
+        },
+      ];
+
+      // Combo-button count per sub-category (static, computed once)
+      const phonicsCatCounts = {};
+      PHONICS_GROUPS.forEach((g) => {
+        phonicsCatCounts[g.id] = g.rows.reduce(
+          (n, [, combos]) => n + combos.length,
+          0,
+        );
+      });
+
+      // Three main sections, sub-categories shown side by side
+      const PHONICS_SECTIONS = [
+        { id: "vowel", label: "Vowels", groups: ["short-vowel", "long-vowel"] },
+        { id: "consonant", label: "Consonants", groups: ["voiced", "voiceless"] },
+        {
+          id: "special-vowel",
+          label: "Special Vowel Forms",
+          groups: ["vowel-r", "other-vowel-r", "special"],
+        },
+      ];
+      const phonicsSectionCounts = {};
+      PHONICS_SECTIONS.forEach((s) => {
+        phonicsSectionCounts[s.id] = s.groups.reduce(
+          (n, gid) => n + (phonicsCatCounts[gid] || 0),
+          0,
+        );
+      });
+
+      // Expanded main section id; default to Vowels
+      let phonicsSection = "vowel";
+
+      // Collapsed sub-category ids
+      const collapsedSubcats = new Set();
+
+      // combo → RegExp (cached)
+      // Rule: combos containing "_" are "magic-e" pairs, e.g. a_e → a + one letter + e; others are plain substrings
+      const phonicsRegexCache = {};
+      function phonicsRegex(combo) {
+        if (phonicsRegexCache[combo]) return phonicsRegexCache[combo];
+        let src;
+        if (combo.includes("_")) {
+          src = combo.replace(/_/g, "[a-z]");
+        } else {
+          src = combo.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        }
+        const re = new RegExp(src, "i");
+        phonicsRegexCache[combo] = re;
+        return re;
+      }
+
+      // Count words in the current vocab containing a combo
+      function phonicsCount(combo) {
+        const re = phonicsRegex(combo);
+        return vocab.reduce((n, v) => n + (re.test(v.word) ? 1 : 0), 0);
+      }
+
+      // OR-regex over all combos of a sub-category
+      const phonicsGroupRegexCache = {};
+      function phonicsGroupRegex(catId) {
+        if (phonicsGroupRegexCache[catId])
+          return phonicsGroupRegexCache[catId];
+        const group = PHONICS_GROUPS.find((g) => g.id === catId);
+        const uniq = [];
+        group.rows.forEach(([, combos]) =>
+          combos.forEach((c) => {
+            if (!uniq.includes(c)) uniq.push(c);
+          }),
+        );
+        const src = uniq
+          .map((c) =>
+            c.includes("_")
+              ? c.replace(/_/g, "[a-z]")
+              : c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+          )
+          .join("|");
+        const re = new RegExp(src, "i");
+        phonicsGroupRegexCache[catId] = re;
+        return re;
+      }
+
+      function renderPhonicsBar() {
+        const body = document.getElementById("phonicsPanelBody");
+        if (!body) return;
+        body.innerHTML = "";
+
+        const catRow = document.createElement("div");
+        catRow.className = "phonics-cat-row";
+
+        // Three main-section tabs
+        PHONICS_SECTIONS.forEach((s) => {
+          const btn = document.createElement("button");
+          btn.className =
+            "phonics-chip" +
+            (phonicsSection === s.id ? " active" : "");
+          btn.innerHTML =
+            `${esc(s.label)} ` +
+            `<span class="pc-cat-count">${phonicsSectionCounts[s.id]}</span>`;
+          btn.title = `Show letter combinations of "${s.label}"`;
+          btn.onclick = () => {
+            phonicsSection = phonicsSection === s.id ? null : s.id;
+            renderPhonicsBar();
+          };
+          catRow.appendChild(btn);
+        });
+
+        // Clear-filter button
+        if (currentFilter.phonics) {
+          const clear = document.createElement("button");
+          clear.className = "phonics-chip phonics-clear";
+          clear.textContent = "✕ Clear";
+          clear.title = "Clear the letter-combination filter";
+          clear.onclick = () => {
+            currentFilter.phonics = null;
+            phonicsSection = null;
+            collapsedSubcats.clear();
+            applyFilters();
+            renderPhonicsBar();
+          };
+          catRow.appendChild(clear);
+        }
+
+        body.appendChild(catRow);
+
+        // Expanded section: sub-categories side by side
+        const section = PHONICS_SECTIONS.find((s) => s.id === phonicsSection);
+        if (section) {
+          const area = document.createElement("div");
+          area.className = "phonics-section-area";
+
+          section.groups.forEach((gid) => {
+            const group = PHONICS_GROUPS.find((g) => g.id === gid);
+            if (!group) return;
+            const col = document.createElement("div");
+            col.className = "phonics-subcat-col";
+
+            // Sub-category title: click = filter whole category; ▾ = collapse/expand combos
+            const isWhole =
+              currentFilter.phonics &&
+              currentFilter.phonics.whole &&
+              currentFilter.phonics.catId === gid;
+            const title = document.createElement("div");
+            title.className =
+              "phonics-subcat-title" + (isWhole ? " active" : "");
+            title.title = "Click to filter all words of this category";
+            title.innerHTML =
+              `<span class="psc-label">${esc(group.label)}</span>` +
+              `<span class="psc-count">${phonicsCatCounts[gid]}</span>`;
+            const arrow = document.createElement("button");
+            arrow.className = "psc-arrow" + (collapsedSubcats.has(gid) ? "" : " open");
+            arrow.textContent = collapsedSubcats.has(gid) ? "▸" : "▾";
+            arrow.title = collapsedSubcats.has(gid)
+              ? "Show combo buttons"
+              : "Hide combo buttons";
+            arrow.onclick = (e) => {
+              e.stopPropagation();
+              if (collapsedSubcats.has(gid)) collapsedSubcats.delete(gid);
+              else collapsedSubcats.add(gid);
+              renderPhonicsBar();
+            };
+            title.appendChild(arrow);
+            title.onclick = () => {
+              currentFilter.phonics = {
+                catId: gid,
+                category: group.label,
+                whole: true,
+              };
+              applyFilters();
+              renderPhonicsBar();
+              if (isMobile())
+                document.getElementById("grid").scrollTop = 0;
+            };
+            col.appendChild(title);
+
+            // Sub-category body: combos grouped by sound (table-style rows)
+            if (!collapsedSubcats.has(gid)) {
+              const body2 = document.createElement("div");
+              body2.className = "phonics-subcat-body";
+              group.rows.forEach(([sound, combos]) => {
+                const row = document.createElement("div");
+                row.className = "phonics-sound-row";
+
+                // Sound badge: marked once for the whole group
+                const badge = document.createElement("span");
+                badge.className =
+                  "phonics-sound-badge" +
+                  (currentFilter.phonics &&
+                  currentFilter.phonics.sound === sound &&
+                  !currentFilter.phonics.whole
+                    ? " active"
+                    : "");
+                badge.textContent = sound;
+                badge.title = `Sound ${sound} · click a combo button below to filter`;
+                row.appendChild(badge);
+
+                // Combo buttons under this sound: each filters independently
+                const combosWrap = document.createElement("div");
+                combosWrap.className = "phonics-sound-combos";
+                combos.forEach((combo) => {
+                  const isActive =
+                    currentFilter.phonics &&
+                    currentFilter.phonics.combo === combo;
+                  const btn = document.createElement("button");
+                  btn.className =
+                    "phonics-combo-btn" + (isActive ? " active" : "");
+                  const cnt = isActive
+                    ? filteredVocab.length
+                    : phonicsCount(combo);
+                  btn.innerHTML =
+                    `<span class="pc-combo">${esc(combo)}</span>` +
+                    `<span class="pc-count">${cnt}</span>`;
+                  btn.title = `Combo ${combo} · sound ${sound} · ${cnt} words`;
+                  btn.onclick = () => {
+                    if (isActive) {
+                      currentFilter.phonics = null;
+                    } else {
+                      currentFilter.phonics = {
+                        combo,
+                        sound,
+                        category: group.label,
+                        catId: group.id,
+                      };
+                    }
+                    applyFilters();
+                    renderPhonicsBar();
+                    if (isMobile())
+                      document.getElementById("grid").scrollTop = 0;
+                  };
+                  combosWrap.appendChild(btn);
+                });
+                row.appendChild(combosWrap);
+                body2.appendChild(row);
+              });
+              col.appendChild(body2);
+            }
+
+            area.appendChild(col);
+          });
+          body.appendChild(area);
+        }
+
+        updatePhonicsFab();
+      }
+
+      /* ── Floating panel: toggle / drag / position memory ── */
+      function updatePhonicsFab() {
+        const fab = document.getElementById("phonicsFab");
+        if (!fab) return;
+        const label = fab.querySelector(".fab-label");
+        const p = currentFilter.phonics;
+        if (p) {
+          label.textContent = p.whole ? p.category : `${p.combo} · ${p.sound}`;
+          fab.classList.add("active");
+        } else {
+          label.textContent = "Phonics";
+          fab.classList.remove("active");
+        }
+      }
+
+      function initPhonicsPanel() {
+        const bar = document.getElementById("phonicsBar");
+        const head = document.getElementById("phonicsPanelHead");
+        const closeBtn = document.getElementById("phonicsPanelClose");
+        const fab = document.getElementById("phonicsFab");
+        if (!bar || !head || !closeBtn || !fab) return;
+
+        // Restore last drag position
+        try {
+          const saved = localStorage.getItem("phonicsPanelPos");
+          if (saved) {
+            const { left, top } = JSON.parse(saved);
+            if (typeof left === "number" && typeof top === "number") {
+              bar.style.left = left + "px";
+              bar.style.top = top + "px";
+              bar.style.right = "auto";
+            }
+          }
+        } catch (e) {
+          /* ignore */
+        }
+
+        // Restore last size
+        try {
+          const saved = localStorage.getItem("phonicsPanelSize");
+          if (saved) {
+            const { width, height } = JSON.parse(saved);
+            if (typeof width === "number" && width >= 320)
+              bar.style.width = width + "px";
+            if (typeof height === "number" && height >= 240)
+              bar.style.height = height + "px";
+          }
+        } catch (e) {
+          /* ignore */
+        }
+
+        // Open / close
+        const clampPos = () => {
+          const w = bar.offsetWidth;
+          const h = bar.offsetHeight;
+          let l = bar.offsetLeft;
+          let t = bar.offsetTop;
+          if (l + w > window.innerWidth)
+            l = Math.max(0, window.innerWidth - w);
+          if (t + h > window.innerHeight)
+            t = Math.max(0, window.innerHeight - h);
+          if (l !== bar.offsetLeft || t !== bar.offsetTop) {
+            bar.style.left = l + "px";
+            bar.style.top = t + "px";
+          }
+        };
+        const setOpen = (open) => {
+          bar.classList.toggle("open", open);
+          if (open) clampPos();
+          fab.title = open ? "Close phonics panel" : "Open phonics panel";
+        };
+        fab.addEventListener("click", () =>
+          setOpen(!bar.classList.contains("open")),
+        );
+        closeBtn.addEventListener("click", () => setOpen(false));
+
+        // Drag panel by its header
+        let drag = null;
+        head.addEventListener("pointerdown", (e) => {
+          if (e.target.closest(".phonics-panel-close")) return;
+          drag = {
+            x: e.clientX,
+            y: e.clientY,
+            l: bar.offsetLeft,
+            t: bar.offsetTop,
+          };
+          head.setPointerCapture(e.pointerId);
+        });
+        head.addEventListener("pointermove", (e) => {
+          if (!drag) return;
+          const l = Math.min(
+            Math.max(drag.l + e.clientX - drag.x, 0),
+            window.innerWidth - bar.offsetWidth,
+          );
+          const t = Math.min(
+            Math.max(drag.t + e.clientY - drag.y, 0),
+            window.innerHeight - bar.offsetHeight,
+          );
+          bar.style.left = l + "px";
+          bar.style.top = t + "px";
+          bar.style.right = "auto";
+        });
+        const endDrag = () => {
+          if (!drag) return;
+          drag = null;
+          try {
+            localStorage.setItem(
+              "phonicsPanelPos",
+              JSON.stringify({ left: bar.offsetLeft, top: bar.offsetTop }),
+            );
+          } catch (e) {
+            /* ignore */
+          }
+        };
+        head.addEventListener("pointerup", endDrag);
+        head.addEventListener("pointercancel", endDrag);
+
+        // 8-way resize handles
+        const MIN_W = 320;
+        const MIN_H = 260;
+        let resize = null;
+        const resizeHandles = bar.querySelectorAll(".ph-resize[data-dir]");
+        resizeHandles.forEach((h) => {
+          const dir = h.dataset.dir;
+          h.addEventListener("pointerdown", (e) => {
+            e.preventDefault();
+            h.classList.add("resizing");
+            bar.classList.add("resizing-panel");
+            resize = {
+              dir,
+              x: e.clientX,
+              y: e.clientY,
+              l: bar.offsetLeft,
+              t: bar.offsetTop,
+              w: bar.offsetWidth,
+              h: bar.offsetHeight,
+            };
+            h.setPointerCapture(e.pointerId);
+          });
+          h.addEventListener("pointermove", (e) => {
+            if (!resize || resize.dir !== dir) return;
+            const dx = e.clientX - resize.x;
+            const dy = e.clientY - resize.y;
+            let l = resize.l;
+            let t = resize.t;
+            let w = resize.w;
+            let h = resize.h;
+            if (dir.includes("e")) {
+              w = resize.w + dx;
+            } else if (dir.includes("w")) {
+              w = resize.w - dx;
+              l = resize.l + dx;
+              if (l < 0) {
+                l = 0;
+                w = resize.w + resize.l;
+              }
+            }
+            if (dir.includes("s")) {
+              h = resize.h + dy;
+            } else if (dir.includes("n")) {
+              h = resize.h - dy;
+              t = resize.t + dy;
+              if (t < 0) {
+                t = 0;
+                h = resize.h + resize.t;
+              }
+            }
+            w = Math.min(Math.max(w, MIN_W), window.innerWidth - 24);
+            h = Math.min(Math.max(h, MIN_H), window.innerHeight - 24);
+            if (l + w > window.innerWidth)
+              l = Math.max(0, window.innerWidth - w);
+            if (t + h > window.innerHeight)
+              t = Math.max(0, window.innerHeight - h);
+            bar.style.left = l + "px";
+            bar.style.top = t + "px";
+            bar.style.width = w + "px";
+            bar.style.height = h + "px";
+            bar.style.right = "auto";
+          });
+          const endResize = () => {
+            if (!resize || resize.dir !== dir) return;
+            resize = null;
+            h.classList.remove("resizing");
+            bar.classList.remove("resizing-panel");
+            try {
+              localStorage.setItem(
+                "phonicsPanelPos",
+                JSON.stringify({ left: bar.offsetLeft, top: bar.offsetTop }),
+              );
+              localStorage.setItem(
+                "phonicsPanelSize",
+                JSON.stringify({
+                  width: bar.offsetWidth,
+                  height: bar.offsetHeight,
+                }),
+              );
+            } catch (err) {
+              /* ignore */
+            }
+          };
+          h.addEventListener("pointerup", endResize);
+          h.addEventListener("pointercancel", endResize);
+        });
+
+        updatePhonicsFab();
+      }
 
       /* ═══════════════════════════════════════
    ONBOARDING
@@ -175,6 +705,10 @@
 window.addEventListener("load", () => {
   // 1. 先显示骨架屏
   if (typeof showSkeletons === "function") showSkeletons();
+
+  // 1.5 初始化自然发音浮动面板（此时 DOM 已就绪，词库异步加载后计数会再刷新）
+  initPhonicsPanel();
+  renderPhonicsBar();
 
   // 2. 加载词库列表（带分类标题美化）
   fetch("data/list.json")
@@ -246,6 +780,7 @@ window.addEventListener("load", () => {
               }));
             updatePOSMenu();
             updateAZBar();
+            renderPhonicsBar(); // 刷新发音分类的组合计数（随词库变化）
             applyFilters();
           })
           .catch(() => showError("Failed to load vocab: " + url));
@@ -441,23 +976,31 @@ function renderSuffixControls(filterText = "") {
 ═══════════════════════════════════════ */
       let staticExamples = {};
       let ecdictExamples = {};
+      let localIPA = {}; // 本地音标（data/ipa.json，来自 ECDICT）
 
-      // 加载例句数据，完成后刷新已渲染卡片
+      // 加载例句数据 + 本地音标，完成后刷新已渲染卡片
       Promise.all([
         fetch("data/examples.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
         fetch("data/ecdict-examples.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
-      ]).then(([ex, ec]) => {
+        fetch("data/ipa.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      ]).then(([ex, ec, ipa]) => {
         staticExamples = ex;
         ecdictExamples = ec;
-        // 刷新已渲染卡片的例句（不检查 IPA 状态）
+        localIPA = ipa || {};
+        // 刷新已渲染卡片：例句 + 音标（本地音标就绪后合并显示）
         document.querySelectorAll(".card[data-word]").forEach(card => {
           const exEl = card.querySelector(".card-examples");
-          if (!exEl) return;
+          const ipaEl = card.querySelector(".word-phonetic");
           const word = card.dataset.word;
           const cached = getIPACache()[word];
           const apiEx = (cached && typeof cached === "object" && cached.examples) ? cached.examples : [];
           const merged = mergeExamples(word, apiEx);
           renderExamples(exEl, word, merged, false);
+          // 已显示过音标的卡片（非 "..." 占位）→ 用本地音标重新合并
+          if (ipaEl && ipaEl.textContent !== "...") {
+            const remote = (cached && typeof cached === "object") ? (cached.ipa || "") : "";
+            renderPhonetic(word, ipaEl, remote);
+          }
         });
       });
 
@@ -476,30 +1019,65 @@ function renderSuffixControls(filterText = "") {
           keys.slice(0, keys.length - 5000).forEach((k) => delete cache[k]);
         localStorage.setItem("ipa-cache", JSON.stringify(cache));
       }
+      // 本地音标查询（data/ipa.json，键为小写）
+      function getLocalIPA(word) {
+        return localIPA[word.toLowerCase()] || "";
+      }
+
+      // 音标渲染：本地（强调色）+ 远程（灰色）同行并列，用颜色区分，相同则只显示一个
+      function renderPhonetic(word, element, remoteIPA) {
+        const local = getLocalIPA(word);
+        const remote = remoteIPA || "";
+        element.innerHTML = "";
+        const items = [];
+        if (local) items.push({ cls: "ipa-local", ipa: local });
+        if (remote && remote !== local) items.push({ cls: "ipa-remote", ipa: remote });
+        if (!items.length) {
+          element.style.opacity = "";
+          return;
+        }
+        items.forEach((it, i) => {
+          if (i > 0) {
+            const sep = document.createElement("span");
+            sep.className = "ipa-sep";
+            sep.textContent = "·";
+            element.appendChild(sep);
+          }
+          const ip = document.createElement("span");
+          ip.className = "ipa-text " + it.cls;
+          ip.textContent = it.ipa;
+          element.appendChild(ip);
+        });
+        element.style.opacity = "0.8";
+      }
+
       async function fetchIPA(word, element, exampleEl) {
         let cache = getIPACache();
         let cached = cache[word];
 
-        // 兼容旧格式（纯字符串）→ 保留 IPA，删除旧条目，重新获取
+        // 兼容旧格式（纯字符串）→ 删除旧条目，按新逻辑重新获取
         if (typeof cached === "string") {
-          element.textContent = cached;
-          if (cached) element.style.opacity = "0.8";
           delete cache[word];
           localStorage.setItem("ipa-cache", JSON.stringify(cache));
-          cached = null; // 标记为需要重新获取
-          // 静态例句先展示
-          const staticEx = staticExamples[word.toLowerCase()];
-          if (staticEx) {
-            renderExamples(exampleEl, word, normalizeStatic(staticEx).map(t => ({ text: t, source: "ai" })), false);
-          }
+          cached = null;
         }
 
+        // 1) 本地音标立即显示（如远程已有缓存则直接合并）
+        const remoteCached = (cached && typeof cached === "object") ? (cached.ipa || "") : "";
+        renderPhonetic(word, element, remoteCached);
+
+        // 2) 静态例句先展示
+        const staticEx = staticExamples[word.toLowerCase()];
+        if (staticEx) {
+          renderExamples(exampleEl, word, normalizeStatic(staticEx).map(t => ({ text: t, source: "ai" })), false);
+        } else if (!cached) {
+          renderExamples(exampleEl, word, [], true); // loading
+        }
+
+        // 3) 已有完整缓存（对象格式）→ 渲染例句并补充 Tatoeba，结束
         if (cached && typeof cached === "object") {
-          element.textContent = cached.ipa || "";
-          if (cached.ipa) element.style.opacity = "0.8";
           const merged = mergeExamples(word, cached.examples || []);
           renderExamples(exampleEl, word, merged, false);
-          // 异步补充 Tatoeba2
           getTatoeba(word).then(tatoebaEx => {
             if (tatoebaEx.length) {
               tatoebaEx.forEach(t => {
@@ -512,21 +1090,15 @@ function renderSuffixControls(filterText = "") {
           return;
         }
 
-        // 静态例句先展示
-        const staticEx = staticExamples[word.toLowerCase()];
-        if (staticEx) {
-          renderExamples(exampleEl, word, normalizeStatic(staticEx).map(t => ({ text: t, source: "ai" })), false);
-        } else {
-          renderExamples(exampleEl, word, [], true); // loading
-        }
-
         try {
           const res = await fetch(
             `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
+            { signal: AbortSignal.timeout(6000) },
           );
           if (!res.ok) {
+            // 确认查无此词（404 等）→ 缓存空值避免反复请求；本地音标继续顶住
             setIPACache(word, "", []);
-            element.textContent = "";
+            renderPhonetic(word, element, "");
             const fallback = staticEx ? normalizeStatic(staticEx).map(t => ({ text: t, source: "ai" })) : [];
             renderExamples(exampleEl, word, fallback, false);
             return;
@@ -547,8 +1119,7 @@ function renderSuffixControls(filterText = "") {
             });
           });
           setIPACache(word, ipa, apiExamples);
-          element.textContent = ipa;
-          if (ipa) element.style.opacity = "0.8";
+          renderPhonetic(word, element, ipa); // 本地 + 远程合并显示
           const merged = mergeExamples(word, apiExamples);
           renderExamples(exampleEl, word, merged, false);
 
@@ -563,8 +1134,7 @@ function renderSuffixControls(filterText = "") {
             }
           });
         } catch {
-          setIPACache(word, "", []);
-          element.textContent = "";
+          // 网络失败/超时：不写缓存（下次还能重试），本地音标保持显示
           renderExamples(exampleEl, word, staticEx ? normalizeStatic(staticEx).map(t => ({ text: t, source: "ai" })) : [], false);
         }
       }
@@ -732,6 +1302,13 @@ function renderSuffixControls(filterText = "") {
             (v) => v.word[0]?.toUpperCase() === l,
           );
         }
+        // Phonics: letter-combination filter (e.g. ee / ai / a_e; whole = all combos of a sub-category)
+        if (currentFilter.phonics) {
+          const re = currentFilter.phonics.whole
+            ? phonicsGroupRegex(currentFilter.phonics.catId)
+            : phonicsRegex(currentFilter.phonics.combo);
+          filteredVocab = filteredVocab.filter((v) => re.test(v.word));
+        }
 
         // 排序
         if (azSortOrder) {
@@ -782,7 +1359,7 @@ function renderSuffixControls(filterText = "") {
           : null;
 
         slice.forEach((item) => {
-          const card = createCard(item, sfxReg);
+          const card = createCard(item, sfxReg, currentFilter.phonics);
           frag.appendChild(card);
           ipaObserver.observe(card);
         });
@@ -810,7 +1387,7 @@ function renderSuffixControls(filterText = "") {
       const esc = (s) =>
         s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-      function createCard(item, sfxReg) {
+      function createCard(item, sfxReg, phonicsInfo) {
         const card = document.createElement("div");
         card.className = "card";
         card.dataset.word = item.word;
@@ -819,17 +1396,41 @@ function renderSuffixControls(filterText = "") {
         card.setAttribute("aria-label", item.word);
 
         let wordHTML = esc(item.word);
-        if (sfxReg)
+        // Phonics: highlight the matched letter combination (takes priority over suffix highlight)
+        if (phonicsInfo) {
+          const re = phonicsInfo.whole
+            ? new RegExp(phonicsGroupRegex(phonicsInfo.catId).source, "gi")
+            : phonicsRegex(phonicsInfo.combo);
+          wordHTML = wordHTML.replace(
+            re,
+            (m) => `<span class="highlight combo-hl">${m}</span>`,
+          );
+        } else if (sfxReg) {
           wordHTML = wordHTML.replace(
             sfxReg,
             (m) => `<span class="highlight">${m}</span>`,
           );
+        }
+        // Search highlight for word
+        const searchQ = currentFilter.search;
+        if (searchQ) {
+          const searchRegex = new RegExp(`(${searchQ.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+          wordHTML = wordHTML.replace(searchRegex, '<span class="search-hl">$1</span>');
+        }
         const w = encodeURIComponent(item.word);
+
+        // Phonics corner tag: combo · sound; whole-category filter shows the category name
+        const comboTag = phonicsInfo
+          ? phonicsInfo.whole
+            ? `<span class="combo-tag" title="${esc(phonicsInfo.category)} · all combinations">${esc(phonicsInfo.category)}</span>`
+            : `<span class="combo-tag" title="${esc(phonicsInfo.category)} · ${esc(phonicsInfo.sound)}">${esc(phonicsInfo.combo)}<i>${esc(phonicsInfo.sound)}</i></span>`
+          : "";
 
         card.innerHTML = `
     <div class="card-inner">
         <div class="word-header">
             <div class="word-text">${wordHTML}</div>
+            ${comboTag}
         </div>
         <div class="word-phonetic" data-word="${esc(item.word)}">...</div>
         <div class="word-def">${esc(item.def)}</div>
