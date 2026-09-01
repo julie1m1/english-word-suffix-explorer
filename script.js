@@ -133,6 +133,7 @@
         pos: "All",
         letter: null,
         phonics: null,
+        search: null,
       };
       let lastScrollTop = 0,
         showAllDef = false;
@@ -169,22 +170,35 @@
           ],
         },
         {
-          id: "voiced", label: "Voiced Consonants", rows: [
-            ["[b]", ["b", "bb"]],
-            ["[d]", ["d", "dd"]],
-            ["[g]", ["g", "gg", "gh", "gu"]],
-            ["[dʒ]", ["j", "ge", "gi", "gy", "dge"]],
-            ["[ʒ]", ["si", "su"]],
-            ["[v]", ["v", "ve", "f"]],
-            ["[l]", ["l", "ll"]],
-            ["[m]", ["m", "mm"]],
-            ["[n]", ["n", "nn"]],
-            ["[ŋ]", ["ng", "nk"]],
-            ["[r]", ["r", "rr", "wr", "rh"]],
-            ["[w]", ["w", "wh"]],
-            ["[j]", ["y"]],
-            ["[z]", ["z", "zz", "s", "se", "ss"]],
-            ["[h]", ["h"]],
+          id: "mono-long", label: "Long Vowels", rows: [
+            ["[i:]", ["ee", "ea", "e_e", "ie", "ei", "ey"]],
+            ["[ɑ:]", ["ar", "are", "al", "au", "aw"]],
+            ["[ɔ:]", ["or", "oar", "oor", "ore", "our", "al", "au", "aw"]],
+            ["[u:]", ["oo", "u_e", "ue", "ui", "ew", "ou"]],
+            ["[ɜ:]", ["ir", "ur", "er", "ear", "or", "yr"]],
+          ],
+        },
+        {
+          id: "mono-short", label: "Short Vowels", rows: [
+            ["[ʌ]", ["u", "o", "oo", "ou", "oe"]],
+            ["[ɪ]", ["i", "y", "e", "u", "ui"]],
+            ["[ʊ]", ["oo", "u", "oul"]],
+            ["[ə]", ["a", "e", "i", "o", "u", "ou"]],
+            ["[ɒ]", ["o", "a", "al"]],
+            ["[e]", ["e", "ea", "a", "ai", "ie"]],
+            ["[æ]", ["a", "ai"]],
+          ],
+        },
+        {
+          id: "mono-dip", label: "Diphthongs", rows: [
+            ["[eɪ]", ["a", "a_e", "ai", "ay", "eigh", "ey", "ea"]],
+            ["[aɪ]", ["i", "i_e", "ie", "igh", "y", "eye", "uy"]],
+            ["[ɔɪ]", ["oi", "oy"]],
+            ["[aʊ]", ["ou", "ow"]],
+            ["[əʊ]", ["o", "o_e", "oa", "oe", "ow"]],
+            ["[ɪə]", ["ear", "eer", "ier", "ia"]],
+            ["[eə]", ["air", "are", "ear", "eir", "ere", "aire", "ayer"]],
+            ["[ʊə]", ["oor", "oure", "our", "ure"]],
           ],
         },
         {
@@ -193,10 +207,50 @@
             ["[t]", ["t", "tt", "ed"]],
             ["[k]", ["c", "k", "ck", "ch", "que"]],
             ["[f]", ["f", "ff"]],
-            ["[s]", ["s", "ss", "se", "sc", "ce", "ci", "cy"]],
-            ["[tʃ]", ["ch", "tch", "tu"]],
-            ["[ʃ]", ["sh", "ti", "c", "s", "ss", "ch"]],
             ["[θ]", ["th"]],
+            ["[s]", ["s", "ss", "se", "sc", "ce", "ci", "cy"]],
+            ["[ʃ]", ["sh", "ti", "c", "s", "ss", "ch"]],
+            ["[tʃ]", ["ch", "tch", "tu"]],
+            ["[tr]", ["tr"]],
+            ["[ts]", ["ts"]],
+          ],
+        },
+        {
+          id: "voiced", label: "Voiced Consonants", rows: [
+            ["[b]", ["b", "bb"]],
+            ["[d]", ["d", "dd"]],
+            ["[g]", ["g", "gg", "gh", "gu"]],
+            ["[v]", ["v", "ve", "f"]],
+            ["[ð]", ["th"]],
+            ["[z]", ["z", "zz", "s", "se", "ss"]],
+            ["[ʒ]", ["si", "su"]],
+            ["[dʒ]", ["j", "ge", "gi", "gy", "dge"]],
+            ["[dr]", ["dr"]],
+            ["[dz]", ["ds"]],
+          ],
+        },
+        {
+          id: "semi-voiced", label: "Semi-voiced Consonants", rows: [
+            ["[h]", ["h"]],
+            ["[r]", ["r", "rr", "wr", "rh"]],
+          ],
+        },
+        {
+          id: "semivowel", label: "Semivowels", rows: [
+            ["[w]", ["w", "wh"]],
+            ["[j]", ["y"]],
+          ],
+        },
+        {
+          id: "nasal", label: "Nasals", rows: [
+            ["[m]", ["m", "mm"]],
+            ["[n]", ["n", "nn"]],
+            ["[ŋ]", ["ng", "nk"]],
+          ],
+        },
+        {
+          id: "lateral", label: "Lateral", rows: [
+            ["[l]", ["l", "ll"]],
           ],
         },
         {
@@ -231,14 +285,16 @@
         );
       });
 
-      // Three main sections, sub-categories shown side by side
+      // Main sections, sub-categories shown side by side; cols = grid column count
       const PHONICS_SECTIONS = [
-        { id: "vowel", label: "Vowels", groups: ["short-vowel", "long-vowel"] },
-        { id: "consonant", label: "Consonants", groups: ["voiced", "voiceless"] },
+        { id: "vowel", label: "Vowels", groups: ["short-vowel", "long-vowel"], cols: 2 },
+        { id: "mono-diphthong", label: "Single & Double Vowels", groups: ["mono-long", "mono-short", "mono-dip"], cols: 2 },
+        { id: "consonant", label: "Consonants", groups: ["voiceless", "voiced", "semi-voiced", "semivowel", "nasal", "lateral"], cols: 2 },
         {
           id: "special-vowel",
           label: "Special Vowel Forms",
           groups: ["vowel-r", "other-vowel-r", "special"],
+          cols: 3,
         },
       ];
       const phonicsSectionCounts = {};
@@ -349,6 +405,7 @@
         if (section) {
           const area = document.createElement("div");
           area.className = "phonics-section-area";
+          area.dataset.cols = section.cols || 2;
 
           section.groups.forEach((gid) => {
             const group = PHONICS_GROUPS.find((g) => g.id === gid);
@@ -709,6 +766,24 @@ window.addEventListener("load", () => {
   // 1.5 初始化自然发音浮动面板（此时 DOM 已就绪，词库异步加载后计数会再刷新）
   initPhonicsPanel();
   renderPhonicsBar();
+
+  // 1.6 搜索框
+  const searchInput = document.getElementById("searchInput");
+  const searchClear = document.getElementById("searchClear");
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      currentFilter.search = e.target.value.trim().toLowerCase();
+      searchClear.style.display = e.target.value ? "flex" : "none";
+      applyFilters();
+    });
+    searchClear.addEventListener("click", () => {
+      searchInput.value = "";
+      currentFilter.search = "";
+      searchClear.style.display = "none";
+      applyFilters();
+      searchInput.focus();
+    });
+  }
 
   // 2. 加载词库列表（带分类标题美化）
   fetch("data/list.json")
@@ -1308,6 +1383,15 @@ function renderSuffixControls(filterText = "") {
             ? phonicsGroupRegex(currentFilter.phonics.catId)
             : phonicsRegex(currentFilter.phonics.combo);
           filteredVocab = filteredVocab.filter((v) => re.test(v.word));
+        }
+        // Search filter: match word or definition
+        if (currentFilter.search) {
+          const q = currentFilter.search;
+          filteredVocab = filteredVocab.filter((v) => {
+            const word = v.word.toLowerCase();
+            const def = (v.def || "").toLowerCase();
+            return word.includes(q) || def.includes(q);
+          });
         }
 
         // 排序

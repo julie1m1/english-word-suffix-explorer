@@ -295,6 +295,64 @@
   pointer-events: none;
 }
 
+/* --- Search Box --- */
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 8px;
+  height: 32px;
+  flex: 1;
+  min-width: 0;
+  max-width: 280px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-box:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.search-box input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: var(--text-primary);
+  min-width: 0;
+}
+.search-box input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+.search-icon {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  order: 1;
+}
+.search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  order: 2;
+}
+.search-clear:hover {
+  background: var(--text-secondary);
+  color: var(--surface);
+}
+
 
 
       /* ── POS ROW — own scrollable bar between top-bar and az-bar ── */
@@ -818,6 +876,12 @@
         color: var(--accent);
         font-weight: 500;
       }
+      .search-hl {
+        background: rgba(255, 193, 7, 0.3);
+        color: inherit;
+        padding: 1px 2px;
+        border-radius: 2px;
+      }
 
       /* ── SKELETON ── */
       .skeleton {
@@ -987,6 +1051,14 @@ display: block !important;
         }
         .top-bar-right {
           gap: 4px;
+        }
+        .search-box {
+          flex: 1;
+          max-width: none;
+          height: 30px;
+        }
+        .search-box input {
+          font-size: 12px;
         }
 
         /* A-Z bar & POS bar: same size on mobile */
@@ -2162,6 +2234,13 @@ body.spelling-mode.spelling-started.spelling-show-words .card:not(.spelling-answ
   gap: 8px 14px;
   padding: 6px 2px 4px;
   align-items: start;
+}
+
+.phonics-section-area[data-cols="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.phonics-section-area[data-cols="3"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .phonics-subcat-col {

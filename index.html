@@ -84,6 +84,14 @@
         <!-- Desktop: POS buttons inline left (hidden on mobile via CSS) -->
         <div class="top-bar-pos" id="topBarPos"></div>
 <div class="top-bar-right">
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search words…" autocomplete="off" />
+    <button class="search-clear" id="searchClear" style="display:none">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+    </button>
+    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg>
+  </div>
+
   <div class="select-wrapper">
     <select id="vocabSelect">
       <option>Loading…</option>
