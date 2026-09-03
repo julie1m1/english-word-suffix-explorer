@@ -5,27 +5,42 @@
 ═══════════════════════════════════════ */
       const Papa = {
         parse(text) {
-          return {
-            data: text.split(/\r?\n/).map((line) => {
-              const cols = [];
-              let cur = "",
-                inQ = false;
-              for (const c of line) {
-                if (c === '"') {
-                  inQ = !inQ;
-                  continue;
-                }
-                if (c === "," && !inQ) {
-                  cols.push(cur);
-                  cur = "";
-                  continue;
-                }
-                cur += c;
+          // 支持引号内换行（多行释义字段）与转义引号 "" 的轻量 CSV 解析
+          const rows = [];
+          let cols = [],
+            cur = "",
+            inQ = false;
+          for (let i = 0; i < text.length; i++) {
+            const c = text[i];
+            if (c === '"') {
+              if (inQ && text[i + 1] === '"') {
+                cur += '"';
+                i++;
+                continue;
               }
+              inQ = !inQ;
+              continue;
+            }
+            if (c === "," && !inQ) {
               cols.push(cur);
-              return cols;
-            }),
-          };
+              cur = "";
+              continue;
+            }
+            if ((c === "\n" || c === "\r") && !inQ) {
+              if (c === "\r" && text[i + 1] === "\n") i++;
+              cols.push(cur);
+              rows.push(cols);
+              cols = [];
+              cur = "";
+              continue;
+            }
+            cur += c;
+          }
+          if (cur !== "" || cols.length) {
+            cols.push(cur);
+            rows.push(cols);
+          }
+          return { data: rows };
         },
       };
 
@@ -135,7 +150,11 @@
         phonics: null,
         syllable: null, // { nSyl, anchors, focus, vce, diph }
         search: null,
+        cluster: null, // 语义分类簇号（int）或 null
       };
+      let clusterData = null; // { wordMap: {word:{cluster,name}}, clusters: [{id,name,count}] }
+      let categoryOpen = false; // 分类标签栏是否展开
+      let allBookUrls = []; // 全部词库 CSV 路径（用于 All Books 合并加载）
       let lastScrollTop = 0,
         showAllDef = false;
       let azSortOrder = null; // null = 不排序, 'asc' = A→Z, 'desc' = Z→A
@@ -1311,13 +1330,54 @@ window.addEventListener("load", () => {
     });
   }
 
-  // 2. 加载词库列表（带分类标题美化）
-  fetch("data/list.json")
+  /* ═══════════════════════════════════════
+   CATEGORY (语义分类) 控件事件
+═══════════════════════════════════════ */
+  const categoryBtn = document.getElementById("categoryBtn");
+  if (categoryBtn) {
+    categoryBtn.addEventListener("click", toggleCategoryBar);
+  }
+  const categoryArrowLeft = document.getElementById("categoryArrowLeft");
+  const categoryArrowRight = document.getElementById("categoryArrowRight");
+  if (categoryArrowLeft) categoryArrowLeft.addEventListener("click", () => scrollCategory(-1));
+  if (categoryArrowRight) categoryArrowRight.addEventListener("click", () => scrollCategory(1));
+  const categoryScrollEl = document.getElementById("categoryScroll");
+  if (categoryScrollEl) categoryScrollEl.addEventListener("scroll", updateCategoryArrows);
+
+  // 2. 加载语义分类 + 词库列表（带分类标题美化）
+  fetch("data/cluster_map.json")
     .then((r) => r.json())
+    .catch(() => null)
+    .then((clusterMap) => {
+      clusterData = clusterMap;
+      return fetch("data/list.json").then((r) => r.json());
+    })
     .then((data) => {
       const sel = document.getElementById("vocabSelect");
       if (!sel) return;
       sel.innerHTML = "";
+
+      // 缓存全部词库 CSV 路径（供 All Books 合并加载使用）
+      allBookUrls = data.vocabs
+        .filter((v) => v.endsWith(".csv"))
+        .map((v) => `data/${v}`);
+
+      // 顶部「全部词库」虚拟选项
+      const allOpt = document.createElement("option");
+      allOpt.value = "ALL_BOOKS";
+      allOpt.textContent = "All Books（全部词库）";
+      allOpt.className = "vocab-all-books";
+      allOpt.style.fontWeight = "bold";
+      allOpt.style.color = "var(--md-primary)";
+      sel.appendChild(allOpt);
+
+      // 分隔线标题
+      const sep = document.createElement("option");
+      sep.disabled = true;
+      sep.textContent = "── 单本词库 ──";
+      sep.className = "vocab-group-title";
+      sep.style.color = "var(--text-3)";
+      sel.appendChild(sep);
 
       // 遍历列表生成选项
       data.vocabs.forEach((n) => {
@@ -1341,19 +1401,28 @@ window.addEventListener("load", () => {
         }
       });
 
-      // 3. 确定初始加载的词库
+      // 3. 确定初始加载的词库（支持 All Books）
       const savedBook = localStorage.getItem("vocab-selected-book");
       const firstValidVocab = data.vocabs.find(v => v.endsWith(".csv"));
-      const initialVocab = (savedBook && data.vocabs.some(v => `data/${v}` === savedBook))
-        ? savedBook
-        : (firstValidVocab ? `data/${firstValidVocab}` : null);
+      let initialVocab = null;
+      if (savedBook === "ALL_BOOKS") {
+        initialVocab = "ALL_BOOKS";
+      } else if (savedBook && data.vocabs.some(v => `data/${v}` === savedBook)) {
+        initialVocab = savedBook;
+      } else if (firstValidVocab) {
+        initialVocab = `data/${firstValidVocab}`;
+      }
 
       if (initialVocab) sel.value = initialVocab;
 
       const firstSuffix = data.suffixes ? data.suffixes[0] : null;
 
+      const loadInitial = initialVocab === "ALL_BOOKS"
+        ? loadAllBooks()
+        : (initialVocab ? loadVocab(initialVocab) : Promise.resolve());
+
       Promise.all([
-        initialVocab ? loadVocab(initialVocab) : Promise.resolve(),
+        loadInitial,
         firstSuffix ? loadSuffix(`data/${firstSuffix}`) : Promise.resolve(),
       ]);
     })
@@ -1373,19 +1442,78 @@ window.addEventListener("load", () => {
           .then((text) => {
             const { data } = Papa.parse(text.trim());
             vocab = data
-              .filter((r) => r[0] && r[1])
+              .filter((r) => r[0] && r[0].trim())
               .map((r) => ({
                 word: r[0].trim(),
-                def: r[1].trim(),
-                pos: r[1].match(/[a-z]+\./g) || [],
+                def: (r[1] || "").trim(),
+                pos: (r[1] || "").match(/[a-z]+\./g) || [],
               }));
+            // 语义分类数据：把簇号 + 簇名挂到每个词上
+            if (clusterData && clusterData.wordMap) {
+              const wm = clusterData.wordMap;
+              vocab.forEach((v) => {
+                const hit = wm[v.word] || wm[v.word.toLowerCase()];
+                if (hit) {
+                  v.cluster = hit.cluster;
+                  v.clusterName = hit.name;
+                }
+              });
+            }
             updatePOSMenu();
             updateAZBar();
             buildSyllableMeta(); // 若本地音标已加载则先建一次音节索引（幂等）
             renderPhonicsBar(); // 刷新发音分类的组合计数（随词库变化）
+            renderCategoryBar(); // 渲染语义分类标签栏（词库就绪后统计）
             applyFilters();
           })
           .catch(() => showError("Failed to load vocab: " + url));
+      }
+
+      // 合并全部词库：并发读取所有书，按词（小写）去重，保留首次出现的释义
+      function loadAllBooks() {
+        showSkeletons();
+        AudioCache.clear();
+        if (!allBookUrls.length) return Promise.resolve();
+        return Promise.all(
+          allBookUrls.map((url) => fetch(url).then((r) => r.text())),
+        )
+          .then((texts) => {
+            const seen = new Map(); // key = word.toLowerCase()
+            const merged = [];
+            texts.forEach((text) => {
+              Papa.parse(text.trim()).data.forEach((r) => {
+                if (!r[0] || !r[0].trim()) return;
+                const word = r[0].trim();
+                const key = word.toLowerCase();
+                if (seen.has(key)) return; // 跨书去重
+                seen.set(key, true);
+                merged.push({
+                  word,
+                  def: (r[1] || "").trim(),
+                  pos: (r[1] || "").match(/[a-z]+\./g) || [],
+                });
+              });
+            });
+            vocab = merged;
+            // 语义分类数据：把簇号 + 簇名挂到每个词上
+            if (clusterData && clusterData.wordMap) {
+              const wm = clusterData.wordMap;
+              vocab.forEach((v) => {
+                const hit = wm[v.word] || wm[v.word.toLowerCase()];
+                if (hit) {
+                  v.cluster = hit.cluster;
+                  v.clusterName = hit.name;
+                }
+              });
+            }
+            updatePOSMenu();
+            updateAZBar();
+            buildSyllableMeta(); // 若本地音标已加载则先建一次音节索引（幂等）
+            renderPhonicsBar();
+            renderCategoryBar();
+            applyFilters();
+          })
+          .catch(() => showError("Failed to load All Books"));
       }
 
       function loadSuffix(url) {
@@ -1407,6 +1535,84 @@ window.addEventListener("load", () => {
             });
             renderSuffixControls();
           });
+      }
+
+      /* ═══════════════════════════════════════
+   语义分类（CATEGORY）· K-Means 主题簇
+═══════════════════════════════════════ */
+      // 渲染分类标签栏（默认收起，点导航栏 Category 按钮展开）
+      function renderCategoryBar() {
+        const scroll = document.getElementById("categoryScroll");
+        if (!scroll || !clusterData) return;
+        scroll.innerHTML = "";
+
+        // 统计当前词库里每个簇的实际词数（用于右下角数字 + 0 词隐藏）
+        const counts = new Map();
+        vocab.forEach((v) => {
+          const key = v.cluster === undefined ? -1 : v.cluster;
+          counts.set(key, (counts.get(key) || 0) + 1);
+        });
+
+        // All 标签
+        const allChip = document.createElement("button");
+        allChip.className = "category-chip" + (currentFilter.cluster === null ? " active" : "");
+        allChip.innerHTML = `<span class="category-chip-name">All</span><span class="category-chip-count">${vocab.length}</span>`;
+        allChip.title = `全部 · ${vocab.length} 词`;
+        allChip.onclick = () => {
+          currentFilter.cluster = null;
+          renderCategoryBar();
+          applyFilters();
+        };
+        scroll.appendChild(allChip);
+
+        // 各簇标签（含「短语」「其他」簇）；当前词库中 0 词的簇不渲染
+        const clusters = clusterData.clusters || [];
+        clusters.forEach((c) => {
+          const n = counts.get(c.id) || 0;
+          if (n === 0) return; // 当前词库没有该分类的词，隐藏标签
+          const chip = document.createElement("button");
+          chip.className = "category-chip" + (currentFilter.cluster === c.id ? " active" : "");
+          chip.innerHTML = `<span class="category-chip-name">${esc(c.name)}</span><span class="category-chip-count">${n}</span>`;
+          chip.title = `${c.name} · ${n} 词`;
+          chip.onclick = () => {
+            currentFilter.cluster = currentFilter.cluster === c.id ? null : c.id;
+            renderCategoryBar();
+            applyFilters();
+          };
+          scroll.appendChild(chip);
+        });
+
+        updateCategoryArrows();
+      }
+
+      // 左右箭头状态 + 滑动
+      function updateCategoryArrows() {
+        const scroll = document.getElementById("categoryScroll");
+        const left = document.getElementById("categoryArrowLeft");
+        const right = document.getElementById("categoryArrowRight");
+        if (!scroll || !left || !right) return;
+        const canLeft = scroll.scrollLeft > 1;
+        const canRight = scroll.scrollLeft + scroll.clientWidth < scroll.scrollWidth - 1;
+        left.classList.toggle("disabled", !canLeft);
+        right.classList.toggle("disabled", !canRight);
+      }
+
+      function scrollCategory(dir) {
+        const scroll = document.getElementById("categoryScroll");
+        if (!scroll) return;
+        const amount = scroll.clientWidth * 0.7;
+        scroll.scrollBy({ left: dir * amount, behavior: "smooth" });
+      }
+
+      // 切换分类标签栏显隐
+      function toggleCategoryBar() {
+        const bar = document.getElementById("categoryBar");
+        const btn = document.getElementById("categoryBtn");
+        if (!bar) return;
+        categoryOpen = !categoryOpen;
+        bar.style.display = categoryOpen ? "flex" : "none";
+        if (btn) btn.classList.toggle("active", categoryOpen);
+        if (categoryOpen) updateCategoryArrows();
       }
 
       /* ═══════════════════════════════════════
@@ -1930,6 +2136,15 @@ function renderSuffixControls(filterText = "") {
             return word.includes(q) || def.includes(q);
           });
         }
+        // 语义分类筛选：cluster===null 不过滤；-1 = OOV「其他」；否则按簇号匹配
+        if (currentFilter.cluster !== null && currentFilter.cluster !== undefined) {
+          if (currentFilter.cluster === -1) {
+            // wordMap 中 OOV 词的 cluster 已标为 -1；undefined 为兜底
+            filteredVocab = filteredVocab.filter((v) => v.cluster === -1 || v.cluster === undefined);
+          } else {
+            filteredVocab = filteredVocab.filter((v) => v.cluster === currentFilter.cluster);
+          }
+        }
 
         // 排序
         if (azSortOrder) {
@@ -1951,6 +2166,19 @@ function renderSuffixControls(filterText = "") {
          // ✅ 新增：清空前断开旧 Observer，防止内存泄漏
         ipaObserver.disconnect();
         loadMoreObserver.disconnect();
+
+        // 语义分类：选中某簇时，列表顶部显示「簇名 · N 词」标题条
+        if (currentFilter.cluster !== null && currentFilter.cluster !== undefined) {
+          let title = "其他";
+          if (currentFilter.cluster !== -1 && clusterData) {
+            const c = clusterData.clusters?.find((x) => x.id === currentFilter.cluster);
+            if (c) title = c.name;
+          }
+          const head = document.createElement("div");
+          head.className = "category-head";
+          head.innerHTML = `<span class="category-head-name">${esc(title)}</span><span class="category-head-count">${filteredVocab.length} 词</span>`;
+          document.getElementById("grid").appendChild(head);
+        }
 
         if (!filteredVocab.length) {
           document.getElementById("grid").innerHTML =
@@ -2192,7 +2420,8 @@ function renderSuffixControls(filterText = "") {
         .getElementById("vocabSelect")
         .addEventListener("change", (e) => {
           localStorage.setItem("vocab-selected-book", e.target.value);
-          loadVocab(e.target.value);
+          if (e.target.value === "ALL_BOOKS") loadAllBooks();
+          else loadVocab(e.target.value);
         });
 
       document.getElementById("viewToggleBtn").addEventListener("click", function () {

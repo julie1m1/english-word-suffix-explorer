@@ -1,6 +1,6 @@
 # Vocab Lab Omni
 
-一个功能丰富的英语单词学习工具，支持 56+ 词库浏览、自动播放、拼写测试、多源例句系统、双音标显示与自然发音（Phonics）筛选。
+一个功能丰富的英语单词学习工具，支持 54 本词库浏览、**语义分类（Category）**、自动播放、拼写测试、多源例句系统、双音标显示与自然发音（Phonics）筛选。
 
 > 🔗 **在线体验**：[https://julie1m1.github.io/english-word-suffix-explorer](https://julie1m1.github.io/english-word-suffix-explorer)
 
@@ -12,20 +12,27 @@
 <!-- ![拼写模式](assets/screenshot-spelling.png) -->
 <!-- ![单词书选择](assets/screenshot-book-select.png) -->
 
- 
-
 ---
 
 ## 功能特性
 
 ### 词库浏览
-- **56+ 词库**：雅思、托福、GRE、朗文、牛津、Wordly Wise 等全覆盖
+- **54 本词库**：雅思、托福、GRE、朗文、牛津、Wordly Wise 等全覆盖，按 9 大考试分类分组
+- **全部词库（All Books）**：下拉框顶部提供虚拟选项，一次性合并 54 本书并按词去重（38,617 词条），分类/筛选可跨书汇总
 - **分类管理**：按考试类型分组，支持禁用横线分隔
 - **后缀/前缀过滤**：快速定位同类单词（如 `-tion`, `-ment`, `un-`）
 - **A-Z 字母索引**：点击字母跳转到对应单词
 - **词性筛选**：名词、动词、形容词等一键过滤
 - **卡片/列表视图**：切换两种浏览模式
 - **分页懒加载**：自动加载更多，支持大量词库
+
+### 语义分类（Category）
+- **100 个语义簇**：基于 GloVe 6B 100d 词向量 + K-Means 聚类，把单词按语义归入「动物」「音乐」「数码·科技」「传染病·疫情」等 100 个主题簇
+- **短语 / 其他（OOV）**：短语单独归为「短语」标签，未命中词向量的词归为「其他」标签
+- **标签栏交互**：导航栏 Category 按钮展开，两行横向滚动 + 左右箭头滑动
+- **数字徽标**：每个标签右下角显示当前词库内该簇的实际词数，不选中也能预览
+- **0 词自动隐藏**：某簇在当前词库中无匹配词时自动隐藏该标签
+- **标题条**：选中后列表顶部显示「簇名 · N 词」
 
 ### 单词书选择
 - 独立选书页面（`book-select.html`）
@@ -97,21 +104,30 @@
 ```
 ├── index.html                # 主页面
 ├── book-select.html          # 单词书选择页面
-├── script.js                 # 核心逻辑（词库加载、播放、拼写、例句）
+├── script.js                 # 核心逻辑（词库加载、分类、播放、拼写、例句）
 ├── style.css                 # 样式表（Material Design 3）
 ├── package.json              # 项目配置
 ├── data/
 │   ├── list.json             # 词库列表 + 分类配置
+│   ├── cluster_map.json      # 语义分类映射（词→簇号/簇名，前端运行必需）
+│   ├── clusters.json         # K-Means 聚类原始结果
+│   ├── cluster_names.json    # 100 个语义簇的中文命名
+│   ├── cluster_meta.json     # 短语 / 其他（OOV）统计
+│   ├── cluster_report.txt    # 每簇代表词报告（命名校准用）
 │   ├── examples.json         # AI 生成例句（口语/书面）
 │   ├── ecdict-examples.json  # ECDICT 提取例句
 │   ├── ipa.json              # 本地音标数据（ECDICT 提取，22,779 条）
 │   ├── longman3000_missing.json    # 朗文 3000 补充数据
 │   ├── longman3000_new_examples.json # 朗文 3000 新例句
 │   ├── Suffix_Ref.csv        # 后缀/前缀参考数据
-│   ├── stardict.db           # ECDICT 词典数据库（本地音标数据源）
-│   └── *.csv                 # 56 个词库 CSV 文件
-└── scripts/                  # 数据处理脚本（开发用）
-    └── gen_ipa_json.py       # 从 stardict.db 生成 data/ipa.json
+│   ├── stardict.db           # ECDICT 词典数据库（本地音标数据源，不入库）
+│   └── *.csv                 # 54 本词库 CSV 文件
+├── scripts/                  # 数据处理脚本（开发用）
+│   ├── cluster_words.py      # GloVe + K-Means 语义聚类（X=100）
+│   ├── build_cluster_map.py  # 合并聚类 + 命名 → cluster_map.json
+│   ├── curate_cluster_names.py # 依据代表词校准 100 个簇名
+│   └── gen_ipa_json.py       # 从 stardict.db 生成 data/ipa.json
+└── glove.6B.100d.txt         # GloVe 词向量（仅聚类时用，约 332MB，不入库）
 ```
 
 ---
@@ -121,18 +137,17 @@
 | 分类 | 词库数 | 包含词库 |
 |------|--------|----------|
 | 雅思 | 9 | 7天高频核心词、100句7000词、剑桥精典、词组必备等 |
-| 托福/SAT/GMAT/GRE | 8 | 托福词组、SAT巴朗、GMAT精选、GRE巴朗等 |
+| 托福/SAT/GMAT/GRE | 7 | 托福词组、SAT巴朗、GMAT精选、GRE巴朗等 |
 | 考研/PET/KET | 4 | 考研2025、考研写作、PET巧记、KET核心词 |
 | BEC | 2 | 中级/高级词汇精选 |
 | 通用词组 | 2 | 英语词组全书（上/下） |
-| 牛津/Wordly Wise | 16 | Oxford 3000/5000、Wordly Wise Book 1-10/K |
+| 牛津/Wordly Wise | 15 | Oxford 3000/5000、Wordly Wise Book 1-10/K |
 | 朗文/语料库 | 8 | 朗文3000、Side by Side 1-4、美国语料库 |
 | 竞赛/热词 | 4 | 大英竞赛8000、热词红宝书 1-3 版 |
-| 其他 | 3 | 鸭圈雅思、学术词汇、ACT核心词 |
+| 其他考试 | 3 | 鸭圈雅思、学术词汇、ACT核心词 |
 
-**总计**：56 词库，50,000+ 单词
+**总计**：54 本词库，去重后 **38,617 词条**（20,849 单词 + 17,062 短语 + 706 未匹配词向量）
 
- 
 ---
 
 ## 技术栈
@@ -141,6 +156,7 @@
 |------|------|
 | HTML/CSS/JS | 纯前端，零框架依赖 |
 | Material Design 3 | 设计语言与配色 |
+| GloVe 6B 100d + scikit-learn K-Means | 单词语义聚类（100 簇，离线预计算） |
 | dictionaryapi.dev | 远程 IPA 音标 + API 例句（兜底） |
 | Tatoeba2 | 社区多语言例句 |
 | ECDICT (stardict.db) | 本地词典例句数据 + 本地音标数据 (ipa.json) |
@@ -165,7 +181,3 @@
 ## 贡献
 
 欢迎提交 Issue 和 Pull Request！
-
- 
-
- 

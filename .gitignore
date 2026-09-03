@@ -8,6 +8,14 @@ node_modules/
 data/stardict.db
 *.db
 
+# GloVe 词向量（约 332MB，仅聚类时用，超过 GitHub 100MB 限制，不入库）
+glove.6B.100d.txt
+glove*.txt
+
+# 一次性探索/弃用脚本
+scripts/probe_target.py
+scripts/remap_cluster_names.py
+
 # 开发中间产物（scripts 批量提取临时文件；保留 .js / .py 等核心脚本）
 scripts/*_chunk*.json
 scripts/*_examples.json
