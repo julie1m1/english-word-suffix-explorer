@@ -133,6 +133,7 @@
         pos: "All",
         letter: null,
         phonics: null,
+        syllable: null, // { nSyl, anchors, focus, vce, diph }
         search: null,
       };
       let lastScrollTop = 0,
@@ -142,6 +143,517 @@
       const PAGE_SIZE = 40;
       let filteredVocab = [];
       const isMobile = () => window.innerWidth <= 1024;
+
+      /* ═══════════════════════════════════════
+   SYLLABLE STRUCTURE (音节结构)
+═══════════════════════════════════════ */
+      // 词库实际出现的全部音节骨架（16 种，每行按开头辅音数 0/1/2/3 排列）
+      const SYLLABLE_SKELS = [
+        "V", "VC", "VCC", "VCCC",
+        "CV", "CVC", "CVCC", "CVCCC",
+        "CCV", "CCVC", "CCVCC", "CCVCCC",
+        "CCCV", "CCCVC", "CCCVCC", "CCCVCCC",
+      ];
+      const SYLLABLE_META = {
+        ready: false,
+        total: 0, // 有本地音标且可解析出骨架的词数
+        nsCount: {}, // 音节数(1..4, 5=5+) -> 词数
+        skelWords: {}, // 骨架 -> 至少含一个该骨架音节的词数
+        openCount: 0, // 含开音节（V 结尾）的词数
+        closedCount: 0, // 含闭音节（C 结尾）的词数
+        vceCount: 0, // 词尾为 VCe 魔法-e 的词数
+        diphCount: 0, // 含双元音音素的词数
+        sig: new Map(), // word(lower) -> { parts, label, vce, diph }
+      };
+
+      // IPA 音素解析：双元音/塞擦音按单个音素处理。
+      // 注：本词库为英式 IPA（ECDICT），双元音含 əʊ（非美式 oʊ），长音带 ː 记号，
+      // 并存在少量旧记法脏字符（є/ε）按元音容错处理。
+      const SYL_DIPH = new Set(["eɪ", "aɪ", "ɔɪ", "aʊ", "əʊ", "ɪə", "eə", "ʊə"]);
+      const SYL_AFFR = new Set(["tʃ", "dʒ"]);
+      const SYL_MONO = new Set("iɪeæɑɔɒoʊuʌəɜɚɝaɛєε".split(""));
+      const SYL_CONS = new Set("pbtdkɡfvθðszʃʒhmnŋlrwj".split(""));
+      const SYL_ONS2 = new Set([
+        "pr","br","tr","dr","kr","gr","fr","θr","ʃr",
+        "pl","bl","kl","gl","fl","sl",
+        "sp","st","sk","sm","sn","sf",
+        "sw","tw","dw","kw","gw","hw",
+        "pj","bj","tj","dj","kj","fj","vj","θj","sj","mj","nj","lj","hj",
+      ]);
+      const SYL_ONS3 = new Set(["spr","spl","str","skr","skl","skw","sfr","stj","skj","spj"]);
+
+      // IPA → 音节骨架数组（如 /əˈbaʊt/ → ["V","CVC"]），失败返回 null
+      function ipaSkeleton(ipa) {
+        if (!ipa) return null;
+        const s = String(ipa).replace(/[ˈˌ\s/]/g, "");
+        const toks = [];
+        for (let i = 0; i < s.length; ) {
+          const two = s.slice(i, i + 2);
+          if (SYL_DIPH.has(two)) { toks.push("V"); i += 2; continue; }
+          if (SYL_AFFR.has(two)) { toks.push("C"); i += 2; continue; }
+          const ch = s[i];
+          if (ch === "ː") { i += 1; continue; } // 长音符：跳过，不影响 V/C
+          if (SYL_MONO.has(ch)) toks.push("V");
+          else if (SYL_CONS.has(ch)) toks.push(ch);
+          i += 1;
+        }
+        const vIdx = [];
+        toks.forEach((t, i) => { if (t === "V") vIdx.push(i); });
+        if (!vIdx.length) return null;
+        const onsOk = (seq) => {
+          const L = seq.length;
+          if (L === 0) return true;
+          if (L === 1) return seq[0] !== "ŋ";
+          if (L === 2) return SYL_ONS2.has(seq.join(""));
+          if (L === 3) return SYL_ONS3.has(seq.join(""));
+          return false;
+        };
+        const parts = [];
+        let onset = toks.slice(0, vIdx[0]);
+        vIdx.forEach((vi, k) => {
+          const core = "V";
+          if (k + 1 < vIdx.length) {
+            const mid = toks.slice(vi + 1, vIdx[k + 1]);
+            let chosen = 0;
+            for (let L = Math.min(3, mid.length); L >= 1; L--) {
+              if (onsOk(mid.slice(-L))) { chosen = L; break; }
+            }
+            let cod = chosen ? mid.slice(0, mid.length - chosen) : mid;
+            if (cod.length > 4) { // 长尾辅音保护：多余部分并入下一音节 onset
+              const extra = cod.length - 4;
+              chosen += extra;
+              cod = cod.slice(0, 4);
+            }
+            parts.push("C".repeat(onset.length) + core + "C".repeat(cod.length));
+            onset = chosen ? mid.slice(mid.length - chosen) : [];
+          } else {
+            const cod = toks.slice(vi + 1);
+            parts.push("C".repeat(onset.length) + core + "C".repeat(cod.length));
+            onset = [];
+          }
+        });
+        if (onset.length) parts.push("C".repeat(onset.length) + "V");
+        return { parts, label: parts.join(".") };
+      }
+
+      // 开/闭音节骨架集（按发音结尾：V 结尾=开，C 结尾=闭）
+      const SYL_OPEN = new Set(["V", "CV", "CCV", "CCCV"]);
+      const SYL_CLOSED = new Set([
+        "VC","VCC","VCCC","CVC","CVCC","CVCCC",
+        "CCVC","CCVCC","CCVCCC","CCCVC","CCCVCC","CCCVCCC",
+      ]);
+      // VCe 魔法-e：拼写为「元音字母+辅音字母+e」时，该元音应发的长音。
+      // 英式 IPA（ECDICT）带 ː 长音符：e 长音为 iː、u 长音为 uː、o 长音为 əʊ（非美式 oʊ）。
+      const VCE_LONG = { a: "eɪ", e: "iː", i: "aɪ", o: "əʊ", u: "uː" };
+      const VCE_EX = new Set([
+        "are","were","there","where","sure","chore","yore",
+        "move","prove","lose","whose","remove",
+      ]);
+      // 取 IPA 最后一个元音单位（双元音优先，含 ː 长音记号）
+      function lastVowelUnit(ipa) {
+        let unit = "";
+        for (let i = 0; i < ipa.length; i++) {
+          const two = ipa.slice(i, i + 2);
+          if (SYL_DIPH.has(two)) { unit = two; i += 1; continue; }
+          const ch = ipa[i];
+          if (SYL_MONO.has(ch)) {
+            unit = ipa[i + 1] === "ː" ? ch + "ː" : ch;
+          }
+        }
+        return unit;
+      }
+      // 严格 VCe 判定：词尾拼写 元音+单辅音+e（该元音前不叠元音字母），
+      // 末音节须以辅音收尾（e 不发音、元音后有尾辅音，VC/CVC/CCVC 均可），
+      // 且该元音确实发对应长音（英式：e→iː、u→uː、o→əʊ）
+      function wordIsVce(wordLower, parts, ipa) {
+        const m = /(?<![aeiou])[aeiou][bcdfghjklmnpqrstvwxyz]e$/.exec(wordLower);
+        if (!m) return false;
+        if (VCE_EX.has(wordLower)) return false;
+        if (!parts.length || !parts[parts.length - 1].endsWith("C")) return false;
+        const v = lastVowelUnit(ipa);
+        const want = VCE_LONG[m[0].charAt(0)];
+        return !!want && v === want;
+      }
+
+      // 用本地英式 IPA 构建音节索引（幂等，可在音标/词库加载后重复调用）
+      function buildSyllableMeta() {
+        if (!Object.keys(localIPA).length || !vocab.length) return;
+        const m = {
+          ready: false, total: 0, nsCount: {}, skelWords: {},
+          openCount: 0, closedCount: 0, vceCount: 0, diphCount: 0,
+          sig: new Map(),
+        };
+        vocab.forEach((v) => {
+          const rec = localIPA[v.word.toLowerCase()];
+          if (!rec) return;
+          const ipa = Array.isArray(rec) && rec.length > 1 ? rec[1] : rec;
+          const r = ipaSkeleton(ipa);
+          if (!r) return;
+          m.total += 1;
+          const n = r.parts.length;
+          m.nsCount[n >= 5 ? 5 : n] = (m.nsCount[n >= 5 ? 5 : n] || 0) + 1;
+          const seen = new Set();
+          r.parts.forEach((p) => { seen.add(p); });
+          seen.forEach((p) => {
+            m.skelWords[p] = (m.skelWords[p] || 0) + 1;
+          });
+          let hasOpen = false, hasClosed = false;
+          seen.forEach((p) => {
+            if (SYL_OPEN.has(p)) hasOpen = true;
+            if (SYL_CLOSED.has(p)) hasClosed = true;
+          });
+          if (hasOpen) m.openCount += 1;
+          if (hasClosed) m.closedCount += 1;
+          const ipaClean = String(ipa).replace(/[ˈˌ\s/]/g, "");
+          let hasDiph = false;
+          for (const d of SYL_DIPH) {
+            if (ipaClean.includes(d)) { hasDiph = true; break; }
+          }
+          if (hasDiph) m.diphCount += 1;
+          const vce = wordIsVce(v.word.toLowerCase(), r.parts, ipaClean);
+          if (vce) m.vceCount += 1;
+          r.vce = vce;
+          r.diph = hasDiph;
+          m.sig.set(v.word.toLowerCase(), r);
+        });
+        m.ready = true;
+        // 用旧索引的引用替换（词库切换后旧 Map 由 GC 回收）
+        SYLLABLE_META.ready = m.ready;
+        SYLLABLE_META.total = m.total;
+        SYLLABLE_META.nsCount = m.nsCount;
+        SYLLABLE_META.skelWords = m.skelWords;
+        SYLLABLE_META.openCount = m.openCount;
+        SYLLABLE_META.closedCount = m.closedCount;
+        SYLLABLE_META.vceCount = m.vceCount;
+        SYLLABLE_META.diphCount = m.diphCount;
+        SYLLABLE_META.sig = m.sig;
+      }
+
+      // 音节筛选状态：激活判定 / 默认焦点 / 文案
+      const sylActive = (s) =>
+        !!s &&
+        (s.nSyl != null ||
+          (s.anchors && Object.keys(s.anchors).length > 0) ||
+          !!s.vce ||
+          !!s.diph);
+      function sylDefaultFocus(nSyl) {
+        return nSyl != null && nSyl >= 1 && nSyl <= 4 ? "1" : "any";
+      }
+      // nSyl=1..4 时位置 = 第1..第N 音节；nSyl 不限(或 5+) 时用 首/末/任一 定位
+      function sylFocusKeys(s) {
+        if (s.nSyl != null && s.nSyl >= 1 && s.nSyl <= 4)
+          return Array.from({ length: s.nSyl }, (_, i) => String(i + 1));
+        return ["first", "last", "any"];
+      }
+      function sylValidFocus(s) {
+        const keys = sylFocusKeys(s || { nSyl: null });
+        let f = (s && s.focus) || "";
+        if (!keys.includes(f)) {
+          f = s && s.nSyl != null && s.nSyl >= 1 && s.nSyl <= 4 ? "1" : "any";
+        }
+        if (!keys.includes(f)) f = keys[0];
+        return f;
+      }
+      function sylKeyName(key) {
+        if (key === "first") return "First syllable";
+        if (key === "last") return "Last syllable";
+        if (key === "any") return "Any syllable";
+        return `Syllable ${key}`;
+      }
+      function sylCondLabel(s) {
+        if (!sylActive(s)) return "";
+        const bits = [];
+        if (s.nSyl != null)
+          bits.push(s.nSyl === 5 ? "5+ syllables" : `${s.nSyl} syllable(s)`);
+        Object.keys(s.anchors || {}).forEach((k) => {
+          bits.push(`${sylKeyName(k)}=${s.anchors[k]}`);
+        });
+        if (s.vce) bits.push("final VCe");
+        if (s.diph) bits.push("contains diphthong");
+        return bits.join(" · ");
+      }
+      // 词是否满足音节条件（无本地音标的词不参与）
+      function sylWordMatch(s, wordLower) {
+        const rec = SYLLABLE_META.sig.get(wordLower);
+        if (!rec) return false;
+        const parts = rec.parts;
+        const ns = parts.length;
+        if (s.nSyl != null) {
+          if (s.nSyl === 5 ? ns < 5 : ns !== s.nSyl) return false;
+        }
+        const anchors = s.anchors || {};
+        for (const k of Object.keys(anchors)) {
+          const skel = anchors[k];
+          if (k === "any") { if (!parts.includes(skel)) return false; }
+          else if (k === "first") { if (parts[0] !== skel) return false; }
+          else if (k === "last") { if (parts[ns - 1] !== skel) return false; }
+          else {
+            const idx = parseInt(k, 10) - 1;
+            if (idx >= ns || parts[idx] !== skel) return false;
+          }
+        }
+        if (s.vce && !rec.vce) return false;
+        if (s.diph && !rec.diph) return false;
+        return true;
+      }
+      // 提交音节条件：空条件置 null，然后重筛 + 重绘
+      function commitSyllable(next) {
+        currentFilter.syllable = sylActive(next) ? next : null;
+        applyFilters();
+        if (isMobile()) {
+          const g = document.getElementById("grid");
+          if (g) g.scrollTop = 0;
+        }
+        renderPhonicsBar();
+      }
+
+      // 音节结构页签 UI
+      function renderSyllableArea(body) {
+        const syl = sylActive(currentFilter.syllable)
+          ? currentFilter.syllable
+          : null;
+        const ready = SYLLABLE_META.ready;
+        const num = (n) => (n == null ? "…" : n);
+        const wrap = document.createElement("div");
+        wrap.className = "syl-area";
+
+        // 引导说明
+        const intro = document.createElement("div");
+        intro.className = "syl-intro";
+        intro.innerHTML =
+          "Split words into syllables by <b>pronunciation</b> — V = vowel phoneme, C = consonant phoneme. Syllable count + skeleton combinations describe all <b>" +
+          num(ready ? SYLLABLE_META.total : null) +
+          "</b> words with a pronunciation";
+        wrap.appendChild(intro);
+
+        // ── 音节数 chips ──
+        const nsLabel = document.createElement("div");
+        nsLabel.className = "syl-label";
+        nsLabel.textContent = "Syllable count";
+        wrap.appendChild(nsLabel);
+        const nsRow = document.createElement("div");
+        nsRow.className = "syl-chips";
+        const nsOpts = [
+          { v: null, label: "Any" },
+          { v: 1, label: "1" },
+          { v: 2, label: "2" },
+          { v: 3, label: "3" },
+          { v: 4, label: "4" },
+          { v: 5, label: "5+" },
+        ];
+        nsOpts.forEach(({ v, label }) => {
+          const cnt =
+            v === null
+              ? (ready ? SYLLABLE_META.total : null)
+              : SYLLABLE_META.nsCount[v];
+          const b = document.createElement("button");
+          b.className = "syl-chip" + (syl && syl.nSyl === v ? " active" : "");
+          b.innerHTML = `${esc(label)}<span class="num">${num(cnt)}</span>`;
+          b.title =
+            label === "Any"
+              ? "No syllable-count limit"
+              : `Only words with ${label === "5+" ? "5 or more" : label + " "}syllable(s)`;
+          b.onclick = () => {
+            const base = syl
+              ? Object.assign({}, syl)
+              : { nSyl: null, anchors: {}, focus: "any" };
+            if (base.nSyl === v) {
+              // 再点一次取消音节数限制
+              base.nSyl = null;
+              base.anchors = {};
+              base.focus = "any";
+            } else {
+              base.nSyl = v;
+              base.anchors = {};
+              base.focus = sylDefaultFocus(v);
+            }
+            commitSyllable(base);
+          };
+          nsRow.appendChild(b);
+        });
+        wrap.appendChild(nsRow);
+
+        // ── 音节位置（先点位置，再从下方骨架库选骨架填入）──
+        const focus = sylValidFocus(syl);
+        const posLabel = document.createElement("div");
+        posLabel.className = "syl-label";
+        const posLabelTxt = document.createElement("span");
+        posLabelTxt.textContent = "Syllable position";
+        const posHint = document.createElement("span");
+        posHint.className = "syl-hint";
+        posHint.textContent =
+          "Pick a position → pick a skeleton · click a filled position to clear";
+        posLabel.appendChild(posLabelTxt);
+        posLabel.appendChild(posHint);
+        wrap.appendChild(posLabel);
+
+        const posRow = document.createElement("div");
+        posRow.className = "syl-chips";
+        sylFocusKeys(syl || { nSyl: null }).forEach((key) => {
+          const val = syl && syl.anchors ? syl.anchors[key] : null;
+          const b = document.createElement("button");
+          b.className =
+            "syl-pos-chip" +
+            (val ? " syl-set" : "") +
+            (focus === key ? " syl-focus" : "");
+          b.innerHTML =
+            esc(sylKeyName(key)) +
+            (val
+              ? `<b class="pv">${esc(val)}</b><span class="px">✕</span>`
+              : "");
+          b.title = val
+            ? `Restricted to ${sylKeyName(key)} = ${val} (click to clear)`
+            : `Select "${sylKeyName(key)}", then pick a skeleton from the library below`;
+          b.onclick = () => {
+            const base = syl
+              ? Object.assign({}, syl)
+              : { nSyl: null, anchors: {}, focus: "any" };
+            if (val) {
+              const a = Object.assign({}, base.anchors);
+              delete a[key];
+              base.anchors = a;
+            }
+            base.focus = key;
+            commitSyllable(base);
+          };
+          posRow.appendChild(b);
+        });
+        wrap.appendChild(posRow);
+
+        // ── 骨架库：全库 16 种，按 开音节(元音结尾)/闭音节(辅音结尾) 分组 ──
+        const skelLabel = document.createElement("div");
+        skelLabel.className = "syl-label";
+        skelLabel.textContent = "Skeleton library · all 16";
+        wrap.appendChild(skelLabel);
+        const activeVal = syl && syl.anchors ? syl.anchors[focus] : null;
+        const makeSkelChip = (skel) => {
+          const cnt = ready ? SYLLABLE_META.skelWords[skel] || 0 : null;
+          const b = document.createElement("button");
+          b.className = "syl-skel-chip" + (activeVal === skel ? " active" : "");
+          b.innerHTML = `${esc(skel)}<span class="num">${num(cnt)}</span>`;
+          b.title = `Syllable skeleton ${skel}: ${num(cnt)} word(s) in the library contain it (filled into "${sylKeyName(focus)}")`;
+          b.onclick = () => {
+            const base = syl
+              ? Object.assign({}, syl)
+              : { nSyl: null, anchors: {}, focus };
+            const a = Object.assign({}, base.anchors || {});
+            if (a[focus] === skel) delete a[focus];
+            else a[focus] = skel;
+            base.anchors = a;
+            commitSyllable(base);
+          };
+          return b;
+        };
+        const groupBox = (label, color, count, skels) => {
+          const box = document.createElement("div");
+          box.className = "syl-group";
+          const head = document.createElement("div");
+          head.className = "syl-group-title";
+          head.title = `${label}: ${num(count)} word(s) in the library have at least one such syllable (open/closed are not mutually exclusive — a word may count in both)`;
+          head.innerHTML = `<span class="syl-dot" style="background:${color}"></span><span>${esc(label)}</span><span class="num">${num(count)}</span>`;
+          box.appendChild(head);
+          const g = document.createElement("div");
+          g.className = "syl-skel-grid";
+          skels.forEach((s) => g.appendChild(makeSkelChip(s)));
+          box.appendChild(g);
+          return box;
+        };
+        wrap.appendChild(
+          groupBox(
+            "Open syllable · ends with a vowel sound",
+            "#1D9E75",
+            ready ? SYLLABLE_META.openCount : null,
+            ["V", "CV", "CCV", "CCCV"],
+          ),
+        );
+        wrap.appendChild(
+          groupBox(
+            "Closed syllable · ends with a consonant sound",
+            "#E24B4A",
+            ready ? SYLLABLE_META.closedCount : null,
+            [
+              "VC","VCC","VCCC","CVC","CVCC","CVCCC",
+              "CCVC","CCVCC","CCVCCC","CCCVC","CCCVCC","CCCVCCC",
+            ],
+          ),
+        );
+
+        // ── 拼写层叠加：VCe 魔法-e / 双元音音素（与上方条件 AND 生效）──
+        const ovLabel = document.createElement("div");
+        ovLabel.className = "syl-label";
+        const ovLabelTxt = document.createElement("span");
+        ovLabelTxt.textContent = "Spelling-layer overlays";
+        const ovHint = document.createElement("span");
+        ovHint.className = "syl-hint";
+        ovHint.textContent = "VCe: word-final vowel+consonant+e pronounced long";
+        ovLabel.appendChild(ovLabelTxt);
+        ovLabel.appendChild(ovHint);
+        wrap.appendChild(ovLabel);
+        const ovRow = document.createElement("div");
+        ovRow.className = "syl-chips";
+        const ovOpts = [
+          {
+            key: "vce",
+            label: "VCe magic-e",
+            cnt: ready ? SYLLABLE_META.vceCount : null,
+            tip: "Only words ending in vowel+consonant+e pronounced with the long vowel, e.g. make / time / hope / use / these (come, there, move etc. excluded)",
+          },
+          {
+            key: "diph",
+            label: "Diphthong phoneme",
+            cnt: ready ? SYLLABLE_META.diphCount : null,
+            tip: "Only words with a diphthong phoneme in some syllable (/eɪ aɪ ɔɪ aʊ əʊ ɪə eə ʊə/), e.g. go / boat / now",
+          },
+        ];
+        ovOpts.forEach((o) => {
+          const b = document.createElement("button");
+          b.className =
+            "syl-chip syl-ov-chip" + (syl && syl[o.key] ? " active" : "");
+          b.innerHTML = `${esc(o.label)}<span class="num">${num(o.cnt)}</span>`;
+          b.title = o.tip;
+          b.onclick = () => {
+            const base = syl
+              ? Object.assign({}, syl)
+              : { nSyl: null, anchors: {}, focus: "any" };
+            base[o.key] = !base[o.key];
+            commitSyllable(base);
+          };
+          ovRow.appendChild(b);
+        });
+        wrap.appendChild(ovRow);
+
+        // ── 命中信息条 ──
+        if (syl) {
+          const ex = filteredVocab.slice(0, 8).map((v) => v.word);
+          const hit = document.createElement("div");
+          hit.className = "syl-hitbar";
+          const info = document.createElement("div");
+          info.className = "syl-hit-info";
+          const title = document.createElement("div");
+          title.className = "syl-hit-title";
+          title.innerHTML = `${esc(sylCondLabel(syl))} → <b>${filteredVocab.length}</b> words`;
+          info.appendChild(title);
+          const exEl = document.createElement("div");
+          exEl.className = "syl-examples";
+          exEl.textContent = filteredVocab.length ? ex.join(" · ") : "No matching words — try adjusting the conditions";
+          exEl.title = exEl.textContent;
+          info.appendChild(exEl);
+          hit.appendChild(info);
+          const reset = document.createElement("button");
+          reset.className = "syl-reset";
+          reset.textContent = "✕";
+          reset.title = "Clear syllable filter";
+          reset.onclick = () => {
+            currentFilter.syllable = null;
+            applyFilters();
+            renderPhonicsBar();
+          };
+          hit.appendChild(reset);
+          wrap.appendChild(hit);
+        }
+
+        body.appendChild(wrap);
+      }
 
       /* ═══════════════════════════════════════
    PHONICS · Letter-Combination Classification
@@ -296,9 +808,14 @@
           groups: ["vowel-r", "other-vowel-r", "special"],
           cols: 3,
         },
+        { id: "syllable", label: "Syllables", groups: [], cols: 1 },
       ];
       const phonicsSectionCounts = {};
       PHONICS_SECTIONS.forEach((s) => {
+        if (s.id === "syllable") {
+          phonicsSectionCounts[s.id] = SYLLABLE_SKELS.length;
+          return;
+        }
         phonicsSectionCounts[s.id] = s.groups.reduce(
           (n, gid) => n + (phonicsCatCounts[gid] || 0),
           0,
@@ -382,14 +899,15 @@
           catRow.appendChild(btn);
         });
 
-        // Clear-filter button
-        if (currentFilter.phonics) {
+        // Clear-filter button (letter-combination / syllable shared)
+        if (currentFilter.phonics || sylActive(currentFilter.syllable)) {
           const clear = document.createElement("button");
           clear.className = "phonics-chip phonics-clear";
           clear.textContent = "✕ Clear";
-          clear.title = "Clear the letter-combination filter";
+          clear.title = "Clear the letter-combination and syllable filters";
           clear.onclick = () => {
             currentFilter.phonics = null;
+            currentFilter.syllable = null;
             phonicsSection = null;
             collapsedSubcats.clear();
             applyFilters();
@@ -402,7 +920,9 @@
 
         // Expanded section: sub-categories side by side
         const section = PHONICS_SECTIONS.find((s) => s.id === phonicsSection);
-        if (section) {
+        if (section && section.id === "syllable") {
+          renderSyllableArea(body);
+        } else if (section) {
           const area = document.createElement("div");
           area.className = "phonics-section-area";
           area.dataset.cols = section.cols || 2;
@@ -526,8 +1046,14 @@
         const fab = document.getElementById("phonicsFab");
         if (!fab) return;
         const label = fab.querySelector(".fab-label");
+        const s = currentFilter.syllable;
         const p = currentFilter.phonics;
-        if (p) {
+        if (sylActive(s)) {
+          const cond = sylCondLabel(s);
+          label.textContent = cond ? `Syllable · ${cond}` : "Syllables";
+          label.title = cond;
+          fab.classList.add("active");
+        } else if (p) {
           label.textContent = p.whole ? p.category : `${p.combo} · ${p.sound}`;
           fab.classList.add("active");
         } else {
@@ -855,6 +1381,7 @@ window.addEventListener("load", () => {
               }));
             updatePOSMenu();
             updateAZBar();
+            buildSyllableMeta(); // 若本地音标已加载则先建一次音节索引（幂等）
             renderPhonicsBar(); // 刷新发音分类的组合计数（随词库变化）
             applyFilters();
           })
@@ -1062,6 +1589,9 @@ function renderSuffixControls(filterText = "") {
         staticExamples = ex;
         ecdictExamples = ec;
         localIPA = ipa || {};
+        // 本地音标就绪后构建音节索引，刷新音节结构页签计数
+        buildSyllableMeta();
+        renderPhonicsBar();
         // 刷新已渲染卡片：例句 + 音标（本地音标就绪后合并显示）
         document.querySelectorAll(".card[data-word]").forEach(card => {
           const exEl = card.querySelector(".card-examples");
@@ -1383,6 +1913,13 @@ function renderSuffixControls(filterText = "") {
             ? phonicsGroupRegex(currentFilter.phonics.catId)
             : phonicsRegex(currentFilter.phonics.combo);
           filteredVocab = filteredVocab.filter((v) => re.test(v.word));
+        }
+        // Syllable structure: syllable count + per-position skeletons (based on local IPA; words without IPA are excluded)
+        if (sylActive(currentFilter.syllable)) {
+          const syl = currentFilter.syllable;
+          filteredVocab = filteredVocab.filter((v) =>
+            sylWordMatch(syl, v.word.toLowerCase()),
+          );
         }
         // Search filter: match word or definition
         if (currentFilter.search) {
