@@ -22,3 +22,25 @@ scripts/*_examples.json
 scripts/batch*.json
 scripts/longman*_chunk*.json
 scripts/longman*_missing.json
+
+# ===== 以下为“仅上传网页展示所需文件”的补充忽略规则 =====
+# 文档（不随网页展示）
+README.md
+PRD*.md
+
+# 网页展示无关的构建脚本、截图资源与 npm 配置
+scripts/
+assets/
+package.json
+package-lock.json
+
+# 构建中间产物 / 分析报告（非运行时所需，网页不加载）
+data/cluster_meta.json
+data/clusters.json
+data/cluster_report.txt
+data/longman3000_missing.json
+data/longman3000_new_examples.json
+data/word_families.json
+data/families_review.csv
+data/Suffix_Ref_cleaned.csv
+data/Suffix_Ref_检查报告.md

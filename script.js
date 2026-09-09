@@ -142,6 +142,9 @@
 ═══════════════════════════════════════ */
       let vocab = [],
         suffixList = [];
+      // 词缀可筛出词数缓存：key = "小写词缀|类型"，仅在词库变化时重算
+      let suffixCounts = null,
+        suffixCountsVocab = null;
       let currentFilter = {
         suffix: null,
         suffixType: null,
@@ -154,6 +157,11 @@
       };
       let clusterData = null; // { wordMap: {word:{cluster,name}}, clusters: [{id,name,count}] }
       let categoryOpen = false; // 分类标签栏是否展开
+      // 侧边栏词缀排序：null=CSV 原序 | "desc"=各分类内多→少 | "asc"=各分类内少→多
+      let suffixSortMode = (() => {
+        const v = localStorage.getItem("vocab-suffix-sort");
+        return v === "desc" || v === "asc" ? v : null;
+      })();
       let allBookUrls = []; // 全部词库 CSV 路径（用于 All Books 合并加载）
       let lastScrollTop = 0,
         showAllDef = false;
@@ -1465,6 +1473,8 @@ window.addEventListener("load", () => {
             renderPhonicsBar(); // 刷新发音分类的组合计数（随词库变化）
             renderCategoryBar(); // 渲染语义分类标签栏（词库就绪后统计）
             applyFilters();
+            if (suffixList.length)
+              renderSuffixControls(document.getElementById("suffixSearch").value);
           })
           .catch(() => showError("Failed to load vocab: " + url));
       }
@@ -1512,6 +1522,8 @@ window.addEventListener("load", () => {
             renderPhonicsBar();
             renderCategoryBar();
             applyFilters();
+            if (suffixList.length)
+              renderSuffixControls(document.getElementById("suffixSearch").value);
           })
           .catch(() => showError("Failed to load All Books"));
       }
@@ -1707,11 +1719,27 @@ function renderSuffixControls(filterText = "") {
   const mobileNav = document.getElementById("mobileBottomNav");
 
   if (!sidebarContainer || !mobileNav) return;
+
+  // 计算当前词库里每个词缀可刷选出的词数（缓存，词库变化时才重算）
+  computeSuffixCounts();
+
   sidebarContainer.innerHTML = "";
   mobileNav.innerHTML = "";
 
-  // 1. 组合列表，添加 "All" 开头
-  const items = [{ suffix: null, meaning: " ", type: null }, ...suffixList];
+  // 手机底栏：排序按钮（吸附在最左，和桌面按钮同一状态）
+  const mobileSortBtn = document.createElement("button");
+  mobileSortBtn.className =
+    "suffix-pill suffix-sort-pill" + (suffixSortMode ? " active" : "");
+  mobileSortBtn.innerHTML = suffixSortIcon();
+  mobileSortBtn.title = suffixSortLabel();
+  mobileSortBtn.onclick = cycleSuffixSort;
+  mobileNav.appendChild(mobileSortBtn);
+
+  // 1. 组合列表："All" 固定置顶，其余按分类内词数排序（默认保持 CSV 原序）
+  const items = [
+    { suffix: null, meaning: " ", type: null },
+    ...sortSuffixListByCount(suffixList),
+  ];
 
   items.forEach((item) => {
     // 2. 搜索过滤
@@ -1741,10 +1769,19 @@ function renderSuffixControls(filterText = "") {
     const isActive = currentFilter.suffix === item.suffix;
     const label = item.suffix || "ALL";
 
+    // 该词缀在当前词库里可刷选出的词数（All / 标题行不显示）
+    const cnt =
+      item.suffix && item.type
+        ? suffixCounts.get(item.suffix.toLowerCase() + "|" + item.type) || 0
+        : null;
+
     // PC 按钮
     const btn = document.createElement("button");
     btn.className = "filter-btn" + (isActive ? " active" : "");
-    btn.innerHTML = `<span class="sfx">${label}</span><span class="meaning">${item.meaning}</span>`;
+    btn.innerHTML =
+      `<span class="sfx">${label}</span>` +
+      `<span class="meaning">${item.meaning}</span>` +
+      (cnt === null ? "" : `<span class="affix-count">${cnt}</span>`);
     btn.onclick = () => toggleSuffix(item.suffix, item.type);
     sidebarContainer.appendChild(btn);
 
@@ -1759,6 +1796,86 @@ function renderSuffixControls(filterText = "") {
     mobileNav.appendChild(pill);
   });
 }
+      /* ══ 词缀排序（按各分类内的可筛词数）══ */
+      // 只在 CSV 的分组标题（ADJ / N / V / PREFIX…）内部排序，跨组不打乱，保留分类语义
+      function sortSuffixListByCount(list) {
+        if (!suffixSortMode) return list;
+        const countOf = (it) =>
+          it.suffix && it.type
+            ? (suffixCounts &&
+                suffixCounts.get(it.suffix.toLowerCase() + "|" + it.type)) ||
+              0
+            : 0;
+        const isHeader = (it) =>
+          it.suffix && (!it.meaning || !it.meaning.trim());
+
+        const out = [];
+        let group = [];
+        const flush = () => {
+          if (!group.length) return;
+          group.sort((a, b) => {
+            const ca = countOf(a),
+              cb = countOf(b);
+            // 0 词的词缀始终沉到本分类末尾（不参与升/降序）
+            if (ca === 0 && cb !== 0) return 1;
+            if (cb === 0 && ca !== 0) return -1;
+            if (ca !== cb)
+              return suffixSortMode === "desc" ? cb - ca : ca - cb;
+            return a.suffix.localeCompare(b.suffix);
+          });
+          out.push(...group);
+          group = [];
+        };
+        for (const it of list) {
+          if (isHeader(it)) {
+            flush();
+            out.push(it);
+          } else group.push(it);
+        }
+        flush();
+        return out;
+      }
+
+      const SUFFIX_SORT_SVG = {
+        off: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5h11M3 10h7M3 15h4"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 7.5v9M17 7.5l-2 2M17 7.5l2 2M17 16.5l-2-2M17 16.5l2-2"/></svg>',
+        desc: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5h11M3 10h7M3 15h4"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 5v11M17 16.5l-2.5-2.5M17 16.5l2.5-2.5"/></svg>',
+        asc: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5h4M3 10h7M3 15h11"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 17V6M17 6l-2.5 2.5M17 6l2.5 2.5"/></svg>',
+      };
+
+      function suffixSortIcon() {
+        return SUFFIX_SORT_SVG[suffixSortMode || "off"];
+      }
+      function suffixSortLabel() {
+        return suffixSortMode === "desc"
+          ? "词数：多 → 少（点击切到少→多）"
+          : suffixSortMode === "asc"
+            ? "词数：少 → 多（点击恢复默认顺序）"
+            : "按词数排序：各分类内 多 → 少";
+      }
+      function updateSuffixSortBtn() {
+        const btn = document.getElementById("suffixSortBtn");
+        if (!btn) return;
+        btn.innerHTML = suffixSortIcon();
+        btn.title = suffixSortLabel();
+        btn.setAttribute("aria-label", suffixSortLabel());
+        btn.classList.toggle("active", !!suffixSortMode);
+      }
+      function cycleSuffixSort() {
+        suffixSortMode =
+          suffixSortMode === null
+            ? "desc"
+            : suffixSortMode === "desc"
+              ? "asc"
+              : null;
+        localStorage.setItem("vocab-suffix-sort", suffixSortMode || "off");
+        updateSuffixSortBtn();
+        renderSuffixControls(document.getElementById("suffixSearch").value);
+      }
+      document
+        .getElementById("suffixSortBtn")
+        .addEventListener("click", cycleSuffixSort);
+      updateSuffixSortBtn();
+
       // Sidebar search
       document.getElementById("suffixSearch").addEventListener("input", (e) => {
         renderSuffixControls(e.target.value);
@@ -1777,6 +1894,25 @@ function renderSuffixControls(filterText = "") {
         if (isMobile()) {
           document.getElementById("grid").scrollTop = 0;
         }
+      }
+
+      // 统计当前 vocab 中每个词缀（前缀 startsWith / 后缀 endsWith）能刷选出的词数
+      function computeSuffixCounts() {
+        if (!vocab || !vocab.length || suffixCountsVocab === vocab) return;
+        const map = new Map();
+        for (const item of suffixList) {
+          if (!item.suffix || !item.type) continue;
+          const s = item.suffix.toLowerCase();
+          const type = item.type;
+          let n = 0;
+          for (const v of vocab) {
+            const w = v.word.toLowerCase();
+            if (type === "prefix" ? w.startsWith(s) : w.endsWith(s)) n++;
+          }
+          map.set(s + "|" + type, n);
+        }
+        suffixCounts = map;
+        suffixCountsVocab = vocab;
       }
 
       /* ═══════════════════════════════════════

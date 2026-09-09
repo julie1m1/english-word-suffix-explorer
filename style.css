@@ -173,8 +173,13 @@
       .suffix-search-wrap {
         padding: 8px 12px;
         border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 6px;
       }
       .suffix-search-wrap input {
+        flex: 1 1 auto;
+        min-width: 0;
         width: 100%;
         background: var(--surface-2);
         border: 1px solid var(--border);
@@ -185,6 +190,35 @@
         color: var(--text-1);
         outline: none;
         transition: border-color 0.2s;
+      }
+      /* 词缀排序按钮：默认 → 多→少 → 少→多 */
+      .suffix-sort-btn {
+        flex: 0 0 28px;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-3);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .suffix-sort-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+      .suffix-sort-btn:hover {
+        color: var(--text-1);
+        border-color: var(--accent);
+      }
+      .suffix-sort-btn.active {
+        background: var(--accent-soft);
+        border-color: var(--accent);
+        color: var(--accent);
       }
       .suffix-search-wrap input::placeholder {
         color: var(--text-3);
@@ -233,6 +267,19 @@
       .filter-btn.active .meaning {
         color: var(--accent);
         opacity: 0.7;
+      }
+      /* 词缀可刷选出的词数：紧贴中文翻译之后、整行右对齐 */
+      .filter-btn .affix-count {
+        margin-left: auto;
+        font-size: 10px;
+        font-variant-numeric: tabular-nums;
+        color: var(--text-3);
+        white-space: nowrap;
+        opacity: 0.85;
+      }
+      .filter-btn.active .affix-count {
+        color: var(--accent);
+        opacity: 1;
       }
 
       /* ══ MAIN AREA ══ */
@@ -1318,6 +1365,24 @@ display: block !important;
     .suffix-pill.active {
   background: var(--accent);
   color: var(--md-on-primary);
+  border-color: var(--accent);
+}
+/* 手机底栏里的词缀排序按钮（左侧吸附，不随横向滚动） */
+.suffix-sort-pill {
+  position: sticky;
+  left: -10px;
+  z-index: 3;
+  padding: 0 6px;
+  background: var(--topbar-bg);
+  color: var(--text-3);
+}
+.suffix-sort-pill svg {
+  width: 14px;
+  height: 14px;
+}
+.suffix-sort-pill.active {
+  background: var(--accent-soft);
+  color: var(--accent);
   border-color: var(--accent);
 }
 
@@ -2872,7 +2937,6 @@ body.spelling-mode.spelling-started.spelling-show-words .card:not(.spelling-answ
 .syl-ov-chip.active {
   border-style: solid;
 }
-
 
 
 

@@ -3,28 +3,110 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vocab Lab</title>
+  <title>Vocab Lab · Bookshelf</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='2' y='2' width='12' height='12' rx='3' fill='%23D0BCFF'/><rect x='18' y='2' width='12' height='12' rx='3' fill='%23D0BCFF' opacity='.6'/><rect x='2' y='18' width='12' height='12' rx='3' fill='%23D0BCFF' opacity='.6'/><rect x='18' y='18' width='12' height='12' rx='3' fill='%23D0BCFF' opacity='.3'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@1,9..144,300;1,9..144,400&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --bg: #0b0b0f;
-      --surface: rgba(255,255,255,.04);
-      --surface-hover: rgba(255,255,255,.07);
+    /* ══ MATERIAL DESIGN 3 — DARK THEME（与 dashboard / index 一致） ══ */
+    :root,
+    [data-theme="dark"] {
+      --md-primary: #d0bcff;
+      --md-on-primary: #381e72;
+      --md-primary-container: #4f378b;
+      --md-on-primary-container: #eaddff;
+      --md-secondary: #ccc2dc;
+      --md-tertiary: #efb8c8;
+      --md-surface: #1c1b1f;
+      --md-surface-1: #28272c;
+      --md-surface-2: #312f38;
+      --md-surface-3: #3a3741;
+      --md-on-surface: #e6e1e5;
+      --md-on-surface-var: #cac4d0;
+      --md-outline: #938f99;
+      --md-outline-var: rgba(147, 143, 153, 0.18);
+      --md-error: #f2b8b8;
+      --md-tonal-spot: rgba(208, 188, 255, 0.12);
+      --md-scrim: rgba(0, 0, 0, 0.4);
+
+      --bg: var(--md-surface);
+      --surface: var(--md-surface-1);
+      --surface-2: var(--md-surface-2);
+      --surface-hover: rgba(208, 188, 255, 0.08);
+      --border: var(--md-outline-var);
+      --accent: var(--md-primary);
+      --accent-2: #b794f6;
+      --text-1: var(--md-on-surface);
+      --text-2: var(--md-on-surface-var);
+      --text-3: var(--md-outline);
+      --glow: rgba(208, 188, 255, 0.12);
+      --nav-bg: rgba(28,27,31,.72);
       --glass: rgba(255,255,255,.03);
-      --glass-border: rgba(255,255,255,.06);
-      --border: rgba(255,255,255,.06);
-      --text-1: #f1f1f3;
-      --text-2: rgba(255,255,255,.55);
-      --text-3: rgba(255,255,255,.3);
-      --accent: #b794f6;
-      --accent-2: #9f7aea;
-      --gradient-1: linear-gradient(135deg, #b794f6 0%, #667eea 50%, #764ba2 100%);
-      --gradient-2: linear-gradient(135deg, rgba(183,148,246,.12) 0%, rgba(102,126,234,.08) 100%);
-      --glow: rgba(183,148,246,.15);
+      --glass-border: var(--md-outline-var);
+      --gradient-1: linear-gradient(135deg, #d0bcff 0%, #9f7aea 50%, #764ba2 100%);
+      --gradient-2: rgba(208,188,255,.08);
+      --shadow: rgba(0,0,0,.45);
+
+      /* ── 书封（dark 模式：第一版饱和宝石色 + 白字） ── */
+      --book-ink: #ffffff;
+      --book-ink-soft: rgba(255,255,255,.85);
+      --book-text-shadow: 0 1px 3px rgba(0,0,0,.30);
+      --book-spine: linear-gradient(180deg, rgba(255,255,255,.28), rgba(0,0,0,.30));
+      --book-spine-border: rgba(255,255,255,.22);
+      --book-sheen: linear-gradient(115deg, rgba(255,255,255,.16) 0%, transparent 42%);
+      --book-shadow: 4px 3px 0 -1px rgba(255,255,255,.30), 8px 7px 0 -1px rgba(0,0,0,.18), 0 16px 38px rgba(0,0,0,.42);
+      --book-shadow-hover: 4px 3px 0 -1px rgba(255,255,255,.34), 10px 12px 0 -1px rgba(0,0,0,.20), 0 26px 54px rgba(0,0,0,.5);
+    }
+
+    /* ══ MATERIAL DESIGN 3 — LIGHT THEME（与 dashboard / index 一致） ══ */
+    [data-theme="light"] {
+      --md-primary: #6750a4;
+      --md-on-primary: #ffffff;
+      --md-primary-container: #eaddff;
+      --md-on-primary-container: #21005d;
+      --md-secondary: #625b71;
+      --md-tertiary: #7d5260;
+      --md-surface: #fffbfe;
+      --md-surface-1: #f7f2fa;
+      --md-surface-2: #f3edf7;
+      --md-surface-3: #ede8f5;
+      --md-on-surface: #1c1b1f;
+      --md-on-surface-var: #49454f;
+      --md-outline: #79747e;
+      --md-outline-var: rgba(121, 116, 126, 0.14);
+      --md-error: #b3261e;
+      --md-tonal-spot: rgba(103, 80, 164, 0.1);
+      --md-scrim: rgba(0, 0, 0, 0.25);
+
+      --bg: var(--md-surface);
+      --surface: var(--md-surface-1);
+      --surface-2: var(--md-surface-2);
+      --surface-hover: rgba(103,80,164,.08);
+      --border: var(--md-outline-var);
+      --accent: var(--md-primary);
+      --accent-2: #7c3aed;
+      --text-1: var(--md-on-surface);
+      --text-2: var(--md-on-surface-var);
+      --text-3: var(--md-outline);
+      --glow: rgba(103,80,164,.12);
+      --nav-bg: rgba(255,251,254,.78);
+      --glass: rgba(255,255,255,.6);
+      --glass-border: var(--md-outline-var);
+      --gradient-1: linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #764ba2 100%);
+      --gradient-2: rgba(103,80,164,.1);
+      --shadow: rgba(103,80,164,.12);
+
+      /* 书封：浅冷色 + 深字 */
+      --book-ink: #241b3a;
+      --book-ink-soft: rgba(36,27,58,.72);
+      --book-text-shadow: 0 1px 2px rgba(255,255,255,.45);
+      --book-spine: linear-gradient(180deg, rgba(255,255,255,.55), rgba(0,0,0,.16));
+      --book-spine-border: rgba(255,255,255,.5);
+      --book-sheen: linear-gradient(115deg, rgba(255,255,255,.4) 0%, transparent 46%);
+      --book-shadow: 4px 3px 0 -1px rgba(255,255,255,.7), 8px 7px 0 -1px rgba(20,16,40,.10), 0 16px 34px rgba(20,16,40,.14);
+      --book-shadow-hover: 4px 3px 0 -1px rgba(255,255,255,.8), 10px 12px 0 -1px rgba(20,16,40,.10), 0 26px 50px rgba(20,16,40,.20);
     }
 
     html {
@@ -38,6 +120,7 @@
       color: var(--text-1);
       min-height: 100vh;
       overflow-x: hidden;
+      transition: background .3s, color .3s;
     }
 
     /* ── Ambient background ── */
@@ -66,120 +149,99 @@
       50% { transform: translate(40px, 30px); }
     }
 
+    /* ══ NAVBAR（与 dashboard 同款：吸顶 + 毛玻璃） ══ */
+    .dash-navbar {
+      position: sticky; top: 0; z-index: 101;
+      width: 100%; height: 48px;
+      display: flex; align-items: center;
+      backdrop-filter: saturate(180%) blur(16px);
+      -webkit-backdrop-filter: saturate(180%) blur(16px);
+      border-bottom: 1px solid var(--glass-border);
+      background: var(--nav-bg);
+      transition: background-color .2s ease;
+    }
+    .dash-navbar-inner {
+      width: 100%; max-width: 1040px; margin: 0 auto;
+      padding: 0 24px; height: 100%;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .dash-navbar-brand { display: flex; align-items: center; gap: 10px; }
+    .dash-navbar-logo {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: #E9D5FF;            /* 与 dashboard 一致的浅紫容器 */
+      color: #6D28D9;                /* 与 dashboard 一致的深紫方块 */
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .dash-navbar-logo svg { width: 16px; height: 16px; }
+    .dash-navbar-text { display: flex; flex-direction: column; line-height: 1.15; }
+    .dash-navbar-text h2 {
+      font-family: "Fraunces", serif;   /* 与 dashboard 一致 */
+      font-style: italic; font-weight: 300;
+      font-size: 17px; letter-spacing: -.2px;
+      color: var(--text-1); margin: 0;
+    }
+    .dash-navbar-text span {
+      font-size: 10px; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: .12em; font-weight: 600;
+    }
+    .nav-stats { display: flex; align-items: center; gap: 8px; }
+    .nav-stat {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      height: 34px; padding: 0 14px;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: var(--surface);
+      white-space: nowrap;
+    }
+    .nav-stat-label { font-size: 11px; color: var(--text-3); font-weight: 500; }
+    .nav-stat-num {
+      font-size: 13px; font-weight: 700; color: var(--text-1);
+      font-variant-numeric: tabular-nums;
+    }
+    .dash-navbar-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+    .theme-btn {
+      height: 34px; width: 34px;
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0; text-decoration: none;
+      border-radius: 8px !important;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-2);
+      transition: all .2s; cursor: pointer;
+    }
+    .theme-btn svg { vertical-align: middle; flex-shrink: 0; }
+    .theme-btn:hover { background: var(--surface-hover); border-color: var(--accent); color: var(--accent); }
+
     /* ── Layout ── */
     .wrapper {
       position: relative; z-index: 1;
-      max-width: 960px; margin: 0 auto;
+      max-width: 1040px; margin: 0 auto;
       padding: 0 24px;
     }
 
-    /* ── Header ── */
-    .header {
-      position: sticky; top: 0; z-index: 100;
-      padding: 20px 0;
-      backdrop-filter: blur(20px) saturate(1.4);
-      -webkit-backdrop-filter: blur(20px) saturate(1.4);
-      background: rgba(11,11,15,.7);
-      border-bottom: 1px solid var(--glass-border);
-    }
-    .header-inner {
-      max-width: 960px; margin: 0 auto; padding: 0 24px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .logo {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 18px; font-weight: 700; letter-spacing: -.3px;
-    }
-    .logo-icon {
-      width: 32px; height: 32px; border-radius: 8px;
-      background: var(--gradient-1);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; color: #fff; font-weight: 700;
-    }
-    .header-actions { display: flex; gap: 8px; }
-    .icon-btn {
-      width: 36px; height: 36px; border-radius: 10px;
-      border: 1px solid var(--glass-border);
-      background: var(--glass);
-      color: var(--text-2); cursor: pointer;
-      font-size: 15px; display: flex; align-items: center; justify-content: center;
-      transition: all .2s;
-    }
-    .icon-btn:hover { background: var(--surface-hover); color: var(--text-1); }
-
     /* ── Hero ── */
     .hero {
-      padding: 64px 0 40px;
+      padding: 56px 0 36px;
       text-align: center;
     }
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 6px 14px; border-radius: 100px;
-      background: var(--gradient-2);
-      border: 1px solid rgba(183,148,246,.15);
-      font-size: 12px; font-weight: 600; color: var(--accent);
-      margin-bottom: 20px;
-      letter-spacing: .5px; text-transform: uppercase;
-    }
     .hero h1 {
-      font-size: 40px; font-weight: 700; letter-spacing: -1px;
+      font-size: 38px; font-weight: 700; letter-spacing: -1px;
       line-height: 1.15; margin-bottom: 14px;
-      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,.7) 100%);
+      background: linear-gradient(135deg, var(--text-1) 0%, var(--text-2) 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     .hero p {
-      font-size: 16px; color: var(--text-2); max-width: 480px;
-      margin: 0 auto; line-height: 1.6;
+      font-size: 16px; color: var(--text-2); max-width: 460px;
+      margin: 0 auto; line-height: 1.7;
     }
-
-    /* ── Search ── */
-    .search-section {
-      padding: 0 0 32px;
-      max-width: 520px; margin: 0 auto;
-    }
-    .search-box {
-      position: relative;
-    }
-    .search-icon {
-      position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
-      color: var(--text-3); font-size: 14px; pointer-events: none;
-      display: inline-flex; align-items: center; justify-content: center;
-    }
-    .search-input {
-      width: 100%; padding: 13px 16px 13px 42px;
-      border-radius: 14px;
-      border: 1px solid var(--glass-border);
-      background: var(--glass);
-      backdrop-filter: blur(12px);
-      color: var(--text-1); font-size: 14px;
-      font-family: inherit; outline: none;
-      transition: border-color .2s, box-shadow .2s;
-    }
-    .search-input::placeholder { color: var(--text-3); }
-    .search-input:focus {
-      border-color: rgba(183,148,246,.35);
-      box-shadow: 0 0 0 3px rgba(183,148,246,.08);
-    }
-
-    /* ── Stats row ── */
-    .stats-row {
-      display: flex; gap: 12px; padding-bottom: 32px;
-      justify-content: center; flex-wrap: wrap;
-    }
-    .stat-chip {
-      padding: 8px 16px; border-radius: 10px;
-      background: var(--glass); border: 1px solid var(--glass-border);
-      font-size: 13px; color: var(--text-2);
-      display: flex; align-items: center; gap: 6px;
-    }
-    .stat-chip b { color: var(--text-1); font-weight: 600; }
 
     /* ── Category ── */
-    .category { margin-bottom: 36px; }
+    .category { margin-bottom: 44px; }
     .category-head {
       display: flex; align-items: center; gap: 10px;
-      margin-bottom: 14px; padding: 0 4px;
+      margin-bottom: 18px; padding: 0 4px;
     }
     .category-name {
       font-size: 14px; font-weight: 700; color: var(--text-1);
@@ -187,78 +249,93 @@
     }
     .category-count {
       font-size: 11px; font-weight: 600; color: var(--accent);
-      background: rgba(183,148,246,.1);
+      background: var(--md-tonal-spot);
       padding: 2px 8px; border-radius: 6px;
     }
-    .category-line {
-      flex: 1; height: 1px;
-      background: var(--glass-border);
-    }
+    .category-line { flex: 1; height: 1px; background: var(--glass-border); }
 
+    /* ── Book grid (book-cover shapes) ── */
     .book-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 26px 22px;
     }
 
-    /* ── Book Card ── */
+    /* ── Book Card = a standing book ── */
     .book-card {
       position: relative;
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: 14px;
-      padding: 16px 18px;
+      display: block;
+      aspect-ratio: 3 / 4;
+      border-radius: 3px 11px 11px 3px;
+      background: linear-gradient(150deg, var(--c1) 0%, var(--c2) 100%);
+      color: var(--book-ink);
+      text-decoration: none;
       cursor: pointer;
-      text-decoration: none; color: inherit;
-      display: flex; align-items: center; gap: 14px;
-      transition: all .22s cubic-bezier(.4,0,.2,1);
       overflow: hidden;
+      box-shadow: var(--book-shadow);
+      transition: transform .28s cubic-bezier(.34,1.4,.5,1), box-shadow .28s, filter .28s;
+      isolation: isolate;
     }
+    /* spine */
     .book-card::before {
       content: "";
+      position: absolute; left: 0; top: 0; bottom: 0; width: 15px;
+      background: var(--book-spine);
+      border-right: 1px solid var(--book-spine-border);
+      z-index: 2;
+    }
+    /* soft sheen across the cover */
+    .book-card::after {
+      content: "";
       position: absolute; inset: 0;
-      background: linear-gradient(135deg, rgba(183,148,246,.06) 0%, transparent 60%);
-      opacity: 0;
-      transition: opacity .25s;
+      background: var(--book-sheen);
+      z-index: 1;
+      pointer-events: none;
     }
     .book-card:hover {
-      border-color: rgba(183,148,246,.2);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(0,0,0,.3), 0 0 0 1px rgba(183,148,246,.08);
+      transform: translateY(-8px) rotate(-1deg);
+      filter: saturate(1.08) brightness(1.04);
+      box-shadow: var(--book-shadow-hover);
     }
-    .book-card:hover::before { opacity: 1; }
-    .book-card:active { transform: translateY(0); }
+    .book-card:active { transform: translateY(-2px) scale(.99); }
 
-    .book-icon {
-      width: 42px; height: 42px; border-radius: 11px;
-      background: var(--gradient-2);
-      border: 1px solid rgba(183,148,246,.1);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px; flex-shrink: 0;
-      position: relative; z-index: 1;
+    .book-inner {
+      position: relative; z-index: 3;
+      height: 100%;
+      padding: 22px 16px 18px 26px;
+      display: flex; flex-direction: column;
+      text-shadow: var(--book-text-shadow);
     }
-    .book-info {
-      flex: 1; min-width: 0;
-      position: relative; z-index: 1;
+    .book-tag {
+      font-size: 10px; font-weight: 700; letter-spacing: .6px;
+      text-transform: uppercase;
+      color: var(--book-ink-soft);
+      margin-bottom: auto;
+      display: flex; align-items: center; gap: 5px;
     }
-    .book-name {
-      font-size: 14px; font-weight: 600; line-height: 1.35;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    .book-tag .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--book-ink-soft);
     }
-    .book-arrow {
-      color: var(--text-3); font-size: 14px; flex-shrink: 0;
-      position: relative; z-index: 1;
-      transition: color .2s, transform .2s;
+    .book-title {
+      font-size: 17px; font-weight: 700; line-height: 1.28;
+      letter-spacing: -.3px;
+      color: var(--book-ink);
+      display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
+      overflow: hidden;
     }
-    .book-card:hover .book-arrow {
-      color: var(--accent); transform: translateX(3px);
+    .book-foot { margin-top: 12px; display: flex; align-items: center; }
+    .book-open {
+      font-size: 11px; font-weight: 600; letter-spacing: .4px;
+      color: var(--book-ink-soft);
+      display: inline-flex; align-items: center; gap: 5px;
+      transform: translateX(-4px); opacity: 0;
+      transition: transform .28s, opacity .28s;
     }
+    .book-card:hover .book-open { transform: translateX(0); opacity: .9; }
 
-    /* ── Empty / Loading ── */
-    .loading, .no-result {
-      text-align: center; padding: 80px 20px;
-      color: var(--text-3); font-size: 14px;
-    }
+    /* ── Loading ── */
+    .loading { text-align: center; padding: 80px 20px; color: var(--text-3); font-size: 14px; }
     .loading::after {
       content: ""; display: block;
       width: 28px; height: 28px; margin: 16px auto 0;
@@ -268,52 +345,76 @@
       animation: spin .8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .no-result { text-align: center; padding: 60px 20px; color: var(--text-3); font-size: 14px; }
 
     /* ── Mobile ── */
     @media (max-width: 640px) {
+      .dash-navbar-inner { gap: 10px; padding: 0 16px; }
+      .nav-stat { padding: 0 10px; height: 32px; }
+      .nav-stat-label { display: none; }
+      .nav-stat-num { font-size: 12px; }
+      .dash-navbar-text span { display: none; }
       .hero { padding: 40px 0 28px; }
       .hero h1 { font-size: 28px; }
       .hero p { font-size: 14px; }
-      .book-grid { grid-template-columns: 1fr; }
-      .stats-row { gap: 8px; }
-      .stat-chip { font-size: 12px; padding: 6px 12px; }
+      .book-grid {
+        grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+        gap: 22px 16px;
+      }
+      .book-inner { padding: 18px 12px 14px 24px; }
+      .book-title { font-size: 15px; }
     }
   </style>
 </head>
 <body>
   <div class="bg-glow"></div>
 
-  <!-- Header -->
-  <div class="header">
-    <div class="header-inner">
-      <div class="logo">
-        <div class="logo-icon">V</div>
-        <span>Vocab Lab</span>
+  <!-- ══ Navbar（与 dashboard 同款；状态 = Bookshelf；统计挂在品牌后） ══ -->
+  <nav class="dash-navbar" role="navigation">
+    <div class="dash-navbar-inner">
+      <div class="dash-navbar-brand">
+        <div class="dash-navbar-logo">
+          <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="6" height="6" rx="2" fill="currentColor"/>
+            <rect x="10" y="2" width="6" height="6" rx="2" fill="currentColor" opacity=".6"/>
+            <rect x="2" y="10" width="6" height="6" rx="2" fill="currentColor" opacity=".6"/>
+            <rect x="10" y="10" width="6" height="6" rx="2" fill="currentColor" opacity=".3"/>
+          </svg>
+        </div>
+        <div class="dash-navbar-text">
+          <h2>Vocab Lab</h2>
+          <span>Bookshelf</span>
+        </div>
       </div>
-      <div class="header-actions">
-        <button class="icon-btn" id="themeToggle"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/></svg></button>
+
+      <div class="nav-stats">
+        <div class="nav-stat">
+          <span class="nav-stat-label">分类</span>
+          <span class="nav-stat-num" id="statCats">—</span>
+        </div>
+        <div class="nav-stat">
+          <span class="nav-stat-label">单词书</span>
+          <span class="nav-stat-num" id="statBooks">—</span>
+        </div>
+      </div>
+
+      <div class="dash-navbar-actions">
+        <a class="theme-btn" href="index.html" title="返回单词浏览器" aria-label="返回主页">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/></svg>
+        </a>
+        <button class="theme-btn" id="themeToggle" title="切换主题" aria-label="切换主题">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/></svg>
+        </button>
       </div>
     </div>
-  </div>
+  </nav>
 
   <div class="wrapper">
     <!-- Hero -->
     <div class="hero">
-      <div class="hero-badge">📖 Choose Your Book</div>
-      <h1>选择你的单词书</h1>
-      <p>从分类中选择一本单词书，开始高效记忆之旅</p>
+      <h1>挑一本单词书，开始今天的学习</h1>
+      <p>从下方分类里选一本，翻开就能背 —— 让每天的记忆都有个轻松的开始。</p>
     </div>
-
-    <!-- Search -->
-    <div class="search-section">
-      <div class="search-box">
-        <span class="search-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg></span>
-        <input type="text" class="search-input" id="searchInput" placeholder="搜索单词书或分类…" autocomplete="off" />
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats-row" id="statsRow"></div>
 
     <!-- Content -->
     <div id="content">
@@ -322,14 +423,70 @@
   </div>
 
   <script>
+    /* ══ 书封配色：dark = 第一版饱和宝石色；light = 浅冷色 ══ */
+    const DARK_PALETTE = [
+      ["#7C3AED", "#C026D3"], // violet → fuchsia
+      ["#6D28D9", "#3B82F6"], // indigo → blue
+      ["#2563EB", "#06B6D4"], // blue → cyan
+      ["#0891B2", "#0EA5E9"], // teal → sky
+      ["#DB2777", "#9333EA"], // pink → purple
+      ["#4F46E5", "#8B5CF6"], // indigo → violet
+      ["#0EA5E9", "#6366F1"], // sky → indigo
+      ["#8B5CF6", "#EC4899"], // purple → pink
+      ["#14B8A6", "#3B82F6"], // teal → blue
+      ["#A855F7", "#6366F1"], // purple → indigo
+      ["#F43F5E", "#A855F7"], // rose → purple
+      ["#22D3EE", "#4F46E5"], // cyan → indigo
+      ["#6366F1", "#A855F7"], // indigo → purple
+      ["#0D9488", "#22D3EE"]  // teal → cyan
+    ];
+    const LIGHT_PALETTE = [
+      ["#C4B5FD", "#E9D5FF"],
+      ["#A5B4FC", "#C7D2FE"],
+      ["#93C5FD", "#BFDBFE"],
+      ["#7DD3FC", "#BAE6FD"],
+      ["#5EEAD4", "#99F6E4"],
+      ["#FBCFE8", "#F9A8D4"],
+      ["#DDD6FE", "#EDE9FE"],
+      ["#A7F3EB", "#CFFAFE"],
+      ["#F5D0FE", "#FBCFE8"],
+      ["#BFDBFE", "#DBEAFE"],
+      ["#C7D2FE", "#E0E7FF"],
+      ["#FBCFE8", "#FEC8E8"],
+      ["#B5E8FC", "#DDF3FE"],
+      ["#E9D5FF", "#F3E8FF"]
+    ];
+    const order = Array.from({ length: Math.max(DARK_PALETTE.length, LIGHT_PALETTE.length) }, (_, i) => i)
+      .sort(() => Math.random() - 0.5);
+    let assignIdx = 0;
+    function nextPair() {
+      const i = order[assignIdx % order.length];
+      assignIdx++;
+      return {
+        dark: DARK_PALETTE[i % DARK_PALETTE.length],
+        light: LIGHT_PALETTE[i % LIGHT_PALETTE.length]
+      };
+    }
+    function applyBookColors(theme) {
+      const key = theme === "light" ? "light" : "dark";
+      document.querySelectorAll(".book-card").forEach(card => {
+        const raw = card.dataset[key];
+        if (!raw) return;
+        const [c1, c2] = raw.split(",");
+        card.style.setProperty("--c1", c1);
+        card.style.setProperty("--c2", c2);
+      });
+    }
+
     /* ══ Theme ══ */
     const THEME_KEY = "vocab-theme";
     function applyTheme(t) {
       document.documentElement.setAttribute("data-theme", t);
       localStorage.setItem(THEME_KEY, t);
-      const sunSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/></svg>';
-      const moonSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/></svg>';
+      const sunSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/></svg>';
+      const moonSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/></svg>';
       document.getElementById("themeToggle").innerHTML = t === "light" ? moonSvg : sunSvg;
+      applyBookColors(t);
     }
     applyTheme(localStorage.getItem(THEME_KEY) || "dark");
     document.getElementById("themeToggle").addEventListener("click", () => {
@@ -355,31 +512,21 @@
         if (cur.books.length) categories.push(cur);
 
         const totalBooks = categories.reduce((s, c) => s + c.books.length, 0);
-        document.getElementById("statsRow").innerHTML =
-          `<div class="stat-chip"><b>${categories.length}</b> 分类</div>` +
-          `<div class="stat-chip"><b>${totalBooks}</b> 本单词书</div>`;
+        document.getElementById("statCats").textContent = categories.length;
+        document.getElementById("statBooks").textContent = totalBooks;
 
-        render(categories);
+        render();
       })
       .catch(() => {
         document.getElementById("content").innerHTML = '<div class="no-result">无法加载词库列表</div>';
       });
 
-    function render(list, q = "") {
+    function render() {
       const content = document.getElementById("content");
       content.innerHTML = "";
-      const query = q.toLowerCase().trim();
-      let shown = 0;
+      const theme = document.documentElement.getAttribute("data-theme");
 
-      list.forEach(cat => {
-        const filtered = query
-          ? cat.books.filter(b =>
-              b.toLowerCase().includes(query) ||
-              cat.name.toLowerCase().includes(query))
-          : cat.books;
-        if (!filtered.length) return;
-        shown += filtered.length;
-
+      categories.forEach(cat => {
         const section = document.createElement("div");
         section.className = "category";
 
@@ -387,21 +534,31 @@
         head.className = "category-head";
         head.innerHTML =
           `<span class="category-name">${esc(cat.name)}</span>` +
-          `<span class="category-count">${filtered.length}</span>` +
+          `<span class="category-count">${cat.books.length}</span>` +
           `<span class="category-line"></span>`;
         section.appendChild(head);
 
         const grid = document.createElement("div");
         grid.className = "book-grid";
 
-        filtered.forEach(book => {
+        cat.books.forEach(book => {
+          const pair = nextPair();
+          const col = theme === "light" ? pair.light : pair.dark;
           const card = document.createElement("a");
           card.className = "book-card";
           card.href = "index.html";
+          card.dataset.dark = pair.dark.join(",");
+          card.dataset.light = pair.light.join(",");
+          card.style.setProperty("--c1", col[0]);
+          card.style.setProperty("--c2", col[1]);
           card.innerHTML =
-            `<div class="book-icon">📖</div>` +
-            `<div class="book-info"><div class="book-name">${esc(book.replace(".csv",""))}</div></div>` +
-            `<div class="book-arrow">→</div>`;
+            `<div class="book-inner">` +
+              `<div class="book-tag"><span class="dot"></span>${esc(cat.name)}</div>` +
+              `<div class="book-title">${esc(book.replace(".csv",""))}</div>` +
+              `<div class="book-foot">` +
+                `<span class="book-open">打开 →</span>` +
+              `</div>` +
+            `</div>`;
           card.addEventListener("click", e => {
             e.preventDefault();
             localStorage.setItem("vocab-selected-book", "data/" + book);
@@ -413,20 +570,11 @@
         section.appendChild(grid);
         content.appendChild(section);
       });
-
-      if (!shown) {
-        content.innerHTML = '<div class="no-result">没有找到匹配的单词书</div>';
-      }
     }
 
     function esc(s) {
       return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
     }
-
-    /* ══ Search ══ */
-    document.getElementById("searchInput").addEventListener("input", e => {
-      render(categories, e.target.value);
-    });
   </script>
 </body>
 </html>
