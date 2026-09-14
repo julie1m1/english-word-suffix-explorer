@@ -1472,6 +1472,7 @@ window.addEventListener("load", () => {
             buildSyllableMeta(); // 若本地音标已加载则先建一次音节索引（幂等）
             renderPhonicsBar(); // 刷新发音分类的组合计数（随词库变化）
             renderCategoryBar(); // 渲染语义分类标签栏（词库就绪后统计）
+            rebuildLocalIndex();
             applyFilters();
             if (suffixList.length)
               renderSuffixControls(document.getElementById("suffixSearch").value);
@@ -1521,6 +1522,7 @@ window.addEventListener("load", () => {
             buildSyllableMeta(); // 若本地音标已加载则先建一次音节索引（幂等）
             renderPhonicsBar();
             renderCategoryBar();
+            rebuildLocalIndex();
             applyFilters();
             if (suffixList.length)
               renderSuffixControls(document.getElementById("suffixSearch").value);
@@ -1771,7 +1773,7 @@ function renderSuffixControls(filterText = "") {
 
     // 该词缀在当前词库里可刷选出的词数（All / 标题行不显示）
     const cnt =
-      item.suffix && item.type
+      item.suffix && item.type && suffixCounts
         ? suffixCounts.get(item.suffix.toLowerCase() + "|" + item.type) || 0
         : null;
 
@@ -1921,16 +1923,21 @@ function renderSuffixControls(filterText = "") {
       let staticExamples = {};
       let ecdictExamples = {};
       let localIPA = {}; // 本地音标（data/ipa.json，来自 ECDICT）
+      let wordnetRel = {}; // WordNet 同/反义关系（data/wordnet_rel.json）
+      let localWords = new Set(); // 本地 3W 词库词（小写）
+      let vocabByWord = new Map(); // 小写词 → vocab 条目
 
-      // 加载例句数据 + 本地音标，完成后刷新已渲染卡片
+      // 加载例句数据 + 本地音标 + WordNet 关系，完成后刷新已渲染卡片
       Promise.all([
         fetch("data/examples.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
         fetch("data/ecdict-examples.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
         fetch("data/ipa.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
-      ]).then(([ex, ec, ipa]) => {
+        fetch("data/wordnet_rel.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      ]).then(([ex, ec, ipa, wnRel]) => {
         staticExamples = ex;
         ecdictExamples = ec;
         localIPA = ipa || {};
+        wordnetRel = wnRel || {};
         // 本地音标就绪后构建音节索引，刷新音节结构页签计数
         buildSyllableMeta();
         renderPhonicsBar();
@@ -1969,6 +1976,18 @@ function renderSuffixControls(filterText = "") {
       // 本地音标查询（data/ipa.json，键为小写）
       function getLocalIPA(word) {
         return localIPA[word.toLowerCase()] || "";
+      }
+
+      // 重建「本地 3W 词库」索引（随词库切换更新）；用于区分本地库 / WordNet 扩展词
+      function rebuildLocalIndex() {
+        localWords = new Set();
+        vocabByWord = new Map();
+        for (const v of (vocab || [])) {
+          const k = (v.word || "").toLowerCase();
+          if (!k) continue;
+          localWords.add(k);
+          if (!vocabByWord.has(k)) vocabByWord.set(k, v);
+        }
       }
 
       // 音标渲染：本地（强调色）+ 远程（灰色）同行并列，用颜色区分，相同则只显示一个
@@ -2190,6 +2209,274 @@ function renderSuffixControls(filterText = "") {
           el.appendChild(div);
         });
       }
+
+      /* ═══════════════════════════════════════
+   DETAIL PANEL (List View master-detail)
+═══════════════════════════════════════ */
+      const POS_ZH = {
+        noun: "名词", verb: "动词", adj: "形容词", adv: "副词",
+        pron: "代词", det: "限定词", prep: "介词", conj: "连词",
+        interj: "感叹词", num: "数词", other: "其他",
+      };
+
+      function buildDetailExamples(word) {
+        const key = word.toLowerCase();
+        const out = [];
+        const sp = staticExamples[key];
+        if (sp) {
+          (sp.spoken || []).forEach(t => out.push({ text: t, source: "ai-spoken" }));
+          (sp.written || []).forEach(t => out.push({ text: t, source: "ai-written" }));
+        }
+        const ec = ecdictExamples[key];
+        if (ec && Array.isArray(ec.ec)) {
+          ec.ec.forEach(t => out.push({ text: t, source: "ecdict" }));
+        }
+        return out;
+      }
+
+      function showDetailPanel(item) {
+        const panel = document.getElementById("detailPanel");
+        const content = document.getElementById("detailContent");
+        const placeholder = panel && panel.querySelector(".detail-placeholder");
+        if (!panel || !content) return;
+
+        if (placeholder) placeholder.style.display = "none";
+        content.style.display = "block";
+
+        const w = encodeURIComponent(item.word);
+        const phonetic = getLocalIPA(item.word) || "";
+        const isMobile = window.innerWidth <= 1024;
+
+        const posTags = (item.pos || [])
+          .map(p => `<span class="detail-pos-tag">${POS_ZH[p] || p}</span>`)
+          .join("");
+
+        // 释义（CSV 中文释义）
+        const defHTML = item.def
+          ? `<div class="detail-section"><div class="detail-section-title">释义</div><div class="detail-def">${esc(item.def)}</div></div>`
+          : "";
+
+        // 例句
+        const examples = buildDetailExamples(item.word);
+        const exampleHTML = examples.length
+          ? `<div class="detail-section"><div class="detail-section-title">例句</div>` +
+            examples.map(({ text, source }) => {
+              let icon = "•", cls = "";
+              if (source === "ai-spoken") { icon = "口语"; cls = "spoken"; }
+              else if (source === "ai-written") { icon = "书面"; cls = "written"; }
+              else if (source === "ecdict") { icon = "ECD"; cls = "ecdict"; }
+              const wordRegex = new RegExp(`(${esc(item.word).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+              const hl = esc(text).replace(wordRegex, '<span class="example-hl">$1</span>');
+              return `<div class="example-sentence"><span class="example-icon ${cls}">${icon}</span><span>${hl}</span></div>`;
+            }).join("") + `</div>`
+          : "";
+
+        // 搜索词高亮
+        const searchQ = currentFilter.search;
+        let detailWordHTML = esc(item.word);
+        if (searchQ) {
+          const searchRegex = new RegExp(`(${searchQ.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+          detailWordHTML = detailWordHTML.replace(searchRegex, '<span class="search-hl">$1</span>');
+        }
+
+        content.innerHTML = `
+          <div class="detail-header">
+            ${isMobile ? '<button class="detail-close-btn" type="button"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>' : ""}
+            <div class="detail-title-row">
+              <div class="detail-word">${detailWordHTML}</div>
+              ${posTags ? `<div class="detail-pos">${posTags}</div>` : ""}
+              ${phonetic ? `<span class="detail-phonetic">${esc(phonetic)}</span>` : ""}
+              <button class="detail-play-btn" type="button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/></svg>
+              </button>
+              <div class="detail-links">
+                <a href="https://dict.eudic.net/dicts/en/${w}" target="_blank" class="dict-link-btn"><span>Eudic</span></a>
+                <a href="https://www.onelook.com/?w=${w}&phrases=1" target="_blank" class="dict-link-btn"><span>OneLook</span></a>
+                <a href="https://www.ldoceonline.com/dictionary/${w}" target="_blank" class="dict-link-btn"><span>Longman</span></a>
+              </div>
+            </div>
+          </div>
+          <div class="detail-body">
+            ${defHTML}
+            ${exampleHTML}
+          </div>
+        `;
+
+        content.querySelector(".detail-play-btn")?.addEventListener("click", () => playDetailWord(item.word));
+        content.querySelector(".detail-close-btn")?.addEventListener("click", closeDetailPanel);
+      }
+
+      function closeDetailPanel() {
+        const panel = document.getElementById("detailPanel");
+        const content = document.getElementById("detailContent");
+        const placeholder = panel && panel.querySelector(".detail-placeholder");
+        if (placeholder) placeholder.style.display = "flex";
+        if (content) { content.style.display = "none"; content.innerHTML = ""; }
+        document.querySelectorAll(".card.selected").forEach(c => c.classList.remove("selected"));
+      }
+
+      function playDetailWord(word) {
+        const cached = AudioCache.get(word);
+        const audio = cached ? cached : new Audio(AudioCache._url(word));
+        audio.play().catch(() => {});
+      }
+
+      /* ═══════════════════════════════════════
+   WORDNET 关联探索器（仅 list 模式 · 右侧详情面板内）
+   以任意词为起点，无限层级探索同/反义词；面包屑 + 悬浮栏防迷失。
+═══════════════════════════════════════ */
+      const REL_ORDER = ["v", "n", "adj", "adv"];
+      const REL_POS_LABEL = { v: "v.", n: "n.", adj: "adj.", adv: "adv." };
+      const DEPTH_WARN = 5; // 深度预警阈值
+
+      const Explorer = (() => {
+        let path = []; // 探索路径（词串），栈顶 = 当前主词
+
+        const isLocal = (w) => localWords.has(String(w).toLowerCase());
+        const relOf = (w) => wordnetRel[String(w).toLowerCase()] || null;
+
+        // 为任意词构造详情条目：本地词取词库释义/音标，WordNet 扩展词取 mini gloss
+        function buildItem(word) {
+          const k = word.toLowerCase();
+          const local = vocabByWord.get(k);
+          if (local) return { word: local.word, def: local.def, pos: local.pos };
+          const rel = relOf(word);
+          const pos = [];
+          if (rel) REL_ORDER.forEach(p => { if (rel.syn[p] || rel.ant[p]) pos.push(REL_POS_LABEL[p]); });
+          const def = rel && rel.g ? rel.g : "";
+          return { word, def, pos };
+        }
+
+        // 复用详情面板 Header + 释义 + 例句 结构（与 showDetailPanel 一致）
+        function coreHTML(item, isMobile) {
+          const w = encodeURIComponent(item.word);
+          const phonetic = getLocalIPA(item.word) || "";
+          const posTags = (item.pos || [])
+            .map(p => `<span class="detail-pos-tag">${POS_ZH[p] || p}</span>`)
+            .join("");
+          const defHTML = item.def
+            ? `<div class="detail-section"><div class="detail-section-title">释义</div><div class="detail-def">${esc(item.def)}</div></div>`
+            : "";
+          const examples = buildDetailExamples(item.word);
+          const exampleHTML = examples.length
+            ? `<div class="detail-section"><div class="detail-section-title">例句</div>` +
+              examples.map(({ text, source }) => {
+                let icon = "•", cls = "";
+                if (source === "ai-spoken") { icon = "口语"; cls = "spoken"; }
+                else if (source === "ai-written") { icon = "书面"; cls = "written"; }
+                else if (source === "ecdict") { icon = "ECD"; cls = "ecdict"; }
+                const wordRegex = new RegExp(`(${esc(item.word).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+                const hl = esc(text).replace(wordRegex, '<span class="example-hl">$1</span>');
+                return `<div class="example-sentence"><span class="example-icon ${cls}">${icon}</span><span>${hl}</span></div>`;
+              }).join("") + `</div>`
+            : "";
+          const searchQ = currentFilter.search;
+          let detailWordHTML = esc(item.word);
+          if (searchQ) {
+            const searchRegex = new RegExp(`(${searchQ.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, "gi");
+            detailWordHTML = detailWordHTML.replace(searchRegex, '<span class="search-hl">$1</span>');
+          }
+          return `
+          <div class="detail-header">
+            ${isMobile ? '<button class="detail-close-btn" type="button"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>' : ""}
+            <div class="detail-title-row">
+              <div class="detail-word">${detailWordHTML}</div>
+              ${posTags ? `<div class="detail-pos">${posTags}</div>` : ""}
+              ${phonetic ? `<span class="detail-phonetic">${esc(phonetic)}</span>` : ""}
+              <button class="detail-play-btn" type="button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/></svg>
+              </button>
+              <div class="detail-links">
+                <a href="https://dict.eudic.net/dicts/en/${w}" target="_blank" class="dict-link-btn"><span>Eudic</span></a>
+                <a href="https://www.onelook.com/?w=${w}&phrases=1" target="_blank" class="dict-link-btn"><span>OneLook</span></a>
+                <a href="https://www.ldoceonline.com/dictionary/${w}" target="_blank" class="dict-link-btn"><span>Longman</span></a>
+              </div>
+            </div>
+          </div>
+          <div class="detail-body">
+            ${defHTML}
+            ${exampleHTML}
+          </div>`;
+        }
+
+        // 渲染一组关系（近义 / 反义），按 POS 分组
+        function relBlock(title, kind, rel) {
+          if (!rel || !rel[kind]) return "";
+          let html = `<div class="exp-group"><div class="exp-group-title">${title}</div>`;
+          for (const pos of REL_ORDER) {
+            const arr = rel[kind][pos];
+            if (!arr || !arr.length) continue;
+            html += `<div class="exp-sub"><span class="exp-pos">${REL_POS_LABEL[pos]}</span><div class="exp-list">`;
+            arr.forEach(wd => {
+              const isL = isLocal(wd);
+              html += `<button class="rel-word ${isL ? "local" : "wordnet"}" data-word="${esc(wd)}">${esc(wd)}<span class="rel-tag">${isL ? "本地库" : "WordNet"}</span></button>`;
+            });
+            html += `</div></div>`;
+          }
+          html += `</div>`;
+          return html;
+        }
+
+        function render() {
+          const panel = document.getElementById("detailPanel");
+          const content = document.getElementById("detailContent");
+          if (!panel || !content) return;
+          const ph = panel.querySelector(".detail-placeholder");
+          if (ph) ph.style.display = "none";
+          content.style.display = "block";
+
+          const word = path[path.length - 1];
+          const item = buildItem(word);
+          const isMobile = window.innerWidth <= 1024;
+          const rel = relOf(word);
+
+          // 面包屑（顶部常驻单行可滚动）
+          let crumbs = `<button class="exp-crumb exp-home" data-act="home">首页</button>`;
+          path.forEach((ww, i) => {
+            const cur = i === path.length - 1;
+            crumbs += `<span class="exp-sep">›</span>` +
+              (cur
+                ? `<span class="exp-crumb current">${esc(ww)}</span>`
+                : `<button class="exp-crumb" data-act="goto" data-i="${i}">${esc(ww)}</button>`);
+          });
+
+          const core = coreHTML(item, isMobile);
+
+          const hasSyn = rel && rel.syn && Object.keys(rel.syn).length;
+          const hasAnt = rel && rel.ant && Object.keys(rel.ant).length;
+          const explore = hasSyn || hasAnt
+            ? `<div class="exp-section">${relBlock("近义词", "syn", rel)}${relBlock("反义词", "ant", rel)}</div>`
+            : `<div class="exp-empty">WordNet 中暂无该词的近义 / 反义关系</div>`;
+
+          const depthIdx = path.length - 1;
+          const depthLabel = depthIdx === 0 ? "起点" : `第 ${depthIdx} 层`;
+          const warn = depthIdx >= DEPTH_WARN ? "warn" : "";
+          const sticky = `<div class="exp-sticky ${warn}"><span class="exp-depth">深度：${depthLabel}</span><button class="exp-tostart" data-act="tostart">一键返回起点</button></div>`;
+
+          content.innerHTML = `<div class="exp-breadcrumb">${crumbs}</div>${core}${explore}${sticky}`;
+
+          // 事件绑定
+          content.querySelector(".detail-play-btn")?.addEventListener("click", () => playDetailWord(word));
+          content.querySelector(".detail-close-btn")?.addEventListener("click", closeDetailPanel);
+          content.querySelector(".exp-crumb.exp-home")?.addEventListener("click", () => home());
+          content.querySelectorAll('.exp-crumb[data-act="goto"]').forEach(b =>
+            b.addEventListener("click", () => goto(parseInt(b.dataset.i, 10))));
+          content.querySelector(".exp-tostart")?.addEventListener("click", () => toStart());
+          content.querySelectorAll(".rel-word").forEach(b =>
+            b.addEventListener("click", () => drill(b.dataset.word)));
+        }
+
+        function start(w) { path = [w]; render(); }
+        function drill(w) {
+          if (String(w).toLowerCase() === String(path[path.length - 1]).toLowerCase()) return;
+          path.push(w); render();
+        }
+        function goto(i) { path = path.slice(0, i + 1); render(); }
+        function toStart() { if (path.length) { path = [path[0]]; render(); } }
+        function home() { path = []; closeDetailPanel(); }
+
+        return { start, drill, goto, toStart, home, render };
+      })();
 
       // IntersectionObserver-based IPA — no hard cap, loads as cards enter viewport
       const ipaObserver = new IntersectionObserver(
@@ -2458,6 +2745,15 @@ function renderSuffixControls(filterText = "") {
                card.addEventListener("click", (e) => {
           if (e.target.closest("a")) return;
 
+          // ✅ 主从布局（list-view）：点击单词 → 右侧详情面板（WordNet 关联探索器）
+          if (document.getElementById("grid").classList.contains("list-view")) {
+            Explorer.start(item.word);
+            document.querySelectorAll(".card.selected").forEach(c => c.classList.remove("selected"));
+            card.classList.add("selected");
+            playWord();
+            return;
+          }
+
           // ✅ 播放模式：点击任意卡片跳转到该位置播放
           if (playerState && playerState.active) {
             const idx = filteredVocab.findIndex(v => v.word === item.word);
@@ -2564,21 +2860,39 @@ function renderSuffixControls(filterText = "") {
   const grid = document.getElementById("grid");
   const label = this.querySelector('.label');
   const iconEl = this.querySelector('.icon');
+  const detailPanel = document.getElementById("detailPanel");
 
   const isList = grid.classList.toggle("list-view");
   iconEl.innerHTML = isList ? icon("squares-2x2") : icon("list-bullet");
   label.textContent = isList ? "Card" : "List";
   localStorage.setItem("vocab-view", isList ? "list" : "card");
+
+  // 显示/隐藏右侧详情面板
+  if (detailPanel) {
+    detailPanel.style.display = isList ? "flex" : "none";
+    if (!isList) {
+      const ph = detailPanel.querySelector(".detail-placeholder");
+      const ct = document.getElementById("detailContent");
+      if (ph) ph.style.display = "flex";
+      if (ct) { ct.style.display = "none"; ct.innerHTML = ""; }
+    }
+  }
 });
 
-// ── 初始化恢复视图状态 ──
+// ── 初始化恢复视图状态（默认左/右主从布局）──
 (function initView() {
   const saved = localStorage.getItem("vocab-view");
-  if (saved === "list") {
-    document.getElementById("grid").classList.add("list-view");
-    const btn = document.getElementById("viewToggleBtn");
+  const grid = document.getElementById("grid");
+  const detailPanel = document.getElementById("detailPanel");
+  const btn = document.getElementById("viewToggleBtn");
+  // 未显式选过卡片视图 → 默认主从（list）布局
+  if (saved !== "card") {
+    grid.classList.add("list-view");
+    if (detailPanel) detailPanel.style.display = "flex";
     btn.querySelector('.icon').innerHTML = icon("squares-2x2");
     btn.querySelector('.label').textContent = "Card";
+  } else if (detailPanel) {
+    detailPanel.style.display = "none";
   }
 })();
 

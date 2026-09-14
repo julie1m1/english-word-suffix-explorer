@@ -27,6 +27,8 @@ scripts/longman*_missing.json
 # 文档（不随网页展示）
 README.md
 PRD*.md
+# 例外：音节可视化的 PRD 需随仓库保留，便于任何人检索
+!PRD-syllables.md
 
 # 网页展示无关的构建脚本、截图资源与 npm 配置
 scripts/

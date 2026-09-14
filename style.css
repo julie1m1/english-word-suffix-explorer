@@ -2397,6 +2397,131 @@ body.spelling-mode.spelling-started.spelling-show-words .card:not(.spelling-answ
   background: rgba(229, 72, 77, 0.12);
 }
 
+/* ══ WordNet 关联探索器（list 模式 · 详情面板内）══ */
+.exp-breadcrumb {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 0 10px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  white-space: nowrap;
+}
+.exp-breadcrumb::-webkit-scrollbar { height: 0; }
+.exp-crumb {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  padding: 2px 5px;
+  border-radius: 6px;
+  color: var(--text-2);
+}
+.exp-crumb:hover { color: var(--text-1); background: var(--surface-2); }
+.exp-crumb.current { color: var(--accent); font-weight: 600; cursor: default; }
+.exp-crumb.exp-home { color: var(--accent); }
+.exp-sep { flex: 0 0 auto; color: var(--text-3); }
+
+.exp-section { margin-top: 6px; display: flex; flex-direction: column; gap: 16px; }
+.exp-group-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+.exp-sub { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+.exp-pos {
+  flex: 0 0 auto;
+  width: 40px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  background: var(--surface-2);
+  border-radius: 6px;
+  padding: 4px 0;
+  margin-top: 2px;
+}
+.exp-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.rel-word {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  transition: transform 0.12s, background 0.15s, border-color 0.15s;
+}
+.rel-word:hover { transform: translateY(-1px); }
+.rel-word.local {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  border-color: transparent;
+  font-weight: 600;
+}
+.rel-word.wordnet {
+  background: var(--surface-2);
+  color: var(--text-2);
+  border-color: var(--border);
+}
+.rel-tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  opacity: 0.85;
+  background: rgba(127, 127, 127, 0.18);
+}
+.rel-word.local .rel-tag { background: rgba(0, 0, 0, 0.12); }
+.exp-empty {
+  margin-top: 16px;
+  padding: 18px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-3);
+  background: var(--surface-2);
+  border-radius: 10px;
+}
+.exp-sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 2px 0;
+  border-top: 1px solid var(--border);
+  background: linear-gradient(to top, var(--surface) 72%, rgba(0, 0, 0, 0));
+}
+.exp-depth { font-size: 13px; font-weight: 600; color: var(--text-1); }
+.exp-sticky.warn .exp-depth { color: var(--md-error); }
+.exp-tostart {
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-1);
+}
+.exp-tostart:hover { background: var(--md-tonal-spot); border-color: var(--accent); }
+
 /* ── Category chip counter ── */
 .pc-cat-count {
   display: inline-block;
@@ -2936,6 +3061,220 @@ body.spelling-mode.spelling-started.spelling-show-words .card:not(.spelling-answ
 }
 .syl-ov-chip.active {
   border-style: solid;
+}
+
+/* ═══════════════════════════════════════
+   LIST LAYOUT · 主从详情（左单词列表 / 右详情面板）
+═══════════════════════════════════════ */
+.list-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.list-layout #grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+/* list-view：左侧窄单词列表 + 右侧详情面板 */
+.list-layout #grid.list-view {
+  flex: 0 0 360px;
+  max-width: 38%;
+  min-width: 280px;
+  grid-template-columns: 1fr;   /* 覆盖默认两列 */
+  align-content: start;
+}
+/* 主从布局下，左侧列表只显示 单词+音标+简短释义，例句/词典链接收进右侧面板 */
+.list-layout #grid.list-view .card-examples,
+.list-layout #grid.list-view .card-links {
+  display: none !important;
+}
+
+/* ── 详情面板 ── */
+.detail-panel {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto;
+  padding: 28px 32px;
+}
+.detail-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  color: var(--text-3);
+  opacity: 0.5;
+}
+.detail-placeholder p {
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+.detail-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.detail-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.detail-word {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-1);
+  font-family: "DM Sans", sans-serif;
+}
+.detail-phonetic {
+  font-size: 15px;
+  color: var(--text-2);
+}
+.detail-pos {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.detail-pos-tag {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  font-weight: 600;
+}
+.detail-play-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--md-primary);
+  color: var(--md-on-primary, #ffffff);
+  cursor: pointer;
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+.detail-play-btn:hover { transform: scale(1.08); }
+.detail-links {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: auto;
+}
+.dict-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-2);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+.dict-link-btn:hover {
+  background: var(--state-hover);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.detail-body { font-size: 15px; line-height: 1.8; color: var(--text-1); }
+.detail-section { margin-top: 20px; }
+.detail-section:first-child { margin-top: 0; }
+.detail-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 10px;
+}
+.detail-def { font-size: 15px; line-height: 1.8; color: var(--text-1); }
+.detail-def-line { padding: 2px 0; }
+
+/* 详情面板内的例句（配色复用卡片例句，作用域限定在 .detail-body） */
+.detail-body .example-sentence {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 7px 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-1);
+}
+.detail-body .example-icon {
+  flex: 0 0 auto;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-top: 3px;
+  font-weight: 700;
+}
+.detail-body .example-icon.spoken { color: #f472b6; background: rgba(244,114,182,0.10); }
+.detail-body .example-icon.written { color: #a78bfa; background: rgba(167,139,250,0.10); }
+.detail-body .example-icon.ecdict { color: #34d399; background: rgba(52,211,153,0.10); }
+.detail-body .example-hl { color: var(--accent); font-weight: 600; }
+
+/* 选中的左侧单词卡片 */
+.card.selected {
+  border-color: var(--md-primary);
+  box-shadow: 0 0 0 2px var(--md-primary-container);
+}
+
+/* 移动端：详情面板为全屏浮层 */
+@media (max-width: 1024px) {
+  .list-layout #grid.list-view {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+  }
+  .detail-panel {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    border-left: none;
+    z-index: 1000;
+    background: var(--surface);
+    padding: 16px;
+    padding-top: 60px;
+  }
+  .detail-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface);
+    padding-top: 8px;
+    margin-top: -8px;
+  }
+  .detail-word { font-size: 24px; }
+  .detail-links { margin-left: 0; width: 100%; }
+  .detail-close-btn {
+    position: absolute;
+    top: 8px;
+    right: 0;
+    background: none;
+    border: none;
+    color: var(--text-2);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+  }
+  .detail-close-btn:hover { background: var(--md-primary-container); }
 }
 
 

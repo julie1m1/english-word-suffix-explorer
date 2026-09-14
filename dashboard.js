@@ -701,6 +701,595 @@
   }
 
   /* ══════════════════════════════════════════════════════
+     ⑩ 自然拼读 · 音素分布（Phase 1：单双元音 + 辅音）
+     分类定义镜像自 index.html / script.js 的 PHONICS_GROUPS
+     （仅取「单双元音」「辅音」两个分区，保证与首页 Phonics 面板口径一致）
+  ══════════════════════════════════════════════════════ */
+  const PHONICS_VIZ = {
+    sections: [
+      {
+        id: "vowels",
+        label: "单双元音",
+        groups: [
+          { id: "mono-long", label: "长元音", color: "#8b5cf6", sounds: [
+            { ipa: "[i:]", combos: ["ee", "ea", "e_e", "ie", "ei", "ey"] },
+            { ipa: "[ɑ:]", combos: ["ar", "are", "al", "au", "aw"] },
+            { ipa: "[ɔ:]", combos: ["or", "oar", "oor", "ore", "our", "al", "au", "aw"] },
+            { ipa: "[u:]", combos: ["oo", "u_e", "ue", "ui", "ew", "ou"] },
+            { ipa: "[ɜ:]", combos: ["ir", "ur", "er", "ear", "or", "yr"] },
+          ] },
+          { id: "mono-short", label: "短元音", color: "#22a6b6", sounds: [
+            { ipa: "[ʌ]", combos: ["u", "o", "oo", "ou", "oe"] },
+            { ipa: "[ɪ]", combos: ["i", "y", "e", "u", "ui"] },
+            { ipa: "[ʊ]", combos: ["oo", "u", "oul"] },
+            { ipa: "[ə]", combos: ["a", "e", "i", "o", "u", "ou"] },
+            { ipa: "[ɒ]", combos: ["o", "a", "al"] },
+            { ipa: "[e]", combos: ["e", "ea", "a", "ai", "ie"] },
+            { ipa: "[æ]", combos: ["a", "ai"] },
+          ] },
+          { id: "mono-dip", label: "双元音", color: "#f0a93b", sounds: [
+            { ipa: "[eɪ]", combos: ["a", "a_e", "ai", "ay", "eigh", "ey", "ea"] },
+            { ipa: "[aɪ]", combos: ["i", "i_e", "ie", "igh", "y", "eye", "uy"] },
+            { ipa: "[ɔɪ]", combos: ["oi", "oy"] },
+            { ipa: "[aʊ]", combos: ["ou", "ow"] },
+            { ipa: "[əʊ]", combos: ["o", "o_e", "oa", "oe", "ow"] },
+            { ipa: "[ɪə]", combos: ["ear", "eer", "ier", "ia"] },
+            { ipa: "[eə]", combos: ["air", "are", "ear", "eir", "ere", "aire", "ayer"] },
+            { ipa: "[ʊə]", combos: ["oor", "oure", "our", "ure"] },
+          ] },
+        ],
+      },
+      {
+        id: "consonants",
+        label: "辅音",
+        groups: [
+          { id: "voiceless", label: "清辅音", color: "#ef5b5b", sounds: [
+            { ipa: "[p]", combos: ["p", "pp"] },
+            { ipa: "[t]", combos: ["t", "tt", "ed"] },
+            { ipa: "[k]", combos: ["c", "k", "ck", "ch", "que"] },
+            { ipa: "[f]", combos: ["f", "ff"] },
+            { ipa: "[θ]", combos: ["th"] },
+            { ipa: "[s]", combos: ["s", "ss", "se", "sc", "ce", "ci", "cy"] },
+            { ipa: "[ʃ]", combos: ["sh", "ti", "c", "s", "ss", "ch"] },
+            { ipa: "[tʃ]", combos: ["ch", "tch", "tu"] },
+            { ipa: "[tr]", combos: ["tr"] },
+            { ipa: "[ts]", combos: ["ts"] },
+          ] },
+          { id: "voiced", label: "浊辅音", color: "#3fae6b", sounds: [
+            { ipa: "[b]", combos: ["b", "bb"] },
+            { ipa: "[d]", combos: ["d", "dd"] },
+            { ipa: "[g]", combos: ["g", "gg", "gh", "gu"] },
+            { ipa: "[v]", combos: ["v", "ve", "f"] },
+            { ipa: "[ð]", combos: ["th"] },
+            { ipa: "[z]", combos: ["z", "zz", "s", "se", "ss"] },
+            { ipa: "[ʒ]", combos: ["si", "su"] },
+            { ipa: "[dʒ]", combos: ["j", "ge", "gi", "gy", "dge"] },
+            { ipa: "[dr]", combos: ["dr"] },
+            { ipa: "[dz]", combos: ["ds"] },
+          ] },
+          { id: "semi-voiced", label: "半浊辅音", color: "#4f9be9", sounds: [
+            { ipa: "[h]", combos: ["h"] },
+            { ipa: "[r]", combos: ["r", "rr", "wr", "rh"] },
+          ] },
+          { id: "semivowel", label: "半元音", color: "#d96bb0", sounds: [
+            { ipa: "[w]", combos: ["w", "wh"] },
+            { ipa: "[j]", combos: ["y"] },
+          ] },
+          { id: "nasal", label: "鼻音", color: "#16a3a3", sounds: [
+            { ipa: "[m]", combos: ["m", "mm"] },
+            { ipa: "[n]", combos: ["n", "nn"] },
+            { ipa: "[ŋ]", combos: ["ng", "nk"] },
+          ] },
+          { id: "lateral", label: "边音", color: "#a06bf0", sounds: [
+            { ipa: "[l]", combos: ["l", "ll"] },
+          ] },
+        ],
+      },
+    ],
+  };
+
+  // 元音段剔除裸单字母 a/e/i/o/u（几乎每词都有、无区分度），保留有辨识度的拼写
+  const BARE_VOWELS = new Set(["a", "e", "i", "o", "u"]);
+  const phonicsReCache = {};
+  function phonicsRegex(c) {
+    if (phonicsReCache[c]) return phonicsReCache[c];
+    const src = c.includes("_")
+      ? c.replace(/_/g, "[a-z]")
+      : c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return (phonicsReCache[c] = new RegExp(src, "i"));
+  }
+  function isEffCombo(c, isVowel) {
+    return !(isVowel && BARE_VOWELS.has(c));
+  }
+
+  let phonicsIndexCache = null;
+  function buildPhonicsIndex(words) {
+    if (phonicsIndexCache) return phonicsIndexCache;
+    const N = words.length;
+    const t0 = (window.performance || Date).now();
+
+    const sections = PHONICS_VIZ.sections.map((sec) => {
+      const isVowel = sec.id === "vowels";
+      const groups = sec.groups.map((grp) => {
+        const sounds = grp.sounds.map((snd) => {
+          const combos = snd.combos
+            .filter((c) => isEffCombo(c, isVowel))
+            .map((c) => ({ combo: c, n: 0, ex: [] }));
+          const byCombo = {};
+          combos.forEach((cs) => (byCombo[cs.combo] = cs));
+          const hit = new Set();
+          const samples = [];
+          words.forEach((w) => {
+            let any = false;
+            combos.forEach((cs) => {
+              if (phonicsRegex(cs.combo).test(w)) {
+                cs.n++;
+                if (cs.ex.length < 5) cs.ex.push(w);
+                any = true;
+              }
+            });
+            if (any) {
+              hit.add(w);
+              if (samples.length < 5) samples.push(w);
+            }
+          });
+          return {
+            ipa: snd.ipa,
+            combos,
+            n: hit.size,
+            pct: N ? (hit.size / N) * 100 : 0,
+            samples,
+          };
+        });
+        sounds.sort((a, b) => b.n - a.n);
+        return { id: grp.id, label: grp.label, color: grp.color, sounds };
+      });
+      const maxN = Math.max.apply(
+        null,
+        [1].concat(groups.flatMap((g) => g.sounds.map((s) => s.n)))
+      );
+      return { id: sec.id, label: sec.label, groups, maxN };
+    });
+
+    phonicsIndexCache = {
+      N,
+      sections,
+      ms: Math.round(((window.performance || Date).now()) - t0),
+    };
+    console.info("[Dashboard] phonics index built in " + phonicsIndexCache.ms + "ms");
+return phonicsIndexCache;
+  }
+
+  function drawPhonics(body, idx) {
+    body.innerHTML = "";
+
+    let active = idx.sections[0].id;
+
+    const toggle = el("div", "mini-toggle");
+    idx.sections.forEach((sec) => {
+      const b = el("button", "mini-toggle-btn" + (sec.id === active ? " is-on" : ""), sec.label);
+      b.dataset.sec = sec.id;
+      toggle.appendChild(b);
+    });
+    body.appendChild(toggle);
+
+    const stage = el("div", "phonics-stage");
+    body.appendChild(stage);
+
+    const foot = el("p", "donut-footnote");
+    foot.innerHTML =
+      "口径：仅单词 " + fmtNum(idx.N) + " 条，短语不计。每条 = 含该发音拼写组合的单词数（去重）；" +
+      "同一单词常同时含多个音，各音计数互相独立，故占比之和可 &gt; 100%。<br>" +
+      "元音段剔除裸单字母 a/e/i/o/u（几乎每词都有、无区分度），仅保留有辨识度的拼写；辅音段保留全部拼写。" +
+      "点击音条可展开其拼写组合与示例词。";
+    body.appendChild(foot);
+
+    function renderSection(secId) {
+      const sec = idx.sections.find((s) => s.id === secId);
+      stage.innerHTML = "";
+      sec.groups.forEach((grp) => {
+        const block = el("div", "phonics-group");
+        block.appendChild(el("div", "phonics-group-label", grp.label));
+        const list = el("div", "phonics-list");
+        const rows = [];
+        grp.sounds.forEach((snd) => {
+          const row = el("div", "phonics-row");
+          const w = (snd.n / sec.maxN) * 100;
+          row.innerHTML =
+            '<span class="phonics-ipa">' + snd.ipa + "</span>" +
+            '<div class="phonics-track"><i class="phonics-fill" style="width:' +
+            w.toFixed(2) + "%;background:" + grp.color + '"></i></div>' +
+            '<span class="phonics-val">' + fmtNum(snd.n) +
+            '<small>' + fmtPct(snd.pct) + "</small></span>";
+
+          const tipHTML = () => {
+            const combos = snd.combos.map((c) => c.combo + " " + fmtNum(c.n)).join("、");
+            const ex = snd.samples.map((w) => "<b>" + w + "</b>").join("、") || "—";
+            return (
+              "<div><b>" + snd.ipa + "</b> · " + grp.label + "</div>" +
+              "<div>" + fmtNum(snd.n) + " 词 · " + fmtPct(snd.pct) + "</div>" +
+              '<div style="margin-top:4px;color:var(--text-2)">拼写：' + combos + "</div>" +
+              '<div style="margin-top:4px;color:var(--text-2)">示例：' + ex + "</div>"
+            );
+          };
+          const enter = (ev) => {
+            hoverBus.emit({ type: "phonics", sound: snd.ipa });
+            showTip(tipHTML(), ev.clientX, ev.clientY);
+            row.classList.add("is-hot");
+          };
+          row.addEventListener("mouseenter", enter);
+          row.addEventListener("mousemove", enter);
+          row.addEventListener("mouseleave", () => {
+            hoverBus.emit(null);
+            hideTip();
+            row.classList.remove("is-hot");
+          });
+          row._snd = snd;
+          row.addEventListener("click", () => {
+            if (grp._openIpa === snd.ipa) {
+              // 再次点击：收起本模块下方详情
+              grp._openIpa = null;
+              grp.detailEl.classList.remove("is-on");
+              grp.detailEl.innerHTML = "";
+              row.classList.remove("is-open");
+            } else {
+              // 展开：详情直接显示在当前音组模块下方（保持整卡宽度）
+              grp._openIpa = snd.ipa;
+              rows.forEach((r) => r.classList.toggle("is-open", r._snd === snd));
+              showGroupDetail(grp, snd);
+            }
+          });
+          rows.push(row);
+          list.appendChild(row);
+        });
+        block.appendChild(list);
+        const detailEl = el("div", "phonics-detail");
+        block.appendChild(detailEl);
+        grp.detailEl = detailEl;
+        grp._openIpa = null;
+        stage.appendChild(block);
+      });
+    }
+
+    function showGroupDetail(grp, snd) {
+      const pills = snd.combos
+        .map((c) => {
+          const ex = c.ex.map((w) => "<b>" + w + "</b>").join("、") || "—";
+          return (
+            '<div class="phonics-pill">' +
+            '<span class="pill-combo">' + c.combo + "</span>" +
+            '<span class="pill-n">' + fmtNum(c.n) + "</span>" +
+            '<span class="pill-ex">' + ex + "</span></div>"
+          );
+        })
+        .join("");
+      const ex = snd.samples.map((w) => "<b>" + w + "</b>").join("、") || "—";
+      grp.detailEl.innerHTML =
+        '<div class="phonics-detail-head">' +
+        '<span class="phonics-detail-ipa">' + snd.ipa + "</span>" +
+        "<span>" + grp.label + "</span>" +
+        '<span class="phonics-detail-meta">' + fmtNum(snd.n) + " 词 · " + fmtPct(snd.pct) + "</span>" +
+        "</div>" +
+        '<div class="phonics-pills">' + pills + "</div>" +
+        '<div class="phonics-detail-ex">示例词：' + ex + "</div>";
+      grp.detailEl.classList.add("is-on");
+    }
+
+    toggle.addEventListener("click", (ev) => {
+      const b = ev.target.closest(".mini-toggle-btn");
+      if (!b || b.classList.contains("is-on")) return;
+      active = b.dataset.sec;
+      Array.prototype.forEach.call(toggle.children, (x) =>
+        x.classList.toggle("is-on", x.dataset.sec === active)
+      );
+      // 切换分区时整体重绘，各模块详情自动收起
+      renderSection(active);
+    });
+
+    renderSection(active);
+  }
+
+  /* ══════════════════════════════════════════════════════
+     音节结构可视化（Syllables）— 基于英式 IPA 拆骨架
+     复用 script.js 的 ipaSkeleton / buildSyllableMeta 口径
+  ══════════════════════════════════════════════════════ */
+  const SYL_DIPH = new Set(["eɪ", "aɪ", "ɔɪ", "aʊ", "əʊ", "ɪə", "eə", "ʊə"]);
+  const SYL_AFFR = new Set(["tʃ", "dʒ"]);
+  const SYL_MONO = new Set("iɪeæɑɔɒoʊuʌəɜɚɝaɛєε".split(""));
+  const SYL_CONS = new Set("pbtdkɡfvθðszʃʒhmnŋlrwj".split(""));
+  const SYL_ONS2 = new Set([
+    "pr","br","tr","dr","kr","gr","fr","θr","ʃr",
+    "pl","bl","kl","gl","fl","sl",
+    "sp","st","sk","sm","sn","sf",
+    "sw","tw","dw","kw","gw","hw",
+    "pj","bj","tj","dj","kj","fj","vj","θj","sj","mj","nj","lj","hj",
+  ]);
+  const SYL_ONS3 = new Set(["spr","spl","str","skr","skl","skw","sfr","stj","skj","spj"]);
+  const SYL_OPEN = new Set(["V", "CV", "CCV", "CCCV"]);
+  const SYL_CLOSED = new Set([
+    "VC","VCC","VCCC","CVC","CVCC","CVCCC",
+    "CCVC","CCVCC","CCVCCC","CCCVC","CCCVCC","CCCVCCC",
+  ]);
+  const VCE_LONG = { a: "eɪ", e: "iː", i: "aɪ", o: "əʊ", u: "uː" };
+  const VCE_EX = new Set([
+    "are","were","there","where","sure","chore","yore",
+    "move","prove","lose","whose","remove",
+  ]);
+  // 4 种起始辅音数对应的配色（0/1/2/3 辅音开头）
+  const SYL_ONSET_COLORS = ["#8b5cf6", "#22a6b6", "#f0a93b", "#ef5b5b"];
+
+  // IPA → 音节骨架数组（如 /əˈbaʊt/ → ["V","CVC"]），失败返回 null
+  function ipaSkeleton(ipa) {
+    if (!ipa) return null;
+    const s = String(ipa).replace(/[ˈˌ\s/]/g, "");
+    const toks = [];
+    for (let i = 0; i < s.length; ) {
+      const two = s.slice(i, i + 2);
+      if (SYL_DIPH.has(two)) { toks.push("V"); i += 2; continue; }
+      if (SYL_AFFR.has(two)) { toks.push("C"); i += 2; continue; }
+      const ch = s[i];
+      if (ch === "ː") { i += 1; continue; }
+      if (SYL_MONO.has(ch)) toks.push("V");
+      else if (SYL_CONS.has(ch)) toks.push(ch);
+      i += 1;
+    }
+    const vIdx = [];
+    toks.forEach((t, i) => { if (t === "V") vIdx.push(i); });
+    if (!vIdx.length) return null;
+    const onsOk = (seq) => {
+      const L = seq.length;
+      if (L === 0) return true;
+      if (L === 1) return seq[0] !== "ŋ";
+      if (L === 2) return SYL_ONS2.has(seq.join(""));
+      if (L === 3) return SYL_ONS3.has(seq.join(""));
+      return false;
+    };
+    const parts = [];
+    let onset = toks.slice(0, vIdx[0]);
+    vIdx.forEach((vi, k) => {
+      const core = "V";
+      if (k + 1 < vIdx.length) {
+        const mid = toks.slice(vi + 1, vIdx[k + 1]);
+        let chosen = 0;
+        for (let L = Math.min(3, mid.length); L >= 1; L--) {
+          if (onsOk(mid.slice(-L))) { chosen = L; break; }
+        }
+        let cod = chosen ? mid.slice(0, mid.length - chosen) : mid;
+        if (cod.length > 4) {
+          const extra = cod.length - 4;
+          chosen += extra;
+          cod = cod.slice(0, 4);
+        }
+        parts.push("C".repeat(onset.length) + core + "C".repeat(cod.length));
+        onset = chosen ? mid.slice(mid.length - chosen) : [];
+      } else {
+        const cod = toks.slice(vi + 1);
+        parts.push("C".repeat(onset.length) + core + "C".repeat(cod.length));
+        onset = [];
+      }
+    });
+    if (onset.length) parts.push("C".repeat(onset.length) + "V");
+    return { parts, label: parts.join(".") };
+  }
+
+  // 取 IPA 最后一个元音单位（双元音优先，含 ː 长音记号）
+  function lastVowelUnit(ipa) {
+    let unit = "";
+    for (let i = 0; i < ipa.length; i++) {
+      const two = ipa.slice(i, i + 2);
+      if (SYL_DIPH.has(two)) { unit = two; i += 1; continue; }
+      const ch = ipa[i];
+      if (SYL_MONO.has(ch)) {
+        unit = ipa[i + 1] === "ː" ? ch + "ː" : ch;
+      }
+    }
+    return unit;
+  }
+  // 严格 VCe 判定：词尾 元音+单辅音+e，末音节须以辅音收尾，且该元音确实发对应长音
+  function wordIsVce(wordLower, parts, ipaClean) {
+    const m = /(?<![aeiou])[aeiou][bcdfghjklmnpqrstvwxyz]e$/.exec(wordLower);
+    if (!m) return false;
+    if (VCE_EX.has(wordLower)) return false;
+    if (!parts.length || !parts[parts.length - 1].endsWith("C")) return false;
+    const v = lastVowelUnit(ipaClean);
+    const want = VCE_LONG[m[0].charAt(0)];
+    return !!want && v === want;
+  }
+
+  let syllableIndexCache = null;
+  function buildSyllableIndex(entries, ipaMap) {
+    if (syllableIndexCache) return syllableIndexCache;
+    const t0 = (window.performance || Date).now();
+    const words = entries.filter((w) => typeof w === "string" && w.indexOf(" ") === -1);
+    const N = words.length;
+    const skelWords = {}, skelEx = {}, nsCount = {}, comboCount = {}, comboEx = {};
+    let total = 0, openCount = 0, closedCount = 0, vceCount = 0, diphCount = 0;
+
+    for (const w of words) {
+      const rec = ipaMap && ipaMap[w.toLowerCase()];
+      if (!rec) continue;
+      const ipa = Array.isArray(rec) && rec.length > 1 ? rec[1] : rec;
+      const r = ipaSkeleton(ipa);
+      if (!r || !r.parts.length) continue;
+      total++;
+      const n = r.parts.length;
+      const nb = n >= 5 ? 5 : n;
+      nsCount[nb] = (nsCount[nb] || 0) + 1;
+      const seen = new Set(r.parts);
+      let hasOpen = false, hasClosed = false;
+      seen.forEach((p) => {
+        skelWords[p] = (skelWords[p] || 0) + 1;
+        if (!skelEx[p]) skelEx[p] = [];
+        if (skelEx[p].length < 5) skelEx[p].push(w);
+        if (SYL_OPEN.has(p)) hasOpen = true;
+        if (SYL_CLOSED.has(p)) hasClosed = true;
+      });
+      if (hasOpen) openCount++;
+      if (hasClosed) closedCount++;
+      const ipaClean = String(ipa).replace(/[ˈˌ\s/]/g, "");
+      let hasDiph = false;
+      for (const d of SYL_DIPH) { if (ipaClean.indexOf(d) !== -1) { hasDiph = true; break; } }
+      if (hasDiph) diphCount++;
+      if (wordIsVce(w.toLowerCase(), r.parts, ipaClean)) vceCount++;
+      const label = r.parts.join(".");
+      comboCount[label] = (comboCount[label] || 0) + 1;
+      if (!comboEx[label]) comboEx[label] = [];
+      if (comboEx[label].length < 5) comboEx[label].push(w);
+    }
+
+    const comboKeys = Object.keys(comboCount).sort((a, b) => comboCount[b] - comboCount[a] || (a < b ? -1 : 1));
+    const TOP = 24;
+    const topCombos = comboKeys.slice(0, TOP).map((k) => ({ label: k, n: comboCount[k], ex: comboEx[k] || [] }));
+    const tailN = comboKeys.length - topCombos.length;
+    let tailWords = 0;
+    for (let i = TOP; i < comboKeys.length; i++) tailWords += comboCount[comboKeys[i]];
+
+    const ms = Math.round(((window.performance || Date).now()) - t0);
+    console.info("[Dashboard] syllable index built in " + ms + "ms; parsed " + total + "/" + N);
+    syllableIndexCache = {
+      N, total, nsCount, skelWords, skelEx, comboCount, comboEx,
+      topCombos, tailN, tailWords, openCount, closedCount, vceCount, diphCount,
+    };
+    return syllableIndexCache;
+  }
+
+  function drawSyllable(body, idx) {
+    body.innerHTML = "";
+    const N = idx.N, parsed = idx.total;
+    const pct = (x) => (parsed ? (x / parsed) * 100 : 0);
+
+    // ── 顶部 4 个 stat ──
+    const stats = el("div", "syl-stats");
+    const mkStat = (label, n, sub) => {
+      const s = el("div", "syl-stat");
+      s.innerHTML = '<div class="syl-stat-num">' + fmtNum(n) + '</div><div class="syl-stat-label">' + label + '</div><div class="syl-stat-sub">' + sub + '</div>';
+      return s;
+    };
+    stats.appendChild(mkStat("可解析词", parsed, "共 " + fmtNum(N) + " 词"));
+    stats.appendChild(mkStat("开音节", idx.openCount, fmtPct(pct(idx.openCount)) + " 元音结尾"));
+    stats.appendChild(mkStat("闭音节", idx.closedCount, fmtPct(pct(idx.closedCount)) + " 辅音结尾"));
+    stats.appendChild(mkStat("VCe 魔法-e", idx.vceCount, "词尾 e 不发音"));
+    stats.appendChild(mkStat("含双元音", idx.diphCount, fmtPct(pct(idx.diphCount))));
+    body.appendChild(stats);
+
+    // chip 渲染：按起始辅音数着色
+    const chipHTML = (skel) => {
+      const onset = skel.indexOf("V");
+      const color = SYL_ONSET_COLORS[onset] || "#888";
+      return '<span class="syl-chip" style="--c:' + color + '">' + skel + '</span>';
+    };
+    const comboHTML = (label) => label.split(".").map(chipHTML).join('<span class="syl-dot">·</span>');
+
+    // ── 音节数分布 ──
+    const nsWrap = el("div", "syl-block");
+    nsWrap.appendChild(el("div", "syl-block-title", "音节数分布"));
+    const nsRows = el("div", "syl-ns-rows");
+    const nsMax = Math.max.apply(null, [1].concat(Object.keys(idx.nsCount).map((k) => idx.nsCount[k])));
+    const nsLabels = { 1: "1 音节", 2: "2 音节", 3: "3 音节", 4: "4 音节", 5: "5+ 音节" };
+    [1, 2, 3, 4, 5].forEach((k) => {
+      const n = idx.nsCount[k] || 0;
+      const w = nsMax ? (n / nsMax) * 100 : 0;
+      const row = el("div", "syl-ns-row");
+      row.innerHTML =
+        '<span class="syl-ns-label">' + nsLabels[k] + '</span>' +
+        '<div class="syl-track"><i class="syl-fill" style="width:' + w.toFixed(2) + '%"></i></div>' +
+        '<span class="syl-val">' + fmtNum(n) + '<small>' + fmtPct(pct(n)) + '</small></span>';
+      nsRows.appendChild(row);
+    });
+    nsWrap.appendChild(nsRows);
+    body.appendChild(nsWrap);
+
+    // ── 常见组合 Top 排行 ──
+    const comboWrap = el("div", "syl-block");
+    comboWrap.appendChild(el("div", "syl-block-title", "常见音节组合 · Top " + idx.topCombos.length));
+    const comboRows = el("div", "syl-combo-rows");
+    const comboMax = idx.topCombos.length ? idx.topCombos[0].n : 1;
+    let selected = null;
+
+    function renderDetail(label, container) {
+      if (!label) { container.classList.remove("is-on"); container.innerHTML = ""; return; }
+      const n = idx.comboCount[label] || 0;
+      const ex = (idx.comboEx[label] || []).map((w) => "<b>" + w + "</b>").join("、") || "—";
+      const skelLines = label.split(".").map((p) => {
+        const sn = idx.skelWords[p] || 0;
+        const sex = (idx.skelEx[p] || []).map((w) => "<b>" + w + "</b>").join("、") || "—";
+        const onset = p.indexOf("V");
+        const color = SYL_ONSET_COLORS[onset] || "#888";
+        const type = SYL_OPEN.has(p) ? "开音节" : (SYL_CLOSED.has(p) ? "闭音节" : "");
+        return '<div class="syl-detail-skel"><span class="syl-chip" style="--c:' + color + '">' + p + '</span>' +
+          '<span class="syl-detail-skel-n">' + fmtNum(sn) + ' 词</span>' +
+          (type ? '<span class="syl-detail-skel-type">' + type + '</span>' : '') +
+          '<span class="syl-detail-skel-ex">示例：' + sex + '</span></div>';
+      }).join("");
+      container.innerHTML =
+        '<div class="syl-detail-head"><span class="syl-detail-combo">' + comboHTML(label) + '</span>' +
+        '<span class="syl-detail-meta">' + fmtNum(n) + ' 词 · ' + fmtPct(pct(n)) + '</span></div>' +
+        '<div class="syl-detail-skel-title">组成音节（含该骨架的词数，各音节独立计数）</div>' +
+        '<div class="syl-detail-skel-list">' + skelLines + '</div>' +
+        '<div class="syl-detail-ex">示例词：' + ex + '</div>';
+      container.classList.add("is-on");
+    }
+
+    let openDetail = null;
+    idx.topCombos.forEach((c) => {
+      const w = comboMax ? (c.n / comboMax) * 100 : 0;
+      const row = el("div", "syl-combo-row");
+      row.innerHTML =
+        '<span class="syl-combo-chips">' + comboHTML(c.label) + '</span>' +
+        '<div class="syl-track"><i class="syl-fill" style="width:' + w.toFixed(2) + '%"></i></div>' +
+        '<span class="syl-val">' + fmtNum(c.n) + '<small>' + fmtPct(pct(c.n)) + '</small></span>';
+      const tipHTML = () => {
+        const ex = (c.ex || []).map((w) => "<b>" + w + "</b>").join("、") || "—";
+        return '<div><b>' + c.label + '</b></div><div>' + fmtNum(c.n) + ' 词 · ' + fmtPct(pct(c.n)) +
+          '</div><div style="margin-top:4px;color:var(--text-2)">示例：' + ex + '</div>';
+      };
+      row.addEventListener("mouseenter", (ev) => { showTip(tipHTML(), ev.clientX, ev.clientY); row.classList.add("is-hot"); });
+      row.addEventListener("mousemove", (ev) => { showTip(tipHTML(), ev.clientX, ev.clientY); });
+      row.addEventListener("mouseleave", () => { hideTip(); row.classList.remove("is-hot"); });
+      // 每个组合条下方直接挂一块内联详情，展开时显示在本条正下方（不再堆到卡片最底部）
+      const rowDetail = el("div", "syl-row-detail");
+      row.addEventListener("click", () => {
+        if (selected === c.label) {
+          selected = null;
+          rowDetail.classList.remove("is-on");
+          rowDetail.innerHTML = "";
+          row.classList.remove("is-open");
+        } else {
+          if (openDetail && openDetail !== rowDetail) {
+            openDetail.classList.remove("is-on");
+            openDetail.innerHTML = "";
+          }
+          Array.prototype.forEach.call(comboRows.querySelectorAll(".syl-combo-row.is-open"), (r) => r.classList.remove("is-open"));
+          selected = c.label;
+          row.classList.add("is-open");
+          renderDetail(c.label, rowDetail);
+          openDetail = rowDetail;
+        }
+      });
+      comboRows.appendChild(row);
+      comboRows.appendChild(rowDetail);
+    });
+
+    if (idx.tailN > 0) {
+      const row = el("div", "syl-combo-row syl-combo-tail");
+      row.innerHTML =
+        '<span class="syl-combo-chips syl-tail-label">其它 ' + fmtNum(idx.tailN) + ' 种组合</span>' +
+        '<div class="syl-track"><i class="syl-fill" style="width:100%"></i></div>' +
+        '<span class="syl-val">' + fmtNum(idx.tailWords) + '</span>';
+      comboRows.appendChild(row);
+    }
+    comboWrap.appendChild(comboRows);
+    body.appendChild(comboWrap);
+
+    const foot = el("p", "donut-footnote");
+    foot.innerHTML =
+      "口径：词库 " + fmtNum(N) + " 词，其中 " + fmtNum(parsed) + " 词有本地音标且可解析为音节骨架（其余无音标、不参与）。" +
+      "骨架用 V=元音音素、C=辅音音素描述每个音节，如 CVC=辅-元-辅；组合 = 多音节的骨架串（· 连接，如 CVC·CV）。" +
+      "同一单词可计入多个骨架（各骨架独立计数，占比之和可 &gt; 100%）；点击组合条可展开其组成音节与示例词。";
+    body.appendChild(foot);
+  }
+
+  /* ══════════════════════════════════════════════════════
      ⑤ 词嵌入降维散点图（UMAP · Canvas）
   ══════════════════════════════════════════════════════ */
   function drawScatter(body, payload, names) {
@@ -1064,85 +1653,70 @@
     const maxC = Math.max.apply(null, ids.map((i) => counts[String(i)] || 1));
     const radius = (id) => 11 + Math.sqrt((counts[String(id)] || 1) / maxC) * 42;
 
-    // ── 目标位置（UMAP 结果等比铺满画布）
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    ids.forEach((i) => {
-      const c = centers[String(i)];
-      if (c[0] < minX) minX = c[0];
-      if (c[0] > maxX) maxX = c[0];
-      if (c[1] < minY) minY = c[1];
-      if (c[1] > maxY) maxY = c[1];
-    });
-    const s0 = Math.min((W - 80) / (maxX - minX || 1), (H - 80) / (maxY - minY || 1));
-    const nodes = ids.map((id) => {
-      const c = centers[String(id)];
-      return {
-        id: id,
-        tx: 40 + (c[0] - minX) * s0,
-        ty: 40 + (c[1] - minY) * s0,
-        x: 0, y: 0,
-        r: radius(id),
-        n: counts[String(id)] || 0,
-      };
-    });
-    nodes.forEach((p) => { p.x = p.tx; p.y = p.ty; });
-
-    // ── 气泡总面积不能超过画布承载力，否则物理上塞不下会挤成一团
-    //    目标堆占比 ~42%，力导向才有呼吸空间
+    // ── 节点：半径按组内词量，再整体缩放使总占比合适（堆得下、不空荡）
+    const nodes = ids.map((id) => ({
+      id: id,
+      r: radius(id),
+      x: 0, y: 0, vx: 0, vy: 0,
+      n: counts[String(id)] || 0,
+    }));
     {
       let sumArea = 0;
       nodes.forEach((p) => (sumArea += Math.PI * p.r * p.r));
-      const avail = W * H;
-      const fit0 = Math.sqrt((0.42 * avail) / (sumArea || 1));
-      const f = Math.min(1.1, fit0);
-      nodes.forEach((p) => (p.r *= f));
+      const target = 0.5 * W * H;
+      const f = Math.min(1.4, Math.sqrt(target / (sumArea || 1)));
+      nodes.forEach((p) => (p.r = Math.min(p.r * f, H * 0.32)));
     }
 
-    // ── 简易力导向：向目标点吸附 + 圆-圆分离（100 个节点，迭代很便宜）
-    const ITER = 260;
-    for (let it = 0; it < ITER; it++) {
-      for (let i = 0; i < nodes.length; i++) {
-        const p = nodes[i];
-        p.x += (p.tx - p.x) * 0.07;
-        p.y += (p.ty - p.y) * 0.07;
+    // ── 重力堆积：气泡受重力下落、圆-圆分离、底部+左右墙停靠，从下往上堆成稳定堆
+    const GRAV = 0.5, MAXV = 7, DAMP = 0.82, ITER = 1400;
+    function settleOnce(randY) {
+      for (const p of nodes) {
+        p.x = p.r + Math.random() * (W - 2 * p.r);
+        p.y = randY ? (-Math.random() * H * 0.6 - p.r) : (Math.random() * H);
+        p.vx = 0; p.vy = 0;
       }
-      for (let i = 0; i < nodes.length; i++) {
-        const a = nodes[i];
-        for (let j = i + 1; j < nodes.length; j++) {
-          const b = nodes[j];
-          let dx = b.x - a.x, dy = b.y - a.y;
-          let d2 = dx * dx + dy * dy;
-          const minD = a.r + b.r + 3;
-          if (d2 > 0 && d2 < minD * minD) {
-            const d = Math.sqrt(d2) || 0.01;
-            const push = (minD - d) / d * 0.5;
-            dx *= push; dy *= push;
-            a.x -= dx; a.y -= dy;
-            b.x += dx; b.y += dy;
-          } else if (d2 === 0) {
-            a.x -= 0.5; b.x += 0.5;
+      for (let it = 0; it < ITER; it++) {
+        const relax = it >= ITER * 0.6; // 末段只做无重叠收拢，去掉残余挤压
+        if (!relax) {
+          for (const p of nodes) {
+            p.vy += GRAV;
+            if (p.vy > MAXV) p.vy = MAXV;
+            p.vx *= DAMP; p.vy *= DAMP;
+            p.x += p.vx; p.y += p.vy;
           }
+        }
+        for (let pass = 0; pass < 2; pass++) {
+          for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+              const a = nodes[i], b = nodes[j];
+              let dx = b.x - a.x, dy = b.y - a.y;
+              let d2 = dx * dx + dy * dy;
+              const minD = a.r + b.r;
+              if (d2 > 0 && d2 < minD * minD) {
+                const d = Math.sqrt(d2) || 0.01;
+                const nx = dx / d, ny = dy / d, ov = (minD - d) * 0.5;
+                a.x -= nx * ov; a.y -= ny * ov;
+                b.x += nx * ov; b.y += ny * ov;
+                if (!relax) {
+                  const va = a.vx * nx + a.vy * ny, vb = b.vx * nx + b.vy * ny;
+                  const diff = (vb - va) * 0.5;
+                  a.vx += nx * diff; a.vy += ny * diff;
+                  b.vx -= nx * diff; b.vy -= ny * diff;
+                }
+              } else if (d2 === 0) { a.x -= 0.4; b.x += 0.4; }
+            }
+          }
+        }
+        for (const p of nodes) {
+          if (p.x - p.r < 0) { p.x = p.r; p.vx = 0; }
+          if (p.x + p.r > W) { p.x = W - p.r; p.vx = 0; }
+          if (p.y + p.r > H) { p.y = H - p.r; p.vy = 0; }
+          if (p.y - p.r < 0) { p.y = p.r; p.vy = 0; }
         }
       }
     }
-    // ── 收敛后等比缩放回画布内
-    let bx0 = Infinity, bx1 = -Infinity, by0 = Infinity, by1 = -Infinity;
-    nodes.forEach((p) => {
-      bx0 = Math.min(bx0, p.x - p.r); bx1 = Math.max(bx1, p.x + p.r);
-      by0 = Math.min(by0, p.y - p.r); by1 = Math.max(by1, p.y + p.r);
-    });
-    const pad = 14;
-    const fit = Math.min((W - 2 * pad) / (bx1 - bx0 || 1), (H - 2 * pad) / (by1 - by0 || 1));
-    const ox = pad + (W - 2 * pad - (bx1 - bx0) * fit) / 2 - bx0 * fit;
-    const oy = pad + (H - 2 * pad - (by1 - by0) * fit) / 2 - by0 * fit;
-    nodes.forEach((p) => { p.x = p.x * fit + ox; p.y = p.y * fit + oy; p.r = p.r * fit; });
-
-    // ── 物理仿真初始化：把收敛+缩放后的位置设为"家位"(tx,ty)，并给一点初速度让动画立刻有动感
-    nodes.forEach((p) => {
-      p.tx = p.x; p.ty = p.y;
-      p.vx = (Math.random() - 0.5) * 0.8;
-      p.vy = (Math.random() - 0.5) * 0.8;
-    });
+    settleOnce(false); // 默认静态堆：随机初值收敛成稳定堆（位置无语义，仅表示物理堆位）
 
     // ── SVG
     const NS = "http://www.w3.org/2000/svg";
@@ -1230,28 +1804,24 @@
 
     const foot = el("p", "donut-footnote");
     foot.innerHTML =
-      "约 100 组近义词，每个气泡是一组；<b>气泡越大代表组内词越多</b>。把鼠标移到气泡上，可在「单词语义地图」里同步高亮这一组。" +
-      "默认静止；点右上角「飘动特效」开关可让气泡轻轻飘动、互相碰撞。" +
-      "<br>最大的 5 组：" +
+      "约 100 组近义词，每个气泡是一组；<b>气泡越大代表组内词越多</b>。气泡受重力落入容器、从下往上堆叠成堆。" +
+      "把鼠标移到气泡上，可在「单词语义地图」里同步高亮这一组。" +
+      "<br>点右上角「重新倒入」可重新随机堆叠。最大的 5 组：" +
       nodes.slice().sort((a, b) => b.n - a.n).slice(0, 5)
         .map((p) => (names[String(p.id)] || p.id) + " " + fmtNum(p.n))
         .join(" · ");
     body.appendChild(foot);
 
-    // ── 物理飘动仿真：弱弹簧锚定 UMAP 家位 + 随机漂移 + 圆-圆碰撞 + 边界反弹
-    //    默认关闭，由卡片右上角「飘动特效」开关控制；开关打开后才持续运行。
-    const SPRING = 0.002, DRIFT = 0.22, DAMP = 0.96, REST = 0.7, MAXV = 1.8;
+    // ── 「重新倒入」：把气泡移到容器上方随机位置，靠重力动画掉落、堆叠成新堆
+    //    默认加载已是静态稳定堆；点按钮才触发一段短时下落动画，收敛后自动休眠（不占 CPU）
     const sim = { running: false, raf: 0, nodes: nodes };
-    let motionOn = false;
     function step() {
       if (!sim.running) return;
       const ns = sim.nodes;
       for (const p of ns) {
-        p.vx += (p.tx - p.x) * SPRING + (Math.random() - 0.5) * DRIFT;
-        p.vy += (p.ty - p.y) * SPRING + (Math.random() - 0.5) * DRIFT;
+        p.vy += GRAV;
+        if (p.vy > MAXV) p.vy = MAXV;
         p.vx *= DAMP; p.vy *= DAMP;
-        const sp = Math.hypot(p.vx, p.vy);
-        if (sp > MAXV) { p.vx = p.vx / sp * MAXV; p.vy = p.vy / sp * MAXV; }
         p.x += p.vx; p.y += p.vy;
       }
       for (let pass = 0; pass < 2; pass++) {
@@ -1260,60 +1830,76 @@
             const a = ns[i], b = ns[j];
             let dx = b.x - a.x, dy = b.y - a.y;
             let d2 = dx * dx + dy * dy;
-            const minD = a.r + b.r + 2;
+            const minD = a.r + b.r;
             if (d2 > 0 && d2 < minD * minD) {
               const d = Math.sqrt(d2) || 0.01;
-              const nx = dx / d, ny = dy / d, overlap = (minD - d) * 0.5;
-              a.x -= nx * overlap; a.y -= ny * overlap;
-              b.x += nx * overlap; b.y += ny * overlap;
-              const vn = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
-              if (vn < 0) {
-                const imp = vn * REST;
-                a.vx += nx * imp; a.vy += ny * imp;
-                b.vx -= nx * imp; b.vy -= ny * imp;
-              }
-            } else if (d2 === 0) { a.x -= 0.5; b.x += 0.5; }
+              const nx = dx / d, ny = dy / d, ov = (minD - d) * 0.5;
+              a.x -= nx * ov; a.y -= ny * ov;
+              b.x += nx * ov; b.y += ny * ov;
+            } else if (d2 === 0) { a.x -= 0.4; b.x += 0.4; }
           }
         }
       }
+      let mv = 0;
       for (const p of ns) {
-        if (p.x - p.r < 0) { p.x = p.r; p.vx = Math.abs(p.vx) * REST; }
-        if (p.x + p.r > W) { p.x = W - p.r; p.vx = -Math.abs(p.vx) * REST; }
-        if (p.y - p.r < 0) { p.y = p.r; p.vy = Math.abs(p.vy) * REST; }
-        if (p.y + p.r > H) { p.y = H - p.r; p.vy = -Math.abs(p.vy) * REST; }
+        if (p.x - p.r < 0) { p.x = p.r; p.vx = 0; }
+        if (p.x + p.r > W) { p.x = W - p.r; p.vx = 0; }
+        if (p.y + p.r > H) { p.y = H - p.r; p.vy = 0; }
+        if (p.y - p.r < 0) { p.y = p.r; p.vy = 0; }
         p.g.setAttribute("transform", "translate(" + p.x.toFixed(2) + "," + p.y.toFixed(2) + ")");
+        mv = Math.max(mv, Math.abs(p.vx), Math.abs(p.vy));
+      }
+      // 速度归零即收尾：再做一段纯位置收拢，消除残余重叠（容器够大时必能铺平，与静态堆一致）
+      if (mv < 0.06) {
+        for (let k = 0; k < 400; k++) {
+          for (let pass = 0; pass < 2; pass++) {
+            for (let i = 0; i < ns.length; i++) {
+              for (let j = i + 1; j < ns.length; j++) {
+                const a = ns[i], b = ns[j];
+                let dx = b.x - a.x, dy = b.y - a.y;
+                let d2 = dx * dx + dy * dy;
+                const minD = a.r + b.r;
+                if (d2 > 0 && d2 < minD * minD) {
+                  const d = Math.sqrt(d2) || 0.01;
+                  const nx = dx / d, ny = dy / d, ov = (minD - d) * 0.5;
+                  a.x -= nx * ov; a.y -= ny * ov;
+                  b.x += nx * ov; b.y += ny * ov;
+                } else if (d2 === 0) { a.x -= 0.4; b.x += 0.4; }
+              }
+            }
+          }
+          for (const p of ns) {
+            if (p.x - p.r < 0) p.x = p.r;
+            if (p.x + p.r > W) p.x = W - p.r;
+            if (p.y + p.r > H) p.y = H - p.r;
+            if (p.y - p.r < 0) p.y = p.r;
+          }
+        }
+        for (const p of ns) p.g.setAttribute("transform", "translate(" + p.x.toFixed(2) + "," + p.y.toFixed(2) + ")");
+        sim.running = false; if (sim.raf) cancelAnimationFrame(sim.raf); return;
       }
       sim.raf = requestAnimationFrame(step);
     }
-    function start() { if (motionOn && !sim.running) { sim.running = true; sim.raf = requestAnimationFrame(step); } }
-    function stop() { sim.running = false; if (sim.raf) cancelAnimationFrame(sim.raf); }
+    function repour() {
+      for (const p of nodes) {
+        p.x = p.r + Math.random() * (W - 2 * p.r);
+        p.y = -Math.random() * H * 0.6 - p.r;
+        p.vx = 0; p.vy = 0;
+      }
+      if (!sim.running) { sim.running = true; sim.raf = requestAnimationFrame(step); }
+    }
 
-    // ── 右上角「飘动特效」开关（默认关闭）
+    // ── 右上角「重新倒入」按钮
     const cardEl = body.closest("article.card");
     const headEl = cardEl && cardEl.querySelector(".card-head");
     if (headEl) {
-      const tog = document.createElement("label");
-      tog.className = "motion-toggle";
-      tog.innerHTML =
-        '<span class="motion-toggle-txt">飘动特效</span>' +
-        '<span class="switch"><input type="checkbox" aria-label="气泡飘动特效开关"><i></i></span>';
-      const chk = tog.querySelector("input");
-      chk.addEventListener("change", () => {
-        motionOn = chk.checked;
-        tog.classList.toggle("is-on", motionOn);
-        if (motionOn) start(); else stop();
-      });
-      headEl.appendChild(tog);
+      const btn = document.createElement("button");
+      btn.className = "repour-btn";
+      btn.type = "button";
+      btn.textContent = "重新倒入";
+      btn.addEventListener("click", repour);
+      headEl.appendChild(btn);
     }
-
-    // ── 省电：滚出视口自动暂停（仅当开关已开）；切后台暂停，回来若开着则恢复
-    if ("IntersectionObserver" in window) {
-      const io = new IntersectionObserver((ents) => {
-        for (const e of ents) { if (!e.isIntersecting) stop(); else if (motionOn) start(); }
-      }, { threshold: 0.05 });
-      io.observe(body);
-    }
-    document.addEventListener("visibilitychange", () => { if (document.hidden) stop(); else if (motionOn) start(); });
   }
 
   /* ══════════════════════════════════════════════════════
@@ -2270,6 +2856,17 @@
     },
     "ngram-heat": async (body) => {
       drawNgramHeat(body, buildCorpus(await loadJSON("data/vocab_entries.json")));
+    },
+    "phonics": async (body) => {
+      const corpus = buildCorpus(await loadJSON("data/vocab_entries.json"));
+      drawPhonics(body, buildPhonicsIndex(corpus.words));
+    },
+    "syllable": async (body) => {
+      const [vocab, ipa] = await Promise.all([
+        loadJSON("data/vocab_entries.json"),
+        loadJSON("data/ipa.json"),
+      ]);
+      drawSyllable(body, buildSyllableIndex(vocab.entries, ipa));
     },
     "umap-scatter": async (body) => {
       const p = await Promise.all([
