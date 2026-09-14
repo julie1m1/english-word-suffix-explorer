@@ -2461,24 +2461,27 @@ body.spelling-mode.spelling-started.spelling-show-words .card:not(.spelling-answ
   font: inherit;
   font-size: 13px;
   cursor: pointer;
-  padding: 3px 10px;
+  padding: 3px 11px;
   border-radius: 999px;
   border: 1px solid transparent;
-  background: none;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   color: var(--text-1);
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s;
 }
-.rel-word:hover { background: var(--surface-2); }
-.rel-word.local { color: var(--text-1); font-weight: 600; }
-.rel-word.wordnet { color: var(--text-2); }
+.rel-word:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.rel-word.local {
+  background: color-mix(in srgb, var(--md-primary) 18%, transparent);
+  color: var(--md-on-primary-container);
+  font-weight: 600;
+}
+.rel-word.wordnet {
+  background: var(--surface-2);
+  color: var(--text-2);
+}
 .rel-word-text { line-height: 1; }
-.rel-ico {
-  display: inline-flex;
-  align-items: center;
-  color: var(--accent);
-  flex: 0 0 auto;
-}
-.rel-ico svg { width: 13px; height: 13px; display: block; }
 .rel-tag {
   font-size: 10px;
   color: var(--text-3);

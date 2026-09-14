@@ -2327,8 +2327,6 @@ function renderSuffixControls(filterText = "") {
 ═══════════════════════════════════════ */
       const REL_ORDER = ["v", "n", "adj", "adv"];
       const REL_POS_LABEL = { v: "v.", n: "n.", adj: "adj.", adv: "adv." };
-      // 本地库标记：书签图标（与全局 icon() 的描边风格一致）
-      const BOOKMARK_ICON = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21l-6.197-3.806a2.25 2.25 0 0 0-2.342 0L6.22 21V5.507c0-1.108.807-2.057 1.907-2.185a48.507 48.507 0 0 1 11.466 0Z"/></svg>';
 
       const Explorer = (() => {
         let path = []; // 探索路径（词串），栈顶 = 当前主词
@@ -2410,9 +2408,7 @@ function renderSuffixControls(filterText = "") {
             inner += `<div class="exp-sub"><span class="exp-pos">${REL_POS_LABEL[pos]}</span><div class="exp-list">`;
             arr.forEach(wd => {
               const isL = isLocal(wd);
-              const marker = isL
-                ? `<span class="rel-ico" title="本地库" aria-label="本地库">${BOOKMARK_ICON}</span>`
-                : `<span class="rel-tag">WordNet</span>`;
+              const marker = isL ? "" : `<span class="rel-tag">WordNet</span>`;
               inner += `<button class="rel-word ${isL ? "local" : "wordnet"}" data-word="${esc(wd)}"><span class="rel-word-text">${esc(wd)}</span>${marker}</button>`;
             });
             inner += `</div></div>`;
