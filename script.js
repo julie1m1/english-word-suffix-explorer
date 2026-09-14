@@ -2327,7 +2327,8 @@ function renderSuffixControls(filterText = "") {
 ═══════════════════════════════════════ */
       const REL_ORDER = ["v", "n", "adj", "adv"];
       const REL_POS_LABEL = { v: "v.", n: "n.", adj: "adj.", adv: "adv." };
-      const DEPTH_WARN = 5; // 深度预警阈值
+      // 本地库标记：书签图标（与全局 icon() 的描边风格一致）
+      const BOOKMARK_ICON = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21l-6.197-3.806a2.25 2.25 0 0 0-2.342 0L6.22 21V5.507c0-1.108.807-2.057 1.907-2.185a48.507 48.507 0 0 1 11.466 0Z"/></svg>';
 
       const Explorer = (() => {
         let path = []; // 探索路径（词串），栈顶 = 当前主词
@@ -2399,22 +2400,24 @@ function renderSuffixControls(filterText = "") {
           </div>`;
         }
 
-        // 渲染一组关系（近义 / 反义），按 POS 分组
+        // 渲染一组关系（近义 / 反义），按 POS 分组；空组整体不输出
         function relBlock(title, kind, rel) {
           if (!rel || !rel[kind]) return "";
-          let html = `<div class="exp-group"><div class="exp-group-title">${title}</div>`;
+          let inner = "";
           for (const pos of REL_ORDER) {
             const arr = rel[kind][pos];
             if (!arr || !arr.length) continue;
-            html += `<div class="exp-sub"><span class="exp-pos">${REL_POS_LABEL[pos]}</span><div class="exp-list">`;
+            inner += `<div class="exp-sub"><span class="exp-pos">${REL_POS_LABEL[pos]}</span><div class="exp-list">`;
             arr.forEach(wd => {
               const isL = isLocal(wd);
-              html += `<button class="rel-word ${isL ? "local" : "wordnet"}" data-word="${esc(wd)}">${esc(wd)}<span class="rel-tag">${isL ? "本地库" : "WordNet"}</span></button>`;
+              const marker = isL
+                ? `<span class="rel-ico" title="本地库" aria-label="本地库">${BOOKMARK_ICON}</span>`
+                : `<span class="rel-tag">WordNet</span>`;
+              inner += `<button class="rel-word ${isL ? "local" : "wordnet"}" data-word="${esc(wd)}"><span class="rel-word-text">${esc(wd)}</span>${marker}</button>`;
             });
-            html += `</div></div>`;
+            inner += `</div></div>`;
           }
-          html += `</div>`;
-          return html;
+          return inner ? `<div class="exp-group"><div class="exp-group-title">${title}</div>${inner}</div>` : "";
         }
 
         function render() {
@@ -2444,16 +2447,12 @@ function renderSuffixControls(filterText = "") {
 
           const hasSyn = rel && rel.syn && Object.keys(rel.syn).length;
           const hasAnt = rel && rel.ant && Object.keys(rel.ant).length;
+          // 无近义 / 反义关系时不显示任何提示
           const explore = hasSyn || hasAnt
             ? `<div class="exp-section">${relBlock("近义词", "syn", rel)}${relBlock("反义词", "ant", rel)}</div>`
-            : `<div class="exp-empty">WordNet 中暂无该词的近义 / 反义关系</div>`;
+            : "";
 
-          const depthIdx = path.length - 1;
-          const depthLabel = depthIdx === 0 ? "起点" : `第 ${depthIdx} 层`;
-          const warn = depthIdx >= DEPTH_WARN ? "warn" : "";
-          const sticky = `<div class="exp-sticky ${warn}"><span class="exp-depth">深度：${depthLabel}</span><button class="exp-tostart" data-act="tostart">一键返回起点</button></div>`;
-
-          content.innerHTML = `<div class="exp-breadcrumb">${crumbs}</div>${core}${explore}${sticky}`;
+          content.innerHTML = `<div class="exp-breadcrumb">${crumbs}</div>${core}${explore}`;
 
           // 事件绑定
           content.querySelector(".detail-play-btn")?.addEventListener("click", () => playDetailWord(word));
@@ -2461,7 +2460,6 @@ function renderSuffixControls(filterText = "") {
           content.querySelector(".exp-crumb.exp-home")?.addEventListener("click", () => home());
           content.querySelectorAll('.exp-crumb[data-act="goto"]').forEach(b =>
             b.addEventListener("click", () => goto(parseInt(b.dataset.i, 10))));
-          content.querySelector(".exp-tostart")?.addEventListener("click", () => toStart());
           content.querySelectorAll(".rel-word").forEach(b =>
             b.addEventListener("click", () => drill(b.dataset.word)));
         }
@@ -2472,10 +2470,9 @@ function renderSuffixControls(filterText = "") {
           path.push(w); render();
         }
         function goto(i) { path = path.slice(0, i + 1); render(); }
-        function toStart() { if (path.length) { path = [path[0]]; render(); } }
         function home() { path = []; closeDetailPanel(); }
 
-        return { start, drill, goto, toStart, home, render };
+        return { start, drill, goto, home, render };
       })();
 
       // IntersectionObserver-based IPA — no hard cap, loads as cards enter viewport

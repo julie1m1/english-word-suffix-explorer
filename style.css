@@ -2457,70 +2457,33 @@ body.spelling-mode.spelling-started.spelling-show-words .card:not(.spelling-answ
 .rel-word {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font: inherit;
   font-size: 13px;
   cursor: pointer;
-  padding: 5px 10px;
+  padding: 3px 10px;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  transition: transform 0.12s, background 0.15s, border-color 0.15s;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-1);
+  transition: background 0.15s, color 0.15s;
 }
-.rel-word:hover { transform: translateY(-1px); }
-.rel-word.local {
-  background: var(--md-primary-container);
-  color: var(--md-on-primary-container);
-  border-color: transparent;
-  font-weight: 600;
+.rel-word:hover { background: var(--surface-2); }
+.rel-word.local { color: var(--text-1); font-weight: 600; }
+.rel-word.wordnet { color: var(--text-2); }
+.rel-word-text { line-height: 1; }
+.rel-ico {
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent);
+  flex: 0 0 auto;
 }
-.rel-word.wordnet {
-  background: var(--surface-2);
-  color: var(--text-2);
-  border-color: var(--border);
-}
+.rel-ico svg { width: 13px; height: 13px; display: block; }
 .rel-tag {
   font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  opacity: 0.85;
-  background: rgba(127, 127, 127, 0.18);
-}
-.rel-word.local .rel-tag { background: rgba(0, 0, 0, 0.12); }
-.exp-empty {
-  margin-top: 16px;
-  padding: 18px;
-  text-align: center;
-  font-size: 13px;
   color: var(--text-3);
-  background: var(--surface-2);
-  border-radius: 10px;
+  flex: 0 0 auto;
 }
-.exp-sticky {
-  position: sticky;
-  bottom: 0;
-  z-index: 5;
-  margin-top: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 2px 0;
-  border-top: 1px solid var(--border);
-  background: linear-gradient(to top, var(--surface) 72%, rgba(0, 0, 0, 0));
-}
-.exp-depth { font-size: 13px; font-weight: 600; color: var(--text-1); }
-.exp-sticky.warn .exp-depth { color: var(--md-error); }
-.exp-tostart {
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text-1);
-}
-.exp-tostart:hover { background: var(--md-tonal-spot); border-color: var(--accent); }
 
 /* ── Category chip counter ── */
 .pc-cat-count {
