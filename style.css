@@ -2487,6 +2487,20 @@ body.spelling-mode.spelling-started.spelling-show-words .card:not(.spelling-answ
   color: var(--text-3);
   flex: 0 0 auto;
 }
+/* 上位词链：面包屑式层级链路 */
+.exp-chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 3px 0;
+}
+.exp-chain-sep {
+  color: var(--text-3);
+  font-size: 13px;
+  flex: 0 0 auto;
+  user-select: none;
+}
 
 /* ── Category chip counter ── */
 .pc-cat-count {

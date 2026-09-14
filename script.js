@@ -2341,7 +2341,10 @@ function renderSuffixControls(filterText = "") {
           if (local) return { word: local.word, def: local.def, pos: local.pos };
           const rel = relOf(word);
           const pos = [];
-          if (rel) REL_ORDER.forEach(p => { if (rel.syn[p] || rel.ant[p]) pos.push(REL_POS_LABEL[p]); });
+          if (rel) REL_ORDER.forEach(p => {
+            if (rel.syn[p] || rel.ant[p] || (rel.hyper && rel.hyper[p]) || (rel.coord && rel.coord[p]) || (rel.hypo && rel.hypo[p]))
+              pos.push(REL_POS_LABEL[p]);
+          });
           const def = rel && rel.g ? rel.g : "";
           return { word, def, pos };
         }
@@ -2416,6 +2419,31 @@ function renderSuffixControls(filterText = "") {
           return inner ? `<div class="exp-group"><div class="exp-group-title">${title}</div>${inner}</div>` : "";
         }
 
+        // 渲染上位词链（每条链为 w1 › w2 › w3 面包屑行，节点可点）
+        function hyperBlock(rel) {
+          if (!rel || !rel.hyper) return "";
+          let inner = "";
+          for (const pos of REL_ORDER) {
+            const chains = rel.hyper[pos];
+            if (!chains || !chains.length) continue;
+            inner += `<div class="exp-sub"><span class="exp-pos">${REL_POS_LABEL[pos]}</span>`;
+            chains.forEach(chain => {
+              if (!chain.length) return;
+              let row = `<div class="exp-chain">`;
+              chain.forEach((wd, idx) => {
+                const isL = isLocal(wd);
+                const marker = isL ? "" : `<span class="rel-tag">WordNet</span>`;
+                row += (idx ? `<span class="exp-chain-sep">›</span>` : "") +
+                  `<button class="rel-word ${isL ? "local" : "wordnet"}" data-word="${esc(wd)}"><span class="rel-word-text">${esc(wd)}</span>${marker}</button>`;
+              });
+              row += `</div>`;
+              inner += row;
+            });
+            inner += `</div>`;
+          }
+          return inner ? `<div class="exp-group"><div class="exp-group-title">上位词链</div>${inner}</div>` : "";
+        }
+
         function render() {
           const panel = document.getElementById("detailPanel");
           const content = document.getElementById("detailContent");
@@ -2448,7 +2476,15 @@ function renderSuffixControls(filterText = "") {
             ? `<div class="exp-section">${relBlock("近义词", "syn", rel)}${relBlock("反义词", "ant", rel)}</div>`
             : "";
 
-          content.innerHTML = `<div class="exp-breadcrumb">${crumbs}</div>${core}${explore}`;
+          // 词库层级：上位词链 / 同位词 / 精选下位词（空缺组不渲染、无提示）
+          const hasHyper = rel && rel.hyper && Object.keys(rel.hyper).length;
+          const hasCoord = rel && rel.coord && Object.keys(rel.coord).length;
+          const hasHypo = rel && rel.hypo && Object.keys(rel.hypo).length;
+          const hierarchy = hasHyper || hasCoord || hasHypo
+            ? `<div class="exp-section">${hyperBlock(rel)}${relBlock("同位词", "coord", rel)}${relBlock("精选下位词", "hypo", rel)}</div>`
+            : "";
+
+          content.innerHTML = `<div class="exp-breadcrumb">${crumbs}</div>${core}${explore}${hierarchy}`;
 
           // 事件绑定
           content.querySelector(".detail-play-btn")?.addEventListener("click", () => playDetailWord(word));
