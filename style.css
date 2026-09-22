@@ -1669,16 +1669,19 @@ display: block !important;
   border-color: var(--accent);
 }
 
-/* ── Hide words mode ── */
-#grid.hide-words .word-text {
+/* ── Hide words mode: 未读/正在读隐藏，读完自动翻开 ── */
+#grid.hide-words .word-text,
+#grid.hide-words .word-phonetic,
+#grid.hide-words .word-def {
   visibility: hidden;
   user-select: none;
 }
-#grid.hide-words .word-phonetic {
-  visibility: hidden;
-}
+#grid.hide-words .card.play-done .word-text,
+#grid.hide-words .card.play-done .word-phonetic,
+#grid.hide-words .card.play-done .word-def,
 #grid.hide-words .card.revealed .word-text,
-#grid.hide-words .card.revealed .word-phonetic {
+#grid.hide-words .card.revealed .word-phonetic,
+#grid.hide-words .card.revealed .word-def {
   visibility: visible;
 }
 
@@ -2342,10 +2345,185 @@ body.spelling-mode.spelling-started.spelling-show-words .card:not(.spelling-answ
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-@media (max-width: 640px) {
+@media (max-width: 1024px) {
   .phonics-fab {
     bottom: 84px;
   }
+}
+
+/* ══════════════════════════════════════════════
+   REVIEW / 生词本（移植自 gpt5000 版）
+   ══════════════════════════════════════════════ */
+
+/* 清空生词本 浮动按钮：置于「Phonics」按钮正上方，仅 Review 模式 + 生词数>2 时显示 */
+.review-clear-fab {
+  position: fixed;
+  z-index: 999;
+  right: 18px;
+  bottom: 68px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px 0 11px;
+  border: none;
+  border-radius: 19px;
+  background: #c62828;
+  color: #fff;
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  transition: filter 0.15s, transform 0.15s;
+}
+.review-clear-fab.hidden {
+  display: none;
+}
+.review-clear-fab:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.review-clear-fab .fab-icon {
+  display: inline-flex;
+  align-items: center;
+}
+.review-clear-fab .fab-label {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 1024px) {
+  .review-clear-fab {
+    bottom: 134px;
+  }
+}
+
+/* 卡片右上角圆圈：空心灰圈 → 已收藏「紫底白勾」 */
+.card-review {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--md-outline);
+  background: transparent;
+  color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 4;
+  opacity: 0.5;
+  transition:
+    opacity 0.18s,
+    background 0.18s,
+    border-color 0.18s,
+    color 0.18s,
+    transform 0.12s;
+}
+.card-review svg {
+  width: 9px;
+  height: 9px;
+  display: block;
+}
+/* 桌面（支持 hover）：默认隐藏圆圈，仅悬停 / 键盘聚焦时显示；已收藏词保留低调紫点；触摸设备回退为常显 */
+@media (hover: hover) {
+  .card-review {
+    opacity: 0;
+  }
+  .card:hover .card-review,
+  .card:focus-visible .card-review {
+    opacity: 1;
+  }
+  .card.reviewed .card-review {
+    opacity: 0.5;
+  }
+  .card.reviewed:hover .card-review {
+    opacity: 1;
+  }
+}
+.card-review:hover {
+  border-color: var(--accent);
+  opacity: 1;
+}
+.card-review:active {
+  transform: scale(0.86);
+}
+.card.reviewed .card-review {
+  background: var(--md-primary-container);
+  border-color: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+[data-theme="light"] .card.reviewed .card-review {
+  background: var(--md-primary);
+  border-color: var(--md-primary);
+  color: #fff;
+}
+/* 单词行右侧留白：避免内容压在圆圈下面 */
+.card-inner > .word-header {
+  padding-right: 22px;
+}
+#grid.list-view .card-inner {
+  padding-right: 28px;
+}
+#grid.list-view .word-header {
+  padding-right: 0;
+}
+/* 平板/手机(≤1024px)：圆圈与 Longman 同占右上角会重叠，
+   故隐藏圆圈，生词本切换改由链接排末尾的「生词」按钮承担 */
+.review-link {
+  display: none;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+}
+.review-link svg {
+  flex: 0 0 auto;
+}
+@media (max-width: 1024px) {
+  .card-review {
+    display: none;
+  }
+  .review-link {
+    display: inline-flex;
+  }
+  .card.reviewed .review-link {
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+  }
+  [data-theme="light"] .card.reviewed .review-link {
+    background: var(--md-primary);
+    color: #fff;
+  }
+}
+/* 取消收藏时卡片淡出 */
+.card.review-removing {
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+  pointer-events: none;
+}
+/* 拼写模式下完全隐藏右上角收藏圆圈 */
+body.spelling-mode .card-review {
+  display: none !important;
+}
+
+/* 清空确认弹层文案 */
+.stats-text {
+  margin: 0 0 18px;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+.stats-text b {
+  color: var(--text-1);
 }
 
 .phonics-cat-row {
@@ -3217,6 +3395,10 @@ body.spelling-mode.spelling-started.spelling-show-words .card:not(.spelling-answ
 
 /* 移动端：详情面板为全屏浮层 */
 @media (max-width: 1024px) {
+  /* pad 尺寸不提供 Card/List 切换，固定为卡片视图 */
+  #viewToggleBtn {
+    display: none !important;
+  }
   .list-layout #grid.list-view {
     flex: 1;
     min-width: 0;
@@ -3260,3 +3442,47 @@ body.spelling-mode.spelling-started.spelling-show-words .card:not(.spelling-answ
 
 
 
+
+
+/* ── Spell exit: add misspelled words to review ── */
+.spell-exit-card { max-width: 440px; }
+.spell-exit-list {
+  max-height: 38vh;
+  overflow-y: auto;
+  margin: 0 0 22px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 6px;
+  text-align: left;
+}
+.spell-exit-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-1);
+}
+.spell-exit-item:hover { background: var(--state-hover); }
+.spell-exit-item input { accent-color: var(--accent); flex: none; }
+.spell-exit-item .se-word { font-weight: 600; flex: none; }
+.spell-exit-item .se-def {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-2);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.spell-exit-item .se-tag {
+  flex: none;
+  font-size: 11px;
+  color: var(--text-2);
+  opacity: 0.7;
+}
+.spell-exit-item.locked { cursor: default; }
+.spell-exit-item.locked:hover { background: none; }

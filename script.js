@@ -65,6 +65,8 @@
         'funnel': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"/>',
         'magnifying-glass': '<path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>',
         'exclamation-triangle': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>',
+        'bookmark': '<path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c.1.14.157.3.157.468v17.96a.75.75 0 0 1-1.187.608L12 19.5l-4.563 3.858A.75.75 0 0 1 6.25 22.75V3.79c0-.168.057-.328.157-.468C6.99 2.6 8.4 2.25 12 2.25s5.01.35 5.593 1.072Z"/>',
+        'check': '<path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>',
       };
 
       function icon(name, size = 20) {
@@ -170,6 +172,94 @@
       const PAGE_SIZE = 40;
       let filteredVocab = [];
       const isMobile = () => window.innerWidth <= 1024;
+
+      /* ═══════════════════════════════════════
+   REVIEW — 生词本（localStorage 持久化）
+═══════════════════════════════════════ */
+      // 独立 key，避免与 gpt5000 版共用 vocab-review 导致跨项目串味
+      const REVIEW_KEY = "vocablab-review";
+      let reviewMode = false; // 顶栏 Review 按钮：作为一层筛选条件叠加
+      let reviewSet = new Set();
+
+      (function loadReview() {
+        try {
+          const raw = JSON.parse(localStorage.getItem(REVIEW_KEY) || "[]");
+          reviewSet = new Set(
+            (Array.isArray(raw) ? raw : []).map((w) => String(w).toLowerCase()),
+          );
+        } catch (e) {
+          reviewSet = new Set();
+        }
+      })();
+
+      function reviewSave() {
+        try {
+          localStorage.setItem(REVIEW_KEY, JSON.stringify([...reviewSet]));
+        } catch (e) {
+          /* 隐私模式 / 配额满：静默降级，本次会话内仍可用 */
+        }
+      }
+
+      // 统一用小写单词作为 key，避免大小写导致的重复收藏
+      const reviewKey = (word) => String(word || "").toLowerCase();
+      const isReviewed = (word) => reviewSet.has(reviewKey(word));
+
+      function setReviewed(word, on) {
+        const k = reviewKey(word);
+        if (!k) return;
+        if (on) reviewSet.add(k);
+        else reviewSet.delete(k);
+        reviewSave();
+      }
+
+      /* ── 顶栏 Review 按钮：切换「只看生词本」这一层筛选 ── */
+      const reviewBtnEl = document.getElementById("reviewBtn");
+      const reviewClearFabEl = document.getElementById("reviewClearFab");
+
+      // Clear All 浮动按钮：仅当「处于 Review 模式 且 生词本单词数 > 2」时才出现
+      function updateClearFab() {
+        if (!reviewClearFabEl) return;
+        const show = reviewMode && reviewSet.size > 2;
+        reviewClearFabEl.classList.toggle("hidden", !show);
+      }
+
+      function setReviewMode(on) {
+        reviewMode = !!on;
+        reviewBtnEl.classList.toggle("active", reviewMode);
+        reviewBtnEl.title = reviewMode
+          ? "Review · 生词本（点击退出）"
+          : "Review · 生词本";
+        updateClearFab();
+        applyFilters();
+      }
+
+      reviewBtnEl.addEventListener("click", () => setReviewMode(!reviewMode));
+
+      /* ── 清空生词本：二次确认（入口在「Phonics」旁的 Clear All 浮动按钮）── */
+      const reviewConfirmEl = document.getElementById("reviewClearConfirm");
+      const reviewConfirmCountEl = document.getElementById("reviewConfirmCount");
+
+      if (reviewClearFabEl) {
+        reviewClearFabEl.addEventListener("click", () => {
+          if (!reviewSet.size) return;
+          reviewConfirmCountEl.textContent = reviewSet.size;
+          reviewConfirmEl.style.display = "flex";
+        });
+      }
+      document
+        .getElementById("reviewClearCancel")
+        .addEventListener("click", () => {
+          reviewConfirmEl.style.display = "none";
+        });
+      document.getElementById("reviewClearOk").addEventListener("click", () => {
+        reviewSet.clear();
+        reviewSave();
+        reviewConfirmEl.style.display = "none";
+        setReviewMode(false); // 清空后自动退出 Review，避免停在空白列表
+      });
+      reviewConfirmEl.addEventListener("click", (e) => {
+        if (e.target === reviewConfirmEl) reviewConfirmEl.style.display = "none";
+      });
 
       /* ═══════════════════════════════════════
    SYLLABLE STRUCTURE (音节结构)
@@ -2588,6 +2678,10 @@ function renderSuffixControls(filterText = "") {
             return word.includes(q) || def.includes(q);
           });
         }
+        // 生词本筛选（Review）：叠加在以上所有筛选之上
+        if (reviewMode) {
+          filteredVocab = filteredVocab.filter((v) => isReviewed(v.word));
+        }
         // 语义分类筛选：cluster===null 不过滤；-1 = OOV「其他」；否则按簇号匹配
         if (currentFilter.cluster !== null && currentFilter.cluster !== undefined) {
           if (currentFilter.cluster === -1) {
@@ -2634,7 +2728,9 @@ function renderSuffixControls(filterText = "") {
 
         if (!filteredVocab.length) {
           document.getElementById("grid").innerHTML =
-            `<div class="empty-state"><div class="icon">${icon("magnifying-glass", 40)}</div><p>No words match this filter.<br>Try a different combination.</p></div>`;
+            reviewMode && !reviewSet.size
+              ? `<div class="empty-state"><div class="icon">${icon("bookmark", 40)}</div><p>Your review list is empty.<br>Click the circle in the top-right of a card to add words.</p></div>`
+              : `<div class="empty-state"><div class="icon">${icon("magnifying-glass", 40)}</div><p>No words match this filter.<br>Try a different combination.</p></div>`;
           return;
         }
         renderNextPage();
@@ -2728,6 +2824,7 @@ function renderSuffixControls(filterText = "") {
           : "";
 
         card.innerHTML = `
+    <button class="card-review" type="button" title="加入生词本" aria-label="加入生词本" aria-pressed="false">${icon("check", 12)}</button>
     <div class="card-inner">
         <div class="word-header">
             <div class="word-text">${wordHTML}</div>
@@ -2742,8 +2839,59 @@ function renderSuffixControls(filterText = "") {
             <a href="https://dict.eudic.net/dicts/en/${w}" target="_blank" class="dict-link en-cn" title="Eudic">中文</a>
             <a href="https://www.onelook.com/?w=${w}&phrases=1" target="_blank" class="dict-link en-en" title="OneLook">EN</a>
             <a href="https://www.ldoceonline.com/dictionary/${w}" target="_blank" class="dict-link en-cn" title="Longman">Longman</a>
+            <button type="button" class="dict-link review-link" title="加入生词本" aria-pressed="false">${icon("check", 10)}生词</button>
         </div>
     </div>`;
+        // ── 生词本切换：桌面 = 右上角圆圈；平板/手机(≤1024px) = 链接排里的「生词」按钮（圆圈隐藏，避免与 Longman 重叠）──
+        const reviewCircle = card.querySelector(".card-review");
+        const reviewPill = card.querySelector(".review-link");
+        const paintReview = (on) => {
+          card.classList.toggle("reviewed", on);
+          const label = on ? "移出生词本" : "加入生词本";
+          [reviewCircle, reviewPill].forEach((el) => {
+            if (!el) return;
+            el.setAttribute("aria-pressed", on ? "true" : "false");
+            el.title = label;
+            el.setAttribute("aria-label", label);
+          });
+        };
+        paintReview(isReviewed(item.word));
+
+        const toggleReviewed = (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const on = !isReviewed(item.word);
+          setReviewed(item.word, on);
+          paintReview(on);
+          updateClearFab();
+
+          // Review 视图下取消收藏 → 就地移除该词的全部卡片，保持滚动位置不跳
+          // （同一词在词库里可能有多条记录，需一次性全部清掉）
+          if (reviewMode && !on) {
+            const key = reviewKey(item.word);
+            for (let i = filteredVocab.length - 1; i >= 0; i--) {
+              if (reviewKey(filteredVocab[i].word) === key) filteredVocab.splice(i, 1);
+            }
+            const targets = [...document.querySelectorAll("#grid .card")].filter(
+              (c) => reviewKey(c.dataset.word) === key,
+            );
+            targets.forEach((c) => c.classList.add("review-removing"));
+            setTimeout(() => {
+              targets.forEach((c) => c.remove());
+              const moreBtn = document.querySelector(".load-more-wrapper button");
+              if (moreBtn) {
+                const rendered =
+                  document.getElementById("grid").querySelectorAll(".card").length;
+                moreBtn.textContent = `Load more (${rendered} / ${filteredVocab.length})`;
+              }
+              if (!filteredVocab.length) applyFilters();
+            }, 180);
+          }
+        };
+        [reviewCircle, reviewPill].forEach((el) =>
+          el && el.addEventListener("click", toggleReviewed),
+        );
+
         let cardAudio = null;
         function playWord() {
           // 播放器激活时不播放单独音频，避免冲突
@@ -2908,14 +3056,16 @@ function renderSuffixControls(filterText = "") {
   }
 });
 
-// ── 初始化恢复视图状态（默认左/右主从布局）──
+// ── 初始化恢复视图状态（默认左/右主从布局；pad 尺寸 ≤1024px 固定卡片视图）──
 (function initView() {
   const saved = localStorage.getItem("vocab-view");
   const grid = document.getElementById("grid");
   const detailPanel = document.getElementById("detailPanel");
   const btn = document.getElementById("viewToggleBtn");
+  const pad = window.matchMedia("(max-width: 1024px)");
+
   // 未显式选过卡片视图 → 默认主从（list）布局
-  if (saved !== "card") {
+  if (saved !== "card" && !pad.matches) {
     grid.classList.add("list-view");
     if (detailPanel) detailPanel.style.display = "flex";
     btn.querySelector('.icon').innerHTML = icon("squares-2x2");
@@ -2923,6 +3073,16 @@ function renderSuffixControls(filterText = "") {
   } else if (detailPanel) {
     detailPanel.style.display = "none";
   }
+
+  function forceCardOnPad() {
+    if (!pad.matches) return;
+    grid.classList.remove("list-view");
+    if (detailPanel) detailPanel.style.display = "none";
+    btn.querySelector('.icon').innerHTML = icon("list-bullet");
+    btn.querySelector('.label').textContent = "List";
+  }
+  forceCardOnPad();
+  pad.addEventListener("change", forceCardOnPad);
 })();
 
 
@@ -2981,6 +3141,7 @@ function stopPlayer() {
   AudioCache.clear(); // 清空预加载缓存
   document.querySelectorAll(".card.now-playing").forEach(c => c.classList.remove("now-playing"));
   document.querySelectorAll(".card.revealed").forEach(c => c.classList.remove("revealed"));
+  document.querySelectorAll(".card.play-done").forEach(c => c.classList.remove("play-done"));
   document.getElementById("playerBar").style.display = "none";
   document.body.classList.remove("player-active");
             // 恢复被隐藏的导航栏
@@ -3015,9 +3176,9 @@ function playCurrentWord() {
     }
   });
 
-  // 隐藏模式下显示当前卡片
+  // 隐藏模式下：正在读的词重新盖回（可能是回跳重播的已读词）
   if (playerState.hideWords && targetCard) {
-    targetCard.classList.add("revealed");
+    targetCard.classList.remove("play-done");
   }
 
   // 自动滚动到当前卡片
@@ -3054,6 +3215,12 @@ function playWordAudio(word, onSkip) {
   function safeNext() {
     if (moved) return;
     moved = true;
+    // 隐藏模式下：这个词播完/跳过 → 自动翻开
+    if (playerState.hideWords) {
+      document.querySelectorAll(".card").forEach(c => {
+        if (c.dataset.word === word) c.classList.add("play-done");
+      });
+    }
     playerState.repeatIndex = 0;
     scheduleNext();
   }
@@ -3216,6 +3383,15 @@ document.getElementById("playerHide").addEventListener("click", () => {
   playerState.hideWords = !playerState.hideWords;
   document.getElementById("grid").classList.toggle("hide-words", playerState.hideWords);
   document.getElementById("playerHide").classList.toggle("active", playerState.hideWords);
+  // 中途开启时，把播放位置之前已读完的词全部翻开
+  if (playerState.hideWords && playerState.active) {
+    for (let i = 0; i < playerState.currentIndex && i < filteredVocab.length; i++) {
+      const w = filteredVocab[i].word;
+      document.querySelectorAll(".card").forEach(c => {
+        if (c.dataset.word === w) c.classList.add("play-done");
+      });
+    }
+  }
 });
 
 // ── 关闭播放器 ──
@@ -3229,11 +3405,7 @@ document.getElementById("grid").addEventListener("click", (e) => {
   const card = e.target.closest(".card");
   if (card) {
     card.classList.add("revealed");
-    setTimeout(() => {
-      if (!card.classList.contains("now-playing")) {
-        card.classList.remove("revealed");
-      }
-    }, 3000);
+    setTimeout(() => card.classList.remove("revealed"), 3000);
   }
 });
 
@@ -3256,14 +3428,14 @@ let spellingState = {
 // ── Button Events ──
 document.getElementById("spellingModeBtn").addEventListener("click", () => {
   if (spellingState.active) {
-    exitSpellingMode(true);
+    requestExitSpellingMode(true);
   } else {
     enterSpellingMode();
   }
 });
 document.getElementById("spellSkip").addEventListener("click", skipSpelling);
 document.getElementById("spellListen").addEventListener("click", relistenSpelling);
-document.getElementById("spellExit").addEventListener("click", () => exitSpellingMode(true));
+document.getElementById("spellExit").addEventListener("click", () => requestExitSpellingMode(true));
 
 document.getElementById("statsRetry").addEventListener("click", retryWrongWords);
 document.getElementById("statsClose").addEventListener("click", () => {
@@ -3347,22 +3519,8 @@ function enterSpellingMode(wordList) {
   const grid = document.getElementById("grid");
   grid.classList.remove("show-all-def", "hide-all-def", "hide-words");
   grid.innerHTML = "";
-
-  const frag = document.createDocumentFragment();
-  list.forEach((item, i) => {
-    const card = createCard(item, null);
-    card.dataset.spellIndex = i;
-    frag.appendChild(card);
-    ipaObserver.observe(card);
-  });
-  grid.appendChild(frag);
-
-  document.querySelectorAll("#grid .card").forEach((card, i) => {
-    const seq = document.createElement("div");
-    seq.className = "card-seq";
-    seq.textContent = i + 1;
-    card.appendChild(seq);
-  });
+  spellingState.renderedCount = 0;
+  renderSpellBatch(PAGE_SIZE);
 
   // ✅ 拼写栏显示
   document.getElementById("spellingBar").style.display = "flex";
@@ -3393,6 +3551,7 @@ document.getElementById("spellHints").style.display = "none";      // ✅ 新增
 
 // ── Exit ──
 function exitSpellingMode(rerender) {
+  spellLoadMoreObserver.disconnect();
   if (spellingState.audio) {
     spellingState.audio.pause();
     spellingState.audio.onended = null;
@@ -3428,6 +3587,112 @@ function exitSpellingMode(rerender) {
   }
 }
 
+// ── Exit guard：中途退出时，把拼错的词一键加入生词本 ──
+let pendingSpellExit = null; // 弹窗打开期间暂存的 rerender 标记
+
+function requestExitSpellingMode(rerender) {
+  const wrongWords =
+    spellingState.active && spellingState.started && !spellingState.finished
+      ? spellingState.vocabList.filter(
+          (_, i) => spellingState.results[i] === "wrong",
+        )
+      : [];
+  if (!wrongWords.length) {
+    exitSpellingMode(rerender);
+    return;
+  }
+  pendingSpellExit = rerender;
+  openSpellExitDialog(wrongWords);
+}
+
+function openSpellExitDialog(words) {
+  const listEl = document.getElementById("spellExitList");
+  listEl.innerHTML = "";
+  words.forEach((v) => {
+    const inReview = isReviewed(v.word);
+    const label = document.createElement("label");
+    label.className = "spell-exit-item" + (inReview ? " locked" : "");
+    label.innerHTML =
+      `<input type="checkbox" class="se-check" data-key="${esc(reviewKey(v.word))}"${inReview ? " checked disabled" : " checked"}>` +
+      `<span class="se-word">${esc(v.word)}</span>` +
+      `<span class="se-def">${esc(v.def || "")}</span>` +
+      (inReview ? `<span class="se-tag">已在生词本</span>` : "");
+    listEl.appendChild(label);
+  });
+  document.getElementById("spellExitCount").textContent = words.length;
+  document.getElementById("spellExitReview").style.display = "flex";
+}
+
+function finishSpellExit() {
+  document.getElementById("spellExitReview").style.display = "none";
+  const rerender = pendingSpellExit;
+  pendingSpellExit = null;
+  exitSpellingMode(rerender);
+}
+
+document.getElementById("spellExitAdd").addEventListener("click", () => {
+  document
+    .querySelectorAll("#spellExitList .se-check:not(:disabled):checked")
+    .forEach((c) => setReviewed(c.dataset.key, true));
+  finishSpellExit();
+});
+
+document.getElementById("spellExitDiscard").addEventListener("click", finishSpellExit);
+
+document.getElementById("spellExitReview").addEventListener("click", (e) => {
+  // 点击遮罩 = 取消退出，留在拼写模式
+  if (e.target === document.getElementById("spellExitReview")) {
+    document.getElementById("spellExitReview").style.display = "none";
+    pendingSpellExit = null;
+  }
+});
+
+// ── Batched rendering：一次只画 PAGE_SIZE 张卡，避免大词书一次性渲染卡死 ──
+const spellLoadMoreObserver = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      spellLoadMoreObserver.unobserve(entry.target);
+      if (spellingState.active) renderSpellBatch(spellingState.renderedCount + PAGE_SIZE);
+    });
+  },
+  { threshold: 0.5 },
+);
+
+function renderSpellBatch(target) {
+  const total = spellingState.vocabList.length;
+  const to = Math.min(target, total);
+  if (to <= spellingState.renderedCount) return;
+
+  const grid = document.getElementById("grid");
+  const oldTrigger = grid.querySelector(".load-more-wrapper");
+  if (oldTrigger) oldTrigger.remove();
+
+  const frag = document.createDocumentFragment();
+  for (let i = spellingState.renderedCount; i < to; i++) {
+    const card = createCard(spellingState.vocabList[i], null);
+    card.dataset.spellIndex = i;
+    const seq = document.createElement("div");
+    seq.className = "card-seq";
+    seq.textContent = i + 1;
+    card.appendChild(seq);
+    frag.appendChild(card);
+    ipaObserver.observe(card);
+  }
+  spellingState.renderedCount = to;
+  grid.appendChild(frag);
+
+  if (to < total) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "load-more-wrapper";
+    wrapper.innerHTML = `<button class="load-more-btn">Load more (${to} / ${total})</button>`;
+    wrapper.querySelector("button").onclick = () =>
+      renderSpellBatch(spellingState.renderedCount + PAGE_SIZE);
+    grid.appendChild(wrapper);
+    spellLoadMoreObserver.observe(wrapper);
+  }
+}
+
 // ── Start from Card ──
 function startSpellingFrom(index) {
   spellingState.started = true;
@@ -3457,8 +3722,15 @@ function activateSpellingCard(index) {
   spellingState.waitingForEnter = false;
 
   const word = spellingState.vocabList[index].word;
-  const card = document.querySelector(`.card[data-spell-index="${index}"]`);
+  let card = document.querySelector(`.card[data-spell-index="${index}"]`);
+  if (!card) {
+    renderSpellBatch(index + 1); // 目标卡还没画出来：补渲染到该位置
+    card = document.querySelector(`.card[data-spell-index="${index}"]`);
+  }
   if (!card) { spellingState.results[index] = "skipped"; advanceSpelling(); return; }
+  if (spellingState.renderedCount - index < PAGE_SIZE / 2) {
+    renderSpellBatch(spellingState.renderedCount + PAGE_SIZE); // 前瞻预取下一批
+  }
 
   // Deactivate previous
   document.querySelectorAll(".card.spelling-active").forEach(c => {
@@ -3688,20 +3960,8 @@ function retryWrongWords() {
 
   const grid = document.getElementById("grid");
   grid.innerHTML = "";
-  const frag = document.createDocumentFragment();
-  wrong.forEach((item, i) => {
-    const card = createCard(item, null);
-    card.dataset.spellIndex = i;
-    frag.appendChild(card);
-  });
-  grid.appendChild(frag);
-
-  document.querySelectorAll("#grid .card").forEach((card, i) => {
-    const seq = document.createElement("div");
-    seq.className = "card-seq";
-    seq.textContent = i + 1;
-    card.appendChild(seq);
-  });
+  spellingState.renderedCount = 0;
+  renderSpellBatch(PAGE_SIZE);
 
   document.getElementById("spellingBar").style.display = "flex";
     document.getElementById("spellSkip").style.display = "";           // ✅ 新增：恢复显示

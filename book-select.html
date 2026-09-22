@@ -113,7 +113,25 @@
       font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
       -webkit-font-smoothing: antialiased;
       scroll-behavior: smooth;
+      /* 弱化系统滚动条（Firefox） */
+      scrollbar-width: thin;
+      scrollbar-color: var(--md-outline) transparent;
     }
+
+    /* ── 弱化右侧滚动条（WebKit）：极细、半透明、留白边 ── */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: var(--md-outline-var);
+      border-radius: 8px;
+      border: 3px solid transparent;
+      background-clip: content-box;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-3);
+      background-clip: content-box;
+    }
+    ::-webkit-scrollbar-corner { background: transparent; }
 
     body {
       background: var(--bg);
@@ -185,7 +203,7 @@
       font-size: 10px; color: var(--text-3);
       text-transform: uppercase; letter-spacing: .12em; font-weight: 600;
     }
-    .nav-stats { display: flex; align-items: center; gap: 8px; }
+    .nav-stats { display: flex; align-items: center; justify-content: center; gap: 8px; }
     .nav-stat {
       display: flex; align-items: center; justify-content: center; gap: 6px;
       height: 34px; padding: 0 14px;
@@ -225,6 +243,7 @@
       padding: 56px 0 36px;
       text-align: center;
     }
+    .hero .nav-stats { margin-bottom: 20px; }
     .hero h1 {
       font-size: 38px; font-weight: 700; letter-spacing: -1px;
       line-height: 1.15; margin-bottom: 14px;
@@ -325,6 +344,12 @@
       overflow: hidden;
     }
     .book-foot { margin-top: 12px; display: flex; align-items: center; }
+    .book-total {
+      margin-bottom: 4px;
+      font-size: 11px; font-weight: 600; letter-spacing: .4px;
+      color: var(--book-ink-soft); opacity: .75;
+      font-variant-numeric: tabular-nums; white-space: nowrap;
+    }
     .book-open {
       font-size: 11px; font-weight: 600; letter-spacing: .4px;
       color: var(--book-ink-soft);
@@ -333,6 +358,44 @@
       transition: transform .28s, opacity .28s;
     }
     .book-card:hover .book-open { transform: translateX(0); opacity: .9; }
+
+    /* ── 左侧极简固定导航：平时只显小刻度，当前/悬停才显文字 ── */
+    .cat-rail {
+      display: none;
+      position: fixed;
+      left: 22px; top: 50%; transform: translateY(-50%);
+      z-index: 90;
+      flex-direction: column;
+      max-height: 76vh;
+    }
+    .cat-rail a {
+      position: relative;
+      display: flex; align-items: center;
+      padding: 7px 0;
+      text-decoration: none;
+    }
+    .cat-rail .tick {
+      width: 14px; height: 2px; border-radius: 2px;
+      background: var(--text-3); opacity: .32;
+      transition: width .25s, background .25s, opacity .25s;
+    }
+    .cat-rail a:hover .tick { opacity: .6; }
+    .cat-rail a.active .tick { width: 26px; background: var(--accent); opacity: 1; }
+    .cat-rail .lbl {
+      position: absolute; left: calc(100% + 12px); top: 50%;
+      transform: translateY(-50%) translateX(-6px);
+      white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis;
+      font-size: 12px; font-weight: 600; color: var(--text-1);
+      background: var(--nav-bg);
+      backdrop-filter: saturate(180%) blur(12px);
+      -webkit-backdrop-filter: saturate(180%) blur(12px);
+      padding: 4px 10px; border-radius: 8px;
+      border: 1px solid var(--glass-border);
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s, transform .2s;
+    }
+    .cat-rail a:hover .lbl { opacity: 1; transform: translateY(-50%) translateX(0); }
+    @media (min-width: 1200px) { .cat-rail { display: flex; } }
 
     /* ── Loading ── */
     .loading { text-align: center; padding: 80px 20px; color: var(--text-3); font-size: 14px; }
@@ -350,9 +413,6 @@
     /* ── Mobile ── */
     @media (max-width: 640px) {
       .dash-navbar-inner { gap: 10px; padding: 0 16px; }
-      .nav-stat { padding: 0 10px; height: 32px; }
-      .nav-stat-label { display: none; }
-      .nav-stat-num { font-size: 12px; }
       .dash-navbar-text span { display: none; }
       .hero { padding: 40px 0 28px; }
       .hero h1 { font-size: 28px; }
@@ -387,6 +447,26 @@
         </div>
       </div>
 
+      <div class="dash-navbar-actions">
+        <a class="theme-btn" href="index.html" title="返回单词浏览器" aria-label="返回主页">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="m15.9 8.1-2.2 5.6-5.6 2.2 2.2-5.6 5.6-2.2Z"/></svg>
+        </a>
+        <a class="theme-btn" href="dashboard.html" title="学习数据" aria-label="学习数据">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>
+        </a>
+        <button class="theme-btn" id="themeToggle" title="切换主题" aria-label="切换主题">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/></svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ══ 左侧分类固定导航（滚动高亮 + 点击跳转，render 时生成） ══ -->
+  <nav class="cat-rail" id="catRail" aria-label="分类导航"></nav>
+
+  <div class="wrapper">
+    <!-- Hero -->
+    <div class="hero">
       <div class="nav-stats">
         <div class="nav-stat">
           <span class="nav-stat-label">分类</span>
@@ -397,21 +477,6 @@
           <span class="nav-stat-num" id="statBooks">—</span>
         </div>
       </div>
-
-      <div class="dash-navbar-actions">
-        <a class="theme-btn" href="index.html" title="返回单词浏览器" aria-label="返回主页">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/></svg>
-        </a>
-        <button class="theme-btn" id="themeToggle" title="切换主题" aria-label="切换主题">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/></svg>
-        </button>
-      </div>
-    </div>
-  </nav>
-
-  <div class="wrapper">
-    <!-- Hero -->
-    <div class="hero">
       <h1>挑一本单词书，开始今天的学习</h1>
       <p>从下方分类里选一本，翻开就能背 —— 让每天的记忆都有个轻松的开始。</p>
     </div>
@@ -495,10 +560,14 @@
 
     /* ══ Data ══ */
     let categories = [];
+    let bookCounts = {};
 
-    fetch("data/list.json")
-      .then(r => r.json())
-      .then(data => {
+    Promise.all([
+      fetch("data/list.json").then(r => r.json()),
+      fetch("data/book_counts.json").then(r => r.ok ? r.json() : {}).catch(() => ({}))
+    ])
+      .then(([data, counts]) => {
+        bookCounts = counts;
         let cur = { name: "", books: [] };
         data.vocabs.forEach(n => {
           if (n === "---") return;
@@ -524,11 +593,15 @@
     function render() {
       const content = document.getElementById("content");
       content.innerHTML = "";
+      const rail = document.getElementById("catRail");
+      rail.innerHTML = "";
       const theme = document.documentElement.getAttribute("data-theme");
 
-      categories.forEach(cat => {
+      categories.forEach((cat, ci) => {
         const section = document.createElement("div");
         section.className = "category";
+        section.id = "cat-" + ci;
+        section.style.scrollMarginTop = "70px";
 
         const head = document.createElement("div");
         head.className = "category-head";
@@ -551,9 +624,11 @@
           card.dataset.light = pair.light.join(",");
           card.style.setProperty("--c1", col[0]);
           card.style.setProperty("--c2", col[1]);
+          const count = bookCounts[book];
           card.innerHTML =
             `<div class="book-inner">` +
               `<div class="book-tag"><span class="dot"></span>${esc(cat.name)}</div>` +
+              (count ? `<div class="book-total">Total: ${count.toLocaleString()} words</div>` : "") +
               `<div class="book-title">${esc(book.replace(".csv",""))}</div>` +
               `<div class="book-foot">` +
                 `<span class="book-open">打开 →</span>` +
@@ -569,7 +644,46 @@
 
         section.appendChild(grid);
         content.appendChild(section);
+
+        const link = document.createElement("a");
+        link.href = "#cat-" + ci;
+        link.title = cat.name;
+        link.innerHTML = `<span class="tick"></span><span class="lbl">${esc(cat.name)}</span>`;
+        rail.appendChild(link);
       });
+
+      setupRailSpy();
+    }
+
+    /* 滚动 → 高亮当前分类；点击 → 平滑跳转 */
+    function setupRailSpy() {
+      const sections = Array.from(document.querySelectorAll(".category"));
+      const links = Array.from(document.querySelectorAll("#catRail a"));
+      if (!sections.length) return;
+
+      function onScroll() {
+        const y = window.scrollY + 120;
+        let idx = 0;
+        for (let i = 0; i < sections.length; i++) {
+          if (sections[i].offsetTop <= y) idx = i;
+        }
+        if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 4) {
+          idx = sections.length - 1;
+        }
+        links.forEach((l, i) => l.classList.toggle("active", i === idx));
+      }
+
+      links.forEach((l, i) => {
+        l.addEventListener("click", e => {
+          e.preventDefault();
+          sections[i].scrollIntoView({ behavior: "smooth", block: "start" });
+          history.replaceState(null, "", "#cat-" + i);
+        });
+      });
+
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", onScroll);
+      onScroll();
     }
 
     function esc(s) {

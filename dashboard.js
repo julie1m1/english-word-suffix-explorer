@@ -138,6 +138,30 @@
     if (tip.el) tip.el.classList.remove("is-on");
   }
 
+  /* ── OOV 标签解释：悬停/聚焦「?」图标时，在图标下方显示说明 ── */
+  (function bindOovInfo() {
+    const btn = document.getElementById("oovInfo");
+    if (!btn) return;
+    const html =
+      '<b>OOV</b>（Out Of Vocabulary · 词表外词）<br>' +
+      '词嵌入模型中找不到对应语义向量的单词：无法进入「单词语义地图」和近义词簇，' +
+      '在语义分类中被归入「其他」类别。';
+    function show() {
+      const el = ensureTip();
+      el.classList.add("is-below");
+      const r = btn.getBoundingClientRect();
+      showTip(html, r.left + r.width / 2, r.bottom);
+    }
+    function hide() {
+      hideTip();
+      if (tip.el) tip.el.classList.remove("is-below");
+    }
+    btn.addEventListener("mouseenter", show);
+    btn.addEventListener("mouseleave", hide);
+    btn.addEventListener("focus", show);
+    btn.addEventListener("blur", hide);
+  })();
+
   /* ══════════════════════════════════════════════════════
      HOVER BUS — 跨图联动（PRD §4 通用要求）
      后续每张图 register 进来即可互相高亮
@@ -927,15 +951,16 @@ return phonicsIndexCache;
           row._snd = snd;
           row.addEventListener("click", () => {
             if (grp._openIpa === snd.ipa) {
-              // 再次点击：收起本模块下方详情
+              // 再次点击：收起本行下方详情
               grp._openIpa = null;
               grp.detailEl.classList.remove("is-on");
               grp.detailEl.innerHTML = "";
               row.classList.remove("is-open");
             } else {
-              // 展开：详情直接显示在当前音组模块下方（保持整卡宽度）
+              // 展开：详情插到被点击音条的正下方，就近查看
               grp._openIpa = snd.ipa;
               rows.forEach((r) => r.classList.toggle("is-open", r._snd === snd));
+              list.insertBefore(grp.detailEl, row.nextSibling);
               showGroupDetail(grp, snd);
             }
           });
@@ -944,8 +969,7 @@ return phonicsIndexCache;
         });
         block.appendChild(list);
         const detailEl = el("div", "phonics-detail");
-        block.appendChild(detailEl);
-        grp.detailEl = detailEl;
+        grp.detailEl = detailEl; // 初始不挂载，展开时移到所点音条下方
         grp._openIpa = null;
         stage.appendChild(block);
       });
@@ -963,15 +987,8 @@ return phonicsIndexCache;
           );
         })
         .join("");
-      const ex = snd.samples.map((w) => "<b>" + w + "</b>").join("、") || "—";
-      grp.detailEl.innerHTML =
-        '<div class="phonics-detail-head">' +
-        '<span class="phonics-detail-ipa">' + snd.ipa + "</span>" +
-        "<span>" + grp.label + "</span>" +
-        '<span class="phonics-detail-meta">' + fmtNum(snd.n) + " 词 · " + fmtPct(snd.pct) + "</span>" +
-        "</div>" +
-        '<div class="phonics-pills">' + pills + "</div>" +
-        '<div class="phonics-detail-ex">示例词：' + ex + "</div>";
+      // 标题/词数与音条行本身重复，展开区只保留拼写组合小卡片
+      grp.detailEl.innerHTML = '<div class="phonics-pills">' + pills + "</div>";
       grp.detailEl.classList.add("is-on");
     }
 
@@ -1180,23 +1197,23 @@ return phonicsIndexCache;
     };
     const comboHTML = (label) => label.split(".").map(chipHTML).join('<span class="syl-dot">·</span>');
 
-    // ── 音节数分布 ──
+    // ── 音节数分布（垂直柱状图）──
     const nsWrap = el("div", "syl-block");
     nsWrap.appendChild(el("div", "syl-block-title", "音节数分布"));
-    const nsRows = el("div", "syl-ns-rows");
+    const nsChart = el("div", "syl-ns-chart");
     const nsMax = Math.max.apply(null, [1].concat(Object.keys(idx.nsCount).map((k) => idx.nsCount[k])));
     const nsLabels = { 1: "1 音节", 2: "2 音节", 3: "3 音节", 4: "4 音节", 5: "5+ 音节" };
     [1, 2, 3, 4, 5].forEach((k) => {
       const n = idx.nsCount[k] || 0;
-      const w = nsMax ? (n / nsMax) * 100 : 0;
-      const row = el("div", "syl-ns-row");
-      row.innerHTML =
-        '<span class="syl-ns-label">' + nsLabels[k] + '</span>' +
-        '<div class="syl-track"><i class="syl-fill" style="width:' + w.toFixed(2) + '%"></i></div>' +
-        '<span class="syl-val">' + fmtNum(n) + '<small>' + fmtPct(pct(n)) + '</small></span>';
-      nsRows.appendChild(row);
+      const h = nsMax ? (n / nsMax) * 100 : 0;
+      const col = el("div", "syl-ns-col");
+      col.innerHTML =
+        '<span class="syl-ns-val">' + fmtNum(n) + '<small>' + fmtPct(pct(n)) + '</small></span>' +
+        '<div class="syl-ns-track"><i class="syl-ns-bar" style="height:' + h.toFixed(2) + '%"></i></div>' +
+        '<span class="syl-ns-label">' + nsLabels[k] + '</span>';
+      nsChart.appendChild(col);
     });
-    nsWrap.appendChild(nsRows);
+    nsWrap.appendChild(nsChart);
     body.appendChild(nsWrap);
 
     // ── 常见组合 Top 排行 ──
@@ -1208,8 +1225,6 @@ return phonicsIndexCache;
 
     function renderDetail(label, container) {
       if (!label) { container.classList.remove("is-on"); container.innerHTML = ""; return; }
-      const n = idx.comboCount[label] || 0;
-      const ex = (idx.comboEx[label] || []).map((w) => "<b>" + w + "</b>").join("、") || "—";
       const skelLines = label.split(".").map((p) => {
         const sn = idx.skelWords[p] || 0;
         const sex = (idx.skelEx[p] || []).map((w) => "<b>" + w + "</b>").join("、") || "—";
@@ -1221,12 +1236,10 @@ return phonicsIndexCache;
           (type ? '<span class="syl-detail-skel-type">' + type + '</span>' : '') +
           '<span class="syl-detail-skel-ex">示例：' + sex + '</span></div>';
       }).join("");
+      // 组合串/词数/占比与所在行重复，示例词也已在悬停提示里，展开区只保留组成音节明细
       container.innerHTML =
-        '<div class="syl-detail-head"><span class="syl-detail-combo">' + comboHTML(label) + '</span>' +
-        '<span class="syl-detail-meta">' + fmtNum(n) + ' 词 · ' + fmtPct(pct(n)) + '</span></div>' +
         '<div class="syl-detail-skel-title">组成音节（含该骨架的词数，各音节独立计数）</div>' +
-        '<div class="syl-detail-skel-list">' + skelLines + '</div>' +
-        '<div class="syl-detail-ex">示例词：' + ex + '</div>';
+        '<div class="syl-detail-skel-list">' + skelLines + '</div>';
       container.classList.add("is-on");
     }
 
@@ -1801,105 +1814,6 @@ return phonicsIndexCache;
       nodeEls.push(g);
       p.g = g;
     });
-
-    const foot = el("p", "donut-footnote");
-    foot.innerHTML =
-      "约 100 组近义词，每个气泡是一组；<b>气泡越大代表组内词越多</b>。气泡受重力落入容器、从下往上堆叠成堆。" +
-      "把鼠标移到气泡上，可在「单词语义地图」里同步高亮这一组。" +
-      "<br>点右上角「重新倒入」可重新随机堆叠。最大的 5 组：" +
-      nodes.slice().sort((a, b) => b.n - a.n).slice(0, 5)
-        .map((p) => (names[String(p.id)] || p.id) + " " + fmtNum(p.n))
-        .join(" · ");
-    body.appendChild(foot);
-
-    // ── 「重新倒入」：把气泡移到容器上方随机位置，靠重力动画掉落、堆叠成新堆
-    //    默认加载已是静态稳定堆；点按钮才触发一段短时下落动画，收敛后自动休眠（不占 CPU）
-    const sim = { running: false, raf: 0, nodes: nodes };
-    function step() {
-      if (!sim.running) return;
-      const ns = sim.nodes;
-      for (const p of ns) {
-        p.vy += GRAV;
-        if (p.vy > MAXV) p.vy = MAXV;
-        p.vx *= DAMP; p.vy *= DAMP;
-        p.x += p.vx; p.y += p.vy;
-      }
-      for (let pass = 0; pass < 2; pass++) {
-        for (let i = 0; i < ns.length; i++) {
-          for (let j = i + 1; j < ns.length; j++) {
-            const a = ns[i], b = ns[j];
-            let dx = b.x - a.x, dy = b.y - a.y;
-            let d2 = dx * dx + dy * dy;
-            const minD = a.r + b.r;
-            if (d2 > 0 && d2 < minD * minD) {
-              const d = Math.sqrt(d2) || 0.01;
-              const nx = dx / d, ny = dy / d, ov = (minD - d) * 0.5;
-              a.x -= nx * ov; a.y -= ny * ov;
-              b.x += nx * ov; b.y += ny * ov;
-            } else if (d2 === 0) { a.x -= 0.4; b.x += 0.4; }
-          }
-        }
-      }
-      let mv = 0;
-      for (const p of ns) {
-        if (p.x - p.r < 0) { p.x = p.r; p.vx = 0; }
-        if (p.x + p.r > W) { p.x = W - p.r; p.vx = 0; }
-        if (p.y + p.r > H) { p.y = H - p.r; p.vy = 0; }
-        if (p.y - p.r < 0) { p.y = p.r; p.vy = 0; }
-        p.g.setAttribute("transform", "translate(" + p.x.toFixed(2) + "," + p.y.toFixed(2) + ")");
-        mv = Math.max(mv, Math.abs(p.vx), Math.abs(p.vy));
-      }
-      // 速度归零即收尾：再做一段纯位置收拢，消除残余重叠（容器够大时必能铺平，与静态堆一致）
-      if (mv < 0.06) {
-        for (let k = 0; k < 400; k++) {
-          for (let pass = 0; pass < 2; pass++) {
-            for (let i = 0; i < ns.length; i++) {
-              for (let j = i + 1; j < ns.length; j++) {
-                const a = ns[i], b = ns[j];
-                let dx = b.x - a.x, dy = b.y - a.y;
-                let d2 = dx * dx + dy * dy;
-                const minD = a.r + b.r;
-                if (d2 > 0 && d2 < minD * minD) {
-                  const d = Math.sqrt(d2) || 0.01;
-                  const nx = dx / d, ny = dy / d, ov = (minD - d) * 0.5;
-                  a.x -= nx * ov; a.y -= ny * ov;
-                  b.x += nx * ov; b.y += ny * ov;
-                } else if (d2 === 0) { a.x -= 0.4; b.x += 0.4; }
-              }
-            }
-          }
-          for (const p of ns) {
-            if (p.x - p.r < 0) p.x = p.r;
-            if (p.x + p.r > W) p.x = W - p.r;
-            if (p.y + p.r > H) p.y = H - p.r;
-            if (p.y - p.r < 0) p.y = p.r;
-          }
-        }
-        for (const p of ns) p.g.setAttribute("transform", "translate(" + p.x.toFixed(2) + "," + p.y.toFixed(2) + ")");
-        sim.running = false; if (sim.raf) cancelAnimationFrame(sim.raf); return;
-      }
-      sim.raf = requestAnimationFrame(step);
-    }
-    function repour() {
-      for (const p of nodes) {
-        p.x = p.r + Math.random() * (W - 2 * p.r);
-        p.y = -Math.random() * H * 0.6 - p.r;
-        p.vx = 0; p.vy = 0;
-      }
-      if (!sim.running) { sim.running = true; sim.raf = requestAnimationFrame(step); }
-    }
-
-    // ── 右上角「重新倒入」按钮
-    const cardEl = body.closest("article.card");
-    const headEl = cardEl && cardEl.querySelector(".card-head");
-    if (headEl) {
-      const btn = document.createElement("button");
-      btn.className = "repour-btn";
-      btn.type = "button";
-      btn.textContent = "重新倒入";
-      btn.addEventListener("click", repour);
-      headEl.appendChild(btn);
-    }
   }
 
   /* ══════════════════════════════════════════════════════
@@ -2047,11 +1961,7 @@ return phonicsIndexCache;
     );
   }
 
-  const SPEAK_ICON =
-    '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
-    '<path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
-
-  // 设为词根按钮图标：与 SPEAK_ICON 同风格（线性、currentColor）的树杈图标
+  // 设为词根按钮图标：线性、currentColor 风格的树杈图标
   const ROOT_ICON =
     '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
     '<circle cx="7" cy="6" r="2.2"/><circle cx="7" cy="18" r="2.2"/><circle cx="17" cy="12" r="2.2"/>' +
@@ -2168,7 +2078,6 @@ return phonicsIndexCache;
       '<div class="tip-head">' +
         '<span class="tip-word">' + esc(word) + "</span>" +
         (ipa ? '<span class="tip-ipa">' + esc(ipa) + "</span>" : "") +
-        '<span class="tip-say">' + SPEAK_ICON + "</span>" +
       "</div>";
     if (tags.length) {
       h += '<div class="tip-pos">' +
@@ -2469,10 +2378,7 @@ return phonicsIndexCache;
           const extra =
             (affixTxt ? '<div class="tip-row" style="margin-top:5px">' + affixTxt + "：<b>" + esc(n.affix) + "</b></div>" : "") +
             (n.depth > 0 ? '<div class="tip-row">词根：<b>' + esc(n.stem) + "</b></div>" : "") +
-            '<div class="tip-hint">' + SPEAK_ICON +
-              "<span>单击发音</span>" +
-              (canRoot ? "<span>· 双击以此为词根</span>" : "") +
-            "</div>";
+            (canRoot ? '<div class="tip-hint"><span>双击以此为词根</span></div>' : "");
 
           const enter = (ev) => {
             showTip(wordTipHTML(word, extra), ev.clientX, ev.clientY);
