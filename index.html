@@ -2,7 +2,10 @@
 <html lang="zh-CN" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>Vocab Lab Omni</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='2' y='2' width='12' height='12' rx='3' fill='%23D0BCFF'/><rect x='18' y='2' width='12' height='12' rx='3' fill='%23D0BCFF' opacity='.6'/><rect x='2' y='18' width='12' height='12' rx='3' fill='%23D0BCFF' opacity='.6'/><rect x='18' y='18' width='12' height='12' rx='3' fill='%23D0BCFF' opacity='.3'/></svg>">
 
@@ -89,9 +92,23 @@
       <div class="top-bar" id="topBar">
         <div class="top-bar-title">Vocab Lab</div>
         <!-- Desktop: POS buttons inline left (hidden on mobile via CSS) -->
-        <div class="top-bar-pos" id="topBarPos"></div>
+        <div class="top-bar-pos-wrap">
+          <div class="top-bar-pos" id="topBarPos"></div>
+          <button class="pos-scroll-btn pos-scroll-right" id="posScrollRight" type="button" title="查看更多词性" aria-label="查看更多词性">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <button class="pos-scroll-btn pos-scroll-left" id="posScrollLeft" type="button" title="滚回最左" aria-label="滚回最左">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m15 18-6-6 6-6"/></svg>
+          </button>
+        </div>
 <div class="top-bar-right">
+  <button class="util-btn mobile-search-btn" id="mobileSearchBtn" title="搜索" aria-label="搜索">
+    <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg></span>
+  </button>
   <div class="search-box">
+    <button class="search-collapse" id="searchCollapse" title="收起搜索" aria-label="收起搜索">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m15 18-6-6 6-6"/></svg>
+    </button>
     <input type="text" id="searchInput" placeholder="Search words…" autocomplete="off" />
     <button class="search-clear" id="searchClear" style="display:none">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
@@ -110,11 +127,11 @@
     <span class="percent-tag"> <b id="match-percent">0%</b></span>
   </div>
 
-  <button class="util-btn" id="toggleAllBtn">
+  <button class="util-btn" id="toggleAllBtn" title="Show All" aria-label="Show All">
     <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg></span><span class="label">Show All</span>
   </button>
 
-  <button class="util-btn" id="viewToggleBtn">
+  <button class="util-btn" id="viewToggleBtn" title="Card" aria-label="Card">
     <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z"/></svg></span><span class="label">Card</span>
   </button>
 

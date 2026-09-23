@@ -1428,6 +1428,57 @@ window.addEventListener("load", () => {
     });
   }
 
+  // 1.7 移动端搜索：收成图标 → 点击整行展开 → 返回箭头收起（保留文字与筛选）
+  const mobileSearchBtn = document.getElementById("mobileSearchBtn");
+  const searchCollapse = document.getElementById("searchCollapse");
+  if (mobileSearchBtn && searchCollapse && searchInput) {
+    const syncSearchIcon = () => {
+      mobileSearchBtn.classList.toggle(
+        "filter-on",
+        !!currentFilter.search && !document.body.classList.contains("search-expanded")
+      );
+    };
+    mobileSearchBtn.addEventListener("click", () => {
+      document.body.classList.add("search-expanded");
+      syncSearchIcon();
+      searchInput.focus();
+    });
+    searchCollapse.addEventListener("click", () => {
+      document.body.classList.remove("search-expanded");
+      searchInput.blur();
+      syncSearchIcon();
+    });
+    searchInput.addEventListener("input", syncSearchIcon);
+    searchClear.addEventListener("click", syncSearchIcon);
+  }
+
+  // 1.8 桌面 POS 行翻页箭头：仅单排布局且词性真的放不下时显示
+  // 右箭头在词性行上方（不遮挡），滚到最右隐藏；左箭头浮在行左侧，滚回起点后隐藏
+  const posScrollRight = document.getElementById("posScrollRight");
+  const posScrollLeft = document.getElementById("posScrollLeft");
+  const topBarPosEl = document.getElementById("topBarPos");
+  if (posScrollRight && posScrollLeft && topBarPosEl) {
+    const updatePosArrow = () => {
+      const overflow = topBarPosEl.scrollWidth - topBarPosEl.clientWidth > 8;
+      const atEnd =
+        topBarPosEl.scrollLeft + topBarPosEl.clientWidth >= topBarPosEl.scrollWidth - 8;
+      const atStart = topBarPosEl.scrollLeft <= 8;
+      posScrollRight.classList.toggle("show", overflow && !atEnd);
+      posScrollLeft.classList.toggle("show", overflow && !atStart);
+    };
+    const posPage = (dir) => {
+      const step = Math.max(120, topBarPosEl.clientWidth * 0.7);
+      topBarPosEl.scrollBy({ left: dir * step, behavior: "smooth" });
+    };
+    posScrollRight.addEventListener("click", () => posPage(1));
+    posScrollLeft.addEventListener("click", () => posPage(-1));
+    topBarPosEl.addEventListener("scroll", updatePosArrow, { passive: true });
+    window.addEventListener("resize", updatePosArrow);
+    // POS 按钮异步渲染，内容变化时重算
+    new MutationObserver(updatePosArrow).observe(topBarPosEl, { childList: true });
+    updatePosArrow();
+  }
+
   /* ═══════════════════════════════════════
    CATEGORY (语义分类) 控件事件
 ═══════════════════════════════════════ */
@@ -2376,8 +2427,8 @@ function renderSuffixControls(filterText = "") {
               <div class="detail-word">${detailWordHTML}</div>
               ${posTags ? `<div class="detail-pos">${posTags}</div>` : ""}
               ${phonetic ? `<span class="detail-phonetic">${esc(phonetic)}</span>` : ""}
-              <button class="detail-play-btn" type="button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/></svg>
+              <button class="detail-play-btn" type="button" title="播放发音" aria-label="播放发音">
+                ${icon("speaker-wave", 16)}
               </button>
               <div class="detail-links">
                 <a href="https://dict.eudic.net/dicts/en/${w}" target="_blank" class="dict-link-btn"><span>Eudic</span></a>
@@ -2402,6 +2453,7 @@ function renderSuffixControls(filterText = "") {
         const placeholder = panel && panel.querySelector(".detail-placeholder");
         if (placeholder) placeholder.style.display = "flex";
         if (content) { content.style.display = "none"; content.innerHTML = ""; }
+        if (panel && window.innerWidth <= 1024) panel.style.display = "none";
         document.querySelectorAll(".card.selected").forEach(c => c.classList.remove("selected"));
       }
 
@@ -2409,6 +2461,34 @@ function renderSuffixControls(filterText = "") {
         const cached = AudioCache.get(word);
         const audio = cached ? cached : new Audio(AudioCache._url(word));
         audio.play().catch(() => {});
+      }
+
+      // ── 手机端行内展开：手风琴式，一次只展开一行 ──
+      function collapseRowDetails() {
+        document.querySelectorAll("#grid .card.expanded").forEach(c => c.classList.remove("expanded"));
+      }
+      function toggleRowDetail(card, item) {
+        const box = card.querySelector(".card-detail");
+        if (!box) return;
+        if (card.classList.contains("expanded")) {
+          card.classList.remove("expanded");
+          return;
+        }
+        collapseRowDetails();
+        if (!box.dataset.loaded) {
+          box.innerHTML = Explorer.inlineHTML(item.word);
+          box.dataset.loaded = "1";
+          box.querySelectorAll(".rel-word").forEach(b =>
+            b.addEventListener("click", () => openOverlayExplorer(b.dataset.word)));
+        }
+        card.classList.add("expanded");
+      }
+      // 行内详情里点关系词 → 打开全屏浮层探索器继续下钻
+      function openOverlayExplorer(word) {
+        const panel = document.getElementById("detailPanel");
+        if (!panel) return;
+        panel.style.display = "flex";
+        Explorer.start(word);
       }
 
       /* ═══════════════════════════════════════
@@ -2475,8 +2555,8 @@ function renderSuffixControls(filterText = "") {
               <div class="detail-word">${detailWordHTML}</div>
               ${posTags ? `<div class="detail-pos">${posTags}</div>` : ""}
               ${phonetic ? `<span class="detail-phonetic">${esc(phonetic)}</span>` : ""}
-              <button class="detail-play-btn" type="button">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/></svg>
+              <button class="detail-play-btn" type="button" title="播放发音" aria-label="播放发音">
+                ${icon("speaker-wave", 16)}
               </button>
               <div class="detail-links">
                 <a href="https://dict.eudic.net/dicts/en/${w}" target="_blank" class="dict-link-btn"><span>Eudic</span></a>
@@ -2534,31 +2614,9 @@ function renderSuffixControls(filterText = "") {
           return inner ? `<div class="exp-group"><div class="exp-group-title">上位词链</div>${inner}</div>` : "";
         }
 
-        function render() {
-          const panel = document.getElementById("detailPanel");
-          const content = document.getElementById("detailContent");
-          if (!panel || !content) return;
-          const ph = panel.querySelector(".detail-placeholder");
-          if (ph) ph.style.display = "none";
-          content.style.display = "block";
-
-          const word = path[path.length - 1];
-          const item = buildItem(word);
-          const isMobile = window.innerWidth <= 1024;
+        // 关系区块（近/反义 + 上位词链/同位词/精选下位词），浮层与行内展开共用
+        function relationsHTML(word) {
           const rel = relOf(word);
-
-          // 面包屑（顶部常驻单行可滚动）
-          let crumbs = `<button class="exp-crumb exp-home" data-act="home">首页</button>`;
-          path.forEach((ww, i) => {
-            const cur = i === path.length - 1;
-            crumbs += `<span class="exp-sep">›</span>` +
-              (cur
-                ? `<span class="exp-crumb current">${esc(ww)}</span>`
-                : `<button class="exp-crumb" data-act="goto" data-i="${i}">${esc(ww)}</button>`);
-          });
-
-          const core = coreHTML(item, isMobile);
-
           const hasSyn = rel && rel.syn && Object.keys(rel.syn).length;
           const hasAnt = rel && rel.ant && Object.keys(rel.ant).length;
           // 无近义 / 反义关系时不显示任何提示
@@ -2573,8 +2631,39 @@ function renderSuffixControls(filterText = "") {
           const hierarchy = hasHyper || hasCoord || hasHypo
             ? `<div class="exp-section">${hyperBlock(rel)}${relBlock("同位词", "coord", rel)}${relBlock("精选下位词", "hypo", rel)}</div>`
             : "";
+          return explore + hierarchy;
+        }
 
-          content.innerHTML = `<div class="exp-breadcrumb">${crumbs}</div>${core}${explore}${hierarchy}`;
+        // 行内展开用：某词的完整详情 HTML（无面包屑、无关闭按钮）
+        function inlineHTML(w) {
+          return coreHTML(buildItem(w), false) + relationsHTML(w);
+        }
+
+        function render() {
+          const panel = document.getElementById("detailPanel");
+          const content = document.getElementById("detailContent");
+          if (!panel || !content) return;
+          const ph = panel.querySelector(".detail-placeholder");
+          if (ph) ph.style.display = "none";
+          content.style.display = "block";
+
+          const word = path[path.length - 1];
+          const item = buildItem(word);
+          const isMobile = window.innerWidth <= 1024;
+
+          // 面包屑（顶部常驻单行可滚动）
+          let crumbs = `<button class="exp-crumb exp-home" data-act="home">首页</button>`;
+          path.forEach((ww, i) => {
+            const cur = i === path.length - 1;
+            crumbs += `<span class="exp-sep">›</span>` +
+              (cur
+                ? `<span class="exp-crumb current">${esc(ww)}</span>`
+                : `<button class="exp-crumb" data-act="goto" data-i="${i}">${esc(ww)}</button>`);
+          });
+
+          const core = coreHTML(item, isMobile);
+
+          content.innerHTML = `<div class="exp-breadcrumb">${crumbs}</div>${core}${relationsHTML(word)}`;
 
           // 事件绑定
           content.querySelector(".detail-play-btn")?.addEventListener("click", () => playDetailWord(word));
@@ -2594,7 +2683,7 @@ function renderSuffixControls(filterText = "") {
         function goto(i) { path = path.slice(0, i + 1); render(); }
         function home() { path = []; closeDetailPanel(); }
 
-        return { start, drill, goto, home, render };
+        return { start, drill, goto, home, render, inlineHTML };
       })();
 
       // IntersectionObserver-based IPA — no hard cap, loads as cards enter viewport
@@ -2831,6 +2920,7 @@ function renderSuffixControls(filterText = "") {
             ${comboTag}
         </div>
         <div class="word-phonetic" data-word="${esc(item.word)}">...</div>
+        <button class="word-speak" type="button" title="播放发音" aria-label="播放发音">${icon("speaker-wave", 13)}</button>
         <div class="word-def">${esc(item.def)}</div>
         <div class="card-examples" style="display:none">
           <div class="example-skeleton"></div>
@@ -2841,6 +2931,7 @@ function renderSuffixControls(filterText = "") {
             <a href="https://www.ldoceonline.com/dictionary/${w}" target="_blank" class="dict-link en-cn" title="Longman">Longman</a>
             <button type="button" class="dict-link review-link" title="加入生词本" aria-pressed="false">${icon("check", 10)}生词</button>
         </div>
+        <div class="card-detail"></div>
     </div>`;
         // ── 生词本切换：桌面 = 右上角圆圈；平板/手机(≤1024px) = 链接排里的「生词」按钮（圆圈隐藏，避免与 Longman 重叠）──
         const reviewCircle = card.querySelector(".card-review");
@@ -2921,6 +3012,15 @@ function renderSuffixControls(filterText = "") {
 
                card.addEventListener("click", (e) => {
           if (e.target.closest("a")) return;
+          if (e.target.closest(".word-speak")) { playWord(); return; }
+
+          // ✅ 手机端行式模式：点行 → 行内展开/收起完整详情（播放、拼写模式下不拦截）
+          if (window.innerWidth <= 1024 &&
+              !(playerState && playerState.active) &&
+              !document.body.classList.contains("spelling-mode")) {
+            toggleRowDetail(card, item);
+            return;
+          }
 
           // ✅ 主从布局（list-view）：点击单词 → 右侧详情面板（WordNet 关联探索器）
           if (document.getElementById("grid").classList.contains("list-view")) {
@@ -3011,16 +3111,20 @@ function renderSuffixControls(filterText = "") {
   const iconEl = this.querySelector('.icon');
 
   if (isMobile()) {
-    const hiding = grid.classList.toggle("hide-all-def");
-    this.classList.toggle("active", hiding);
-    label.textContent = hiding ? "Show All" : "Hide All";
-    iconEl.innerHTML = hiding ? icon("eye") : icon("eye-slash");
+    // 行式模式：批量展开/收起所有行的释义（例句/关系词仍只在单行展开时加载）
+    const showing = grid.classList.toggle("show-all-def");
+    this.classList.toggle("active", showing);
+    label.textContent = showing ? "Hide All" : "Show All";
+    this.title = this.ariaLabel = showing ? "Hide All" : "Show All";
+    iconEl.innerHTML = showing ? icon("eye-slash") : icon("eye");
+    if (!showing) collapseRowDetails();
   } else {
     showAllDef = !showAllDef;
     grid.classList.toggle("show-all-def", showAllDef);
     grid.classList.toggle("show-all-examples", showAllDef);
     this.classList.toggle("active", showAllDef);
     label.textContent = showAllDef ? "Hide All" : "Show All";
+    this.title = this.ariaLabel = showAllDef ? "Hide All" : "Show All";
     iconEl.innerHTML = showAllDef ? icon("eye-slash") : icon("eye");
   }
 });
@@ -3042,6 +3146,7 @@ function renderSuffixControls(filterText = "") {
   const isList = grid.classList.toggle("list-view");
   iconEl.innerHTML = isList ? icon("squares-2x2") : icon("list-bullet");
   label.textContent = isList ? "Card" : "List";
+  this.title = this.ariaLabel = isList ? "Card" : "List";
   localStorage.setItem("vocab-view", isList ? "list" : "card");
 
   // 显示/隐藏右侧详情面板
@@ -3070,6 +3175,7 @@ function renderSuffixControls(filterText = "") {
     if (detailPanel) detailPanel.style.display = "flex";
     btn.querySelector('.icon').innerHTML = icon("squares-2x2");
     btn.querySelector('.label').textContent = "Card";
+    btn.title = btn.ariaLabel = "Card";
   } else if (detailPanel) {
     detailPanel.style.display = "none";
   }
@@ -3080,6 +3186,7 @@ function renderSuffixControls(filterText = "") {
     if (detailPanel) detailPanel.style.display = "none";
     btn.querySelector('.icon').innerHTML = icon("list-bullet");
     btn.querySelector('.label').textContent = "List";
+    btn.title = btn.ariaLabel = "List";
   }
   forceCardOnPad();
   pad.addEventListener("change", forceCardOnPad);
