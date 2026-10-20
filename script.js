@@ -67,11 +67,71 @@
         'exclamation-triangle': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>',
         'bookmark': '<path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c.1.14.157.3.157.468v17.96a.75.75 0 0 1-1.187.608L12 19.5l-4.563 3.858A.75.75 0 0 1 6.25 22.75V3.79c0-.168.057-.328.157-.468C6.99 2.6 8.4 2.25 12 2.25s5.01.35 5.593 1.072Z"/>',
         'check': '<path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>',
+        'arrow-right': '<path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>',
       };
 
       function icon(name, size = 20) {
         const paths = ICONS[name] || ICONS['eye'];
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">${paths}</svg>`;
+      }
+
+      // 词典外链：list 详情面板与 card 链接排共用，保证文案与样式一致
+      // w 必须已是 encodeURIComponent(word)
+      function dictLinksHTML(w) {
+        const link = (href, label) =>
+          `<a href="${href}" target="_blank" rel="noopener" class="dict-link-btn"><span>${label}</span><span class="dict-arrow">${icon("arrow-right", 11)}</span></a>`;
+        return [
+          link(`https://dict.eudic.net/dicts/en/${w}`, "Eudic"),
+          link(`https://www.onelook.com/?w=${w}&phrases=1`, "OneLook"),
+          link(`https://www.ldoceonline.com/dictionary/${w}`, "Longman"),
+        ].join("");
+      }
+
+      /* 词典链接排始终保持一行：可用宽度不足时按容器等比例缩小（写 --dz，
+         字号/内边距/高度/圆角都由它派生）。低于下限就不再压，交给 flex-wrap 折行。
+         card 链接排和 list 详情面板标题行用同一套算法，两边缩放行为一致。 */
+      const DICT_MIN_SCALE = 0.78;
+      // 悬停箭头静止时不占位、展开才加宽，所以整排预留一次展开的量：
+      // 宽度不够就先缩好，避免 hover 时才把整排挤到第二行（那就是频闪）
+      const DICT_GROW = window.matchMedia("(hover: hover)").matches ? 13 : 0;
+      function fitDictLinks(scope) {
+        // 默认整篇文档：详情面板在 #grid 之外，只缩 grid 的话它窗口变化后就不算了
+        const root = scope && scope.querySelectorAll ? scope : document;
+        const rows = root ? [...root.querySelectorAll(".card-links, .detail-links")] : [];
+        if (!rows.length) return;
+        rows.forEach((row) => row.style.removeProperty("--dz"));
+        const plan = [];
+        rows.forEach((row) => {
+          const inner = row.parentElement;
+          if (!inner) return;
+          const rowBox = row.getBoundingClientRect();
+          if (rowBox.width <= 0) return; // 折叠/隐藏中的详情块
+          const kids = [...row.children].filter((el) => getComputedStyle(el).display !== "none");
+          if (!kids.length) return;
+          const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+          const natural = kids.reduce((sum, el) => sum + el.getBoundingClientRect().width, 0) +
+            gap * (kids.length - 1) +
+            DICT_GROW;
+          const cs = getComputedStyle(inner);
+          const avail = inner.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+          const igap = parseFloat(cs.columnGap) || 0;
+          // 同一行上的兄弟元素（手机行式的单词/音标/播放键，详情面板的词名/词性/音标）都要扣掉
+          // 判定用纵向重叠：折到第二行的元素和链接排不重叠，不该扣
+          const used = [...inner.children]
+            .filter((el) => {
+              if (el === row || getComputedStyle(el).display === "none") return false;
+              const b = el.getBoundingClientRect();
+              return b.width > 0 && b.top < rowBox.bottom && b.bottom > rowBox.top;
+            })
+            .reduce((sum, el) => sum + el.getBoundingClientRect().width + igap, 0);
+          plan.push({ row, natural, room: avail - used - 1 });
+        });
+        plan.forEach(({ row, natural, room }) => {
+          if (natural <= 0 || room <= 0) return;
+          // 向下取整：toFixed 四舍五入可能让结果略大于 room，那 1px 就够 flex 折行
+          const scale = Math.min(1, Math.max(DICT_MIN_SCALE, Math.floor((room / natural) * 1000) / 1000));
+          if (scale < 0.999) row.style.setProperty("--dz", scale.toFixed(3));
+        });
       }
 
       /* ═══════════════════════════════════════
@@ -227,8 +287,8 @@
         reviewMode = !!on;
         reviewBtnEl.classList.toggle("active", reviewMode);
         reviewBtnEl.title = reviewMode
-          ? "Review · 生词本（点击退出）"
-          : "Review · 生词本";
+          ? "Review · Wordlist (click to exit)"
+          : "Review · Wordlist";
         updateClearFab();
         applyFilters();
       }
@@ -1514,7 +1574,7 @@ window.addEventListener("load", () => {
       // 顶部「全部词库」虚拟选项
       const allOpt = document.createElement("option");
       allOpt.value = "ALL_BOOKS";
-      allOpt.textContent = "All Books（全部词库）";
+      allOpt.textContent = "All Books";
       allOpt.className = "vocab-all-books";
       allOpt.style.fontWeight = "bold";
       allOpt.style.color = "var(--md-primary)";
@@ -1523,7 +1583,7 @@ window.addEventListener("load", () => {
       // 分隔线标题
       const sep = document.createElement("option");
       sep.disabled = true;
-      sep.textContent = "── 单本词库 ──";
+      sep.textContent = "── Single books ──";
       sep.className = "vocab-group-title";
       sep.style.color = "var(--text-3)";
       sel.appendChild(sep);
@@ -1576,7 +1636,7 @@ window.addEventListener("load", () => {
       ]);
     })
     .catch(() =>
-      showError("无法加载 data/list.json，请检查路径"),
+      showError("Could not load data/list.json — please check the path."),
     );
 });
 
@@ -1712,7 +1772,7 @@ window.addEventListener("load", () => {
         const allChip = document.createElement("button");
         allChip.className = "category-chip" + (currentFilter.cluster === null ? " active" : "");
         allChip.innerHTML = `<span class="category-chip-name">All</span><span class="category-chip-count">${vocab.length}</span>`;
-        allChip.title = `全部 · ${vocab.length} 词`;
+        allChip.title = `All · ${vocab.length} words`;
         allChip.onclick = () => {
           currentFilter.cluster = null;
           renderCategoryBar();
@@ -1728,7 +1788,7 @@ window.addEventListener("load", () => {
           const chip = document.createElement("button");
           chip.className = "category-chip" + (currentFilter.cluster === c.id ? " active" : "");
           chip.innerHTML = `<span class="category-chip-name">${esc(c.name)}</span><span class="category-chip-count">${n}</span>`;
-          chip.title = `${c.name} · ${n} 词`;
+          chip.title = `${c.name} · ${n} words`;
           chip.onclick = () => {
             currentFilter.cluster = currentFilter.cluster === c.id ? null : c.id;
             renderCategoryBar();
@@ -1838,7 +1898,7 @@ window.addEventListener("load", () => {
         // 排序按钮：正序 / 倒序
         const sortBtn = document.createElement("button");
         sortBtn.className = "az-btn az-sort-btn" + (azSortOrder ? " active" : "");
-        sortBtn.title = azSortOrder === 'asc' ? 'A→Z 正序' : azSortOrder === 'desc' ? 'Z→A 倒序' : '排序 A↔Z';
+        sortBtn.title = azSortOrder === 'asc' ? 'A→Z ascending' : azSortOrder === 'desc' ? 'Z→A descending' : 'Sort A↔Z';
         const sortIcon = azSortOrder === 'desc'
           ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9M3 12h5m8 0v8m0 0-3-3m3 3 3-3"/></svg>'
           : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9M3 12h5m8 0V4m0 0-3 3m3-3 3 3"/></svg>';
@@ -1990,10 +2050,10 @@ function renderSuffixControls(filterText = "") {
       }
       function suffixSortLabel() {
         return suffixSortMode === "desc"
-          ? "词数：多 → 少（点击切到少→多）"
+          ? "Word count: high → low (click for low → high)"
           : suffixSortMode === "asc"
-            ? "词数：少 → 多（点击恢复默认顺序）"
-            : "按词数排序：各分类内 多 → 少";
+            ? "Word count: low → high (click to restore default order)"
+            : "Sort by word count: high → low within each group";
       }
       function updateSuffixSortBtn() {
         const btn = document.getElementById("suffixSortBtn");
@@ -2141,6 +2201,7 @@ function renderSuffixControls(filterText = "") {
         if (remote && remote !== local) items.push({ cls: "ipa-remote", ipa: remote });
         if (!items.length) {
           element.style.opacity = "";
+          refitAfterPhonetic(element);
           return;
         }
         items.forEach((it, i) => {
@@ -2156,7 +2217,20 @@ function renderSuffixControls(filterText = "") {
           element.appendChild(ip);
         });
         element.style.opacity = "0.8";
+        refitAfterPhonetic(element);
       }
+
+      // 音标宽度会把词典链接排挤掉，渲染完音标后重算这一排的缩放
+      function refitAfterPhonetic(element) {
+        const scope = element.closest(".card") || element.closest(".detail-title-row");
+        if (scope) requestAnimationFrame(() => fitDictLinks(scope));
+      }
+
+      let dictFitTimer = null;
+      window.addEventListener("resize", () => {
+        clearTimeout(dictFitTimer);
+        dictFitTimer = setTimeout(fitDictLinks, 120);
+      });
 
       async function fetchIPA(word, element, exampleEl) {
         let cache = getIPACache();
@@ -2338,8 +2412,8 @@ function renderSuffixControls(filterText = "") {
 
           let icon = "•";
           let iconClass = "";
-          if (source === "ai-spoken") { icon = "口语"; iconClass = "spoken"; }
-          else if (source === "ai-written") { icon = "书面"; iconClass = "written"; }
+          if (source === "ai-spoken") { icon = "Spoken"; iconClass = "spoken"; }
+          else if (source === "ai-written") { icon = "Written"; iconClass = "written"; }
           else if (source === "ecdict") { icon = "ECD"; iconClass = "ecdict"; }
           else if (source === "tatoeba") { icon = "Tat"; iconClass = "tatoeba"; }
           else if (source === "dictapi") { icon = "API"; iconClass = "dictapi"; }
@@ -2394,17 +2468,17 @@ function renderSuffixControls(filterText = "") {
 
         // 释义（CSV 中文释义）
         const defHTML = item.def
-          ? `<div class="detail-section"><div class="detail-section-title">释义</div><div class="detail-def">${esc(item.def)}</div></div>`
+          ? `<div class="detail-section"><div class="detail-section-title">Definition</div><div class="detail-def">${esc(item.def)}</div></div>`
           : "";
 
         // 例句
         const examples = buildDetailExamples(item.word);
         const exampleHTML = examples.length
-          ? `<div class="detail-section"><div class="detail-section-title">例句</div>` +
+          ? `<div class="detail-section"><div class="detail-section-title">Examples</div>` +
             examples.map(({ text, source }) => {
               let icon = "•", cls = "";
-              if (source === "ai-spoken") { icon = "口语"; cls = "spoken"; }
-              else if (source === "ai-written") { icon = "书面"; cls = "written"; }
+              if (source === "ai-spoken") { icon = "Spoken"; cls = "spoken"; }
+              else if (source === "ai-written") { icon = "Written"; cls = "written"; }
               else if (source === "ecdict") { icon = "ECD"; cls = "ecdict"; }
               const wordRegex = new RegExp(`(${esc(item.word).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
               const hl = esc(text).replace(wordRegex, '<span class="example-hl">$1</span>');
@@ -2427,14 +2501,10 @@ function renderSuffixControls(filterText = "") {
               <div class="detail-word">${detailWordHTML}</div>
               ${posTags ? `<div class="detail-pos">${posTags}</div>` : ""}
               ${phonetic ? `<span class="detail-phonetic">${esc(phonetic)}</span>` : ""}
-              <button class="detail-play-btn" type="button" title="播放发音" aria-label="播放发音">
+              <button class="detail-play-btn" type="button" title="Play pronunciation" aria-label="Play pronunciation">
                 ${icon("speaker-wave", 16)}
               </button>
-              <div class="detail-links">
-                <a href="https://dict.eudic.net/dicts/en/${w}" target="_blank" class="dict-link-btn"><span>Eudic</span></a>
-                <a href="https://www.onelook.com/?w=${w}&phrases=1" target="_blank" class="dict-link-btn"><span>OneLook</span></a>
-                <a href="https://www.ldoceonline.com/dictionary/${w}" target="_blank" class="dict-link-btn"><span>Longman</span></a>
-              </div>
+              <div class="detail-links">${dictLinksHTML(w)}</div>
             </div>
           </div>
           <div class="detail-body">
@@ -2445,6 +2515,7 @@ function renderSuffixControls(filterText = "") {
 
         content.querySelector(".detail-play-btn")?.addEventListener("click", () => playDetailWord(item.word));
         content.querySelector(".detail-close-btn")?.addEventListener("click", closeDetailPanel);
+        requestAnimationFrame(() => fitDictLinks(content));
       }
 
       function closeDetailPanel() {
@@ -2475,13 +2546,15 @@ function renderSuffixControls(filterText = "") {
           return;
         }
         collapseRowDetails();
+        // 先展开再绑定：bindWnUI 需要按可见宽度做 ≥480px 门槛判定，隐藏时 clientWidth 为 0
+        card.classList.add("expanded");
         if (!box.dataset.loaded) {
           box.innerHTML = Explorer.inlineHTML(item.word);
           box.dataset.loaded = "1";
           box.querySelectorAll(".rel-word").forEach(b =>
             b.addEventListener("click", () => openOverlayExplorer(b.dataset.word)));
+          Explorer.bindWn(box, (w) => openOverlayExplorer(w));
         }
-        card.classList.add("expanded");
       }
       // 行内详情里点关系词 → 打开全屏浮层探索器继续下钻
       function openOverlayExplorer(word) {
@@ -2497,6 +2570,595 @@ function renderSuffixControls(filterText = "") {
 ═══════════════════════════════════════ */
       const REL_ORDER = ["v", "n", "adj", "adv"];
       const REL_POS_LABEL = { v: "v.", n: "n.", adj: "adj.", adv: "adv." };
+
+      /* ═══════════════════════════════════════
+         WN GRAPH · D3 WordNet 关系图（Graph tab）
+         分区树：上位上方逐行 / 反义左列 / 同义右列 / 下位中心正下方横排(画布增宽) / 同位最底横排圆角虚线
+         零重叠保证：分区摆放 + 碰撞推挤，画布高度随内容增长
+      ═══════════════════════════════════════ */
+      const WnGraph = (() => {
+        const KINDS = ["syn", "ant", "hyper", "coord", "hypo"];
+        const LABELS = { syn: "Synonym 近义词", ant: "Antonym 反义词", hyper: "Hypernym 上位词", coord: "Coordinate 同位词", hypo: "Hyponym 下位词" };
+        const CAP = 6, CHAIN_VIS = 2, RH = 54, LP = 38, BASE_H = 320, GAP = 6;
+        let uidSeq = 0, mctx = null;
+
+        const hasGraph = (rel) => !!rel && KINDS.some(k => rel[k] && Object.keys(rel[k]).some(p => (rel[k][p] || []).length));
+        const posListOf = (rel) => REL_ORDER.filter(p => KINDS.some(k => rel[k] && (rel[k][p] || []).length));
+        const keyOfLabel = {};
+        REL_ORDER.forEach(p => { keyOfLabel[REL_POS_LABEL[p]] = p; });
+
+        function measure(text, size, weight, family) {
+          if (!mctx) mctx = document.createElement("canvas").getContext("2d");
+          mctx.font = weight + " " + size + "px " + family;
+          return mctx.measureText(text).width;
+        }
+
+        /* 走线避让：轨道（横向段）只能落在词框之间的空隙里。
+           不避让时上位链会穿框：父子被排在同一行 → 横线从两个词中间穿过；
+           跨两行以上 → 折线中点恰好落在中间那一行的词框上。 */
+        function hitH(bands, y, xLo, xHi, a, b) {
+          return bands.some(n => y > n.y0 && y < n.y1 && n.x1 > xLo && n.x0 < xHi && n.id !== a && n.id !== b);
+        }
+        function hitV(bands, x, yLo, yHi, a, b) {
+          return bands.some(n => x > n.x0 && x < n.x1 && yHi > n.y0 && yLo < n.y1 && n.id !== a && n.id !== b);
+        }
+        // 从 want 向两侧逐档外扩，返回第一条满足 ok() 的坐标（找不到给 null）
+        function scanNearest(lo, hi, want, ok) {
+          const a = Math.ceil(lo), b = Math.floor(hi);
+          const w = Math.round(Math.min(Math.max(want, a), b));
+          for (let d = 0; d <= Math.max(w - a, b - w); d++) {
+            if (w - d >= a && ok(w - d)) return w - d;
+            if (w + d <= b && w + d !== w - d && ok(w + d)) return w + d;
+          }
+          return null;
+        }
+        // 兜底：整张画布都挤不出空隙时，取“压框数”最少的一条（同分取离 want 近的）
+        function scanCheapest(lo, hi, want, cost) {
+          let best = null, bc = 1e9, bd = 1e9;
+          for (let v = Math.ceil(lo); v <= Math.floor(hi); v++) {
+            const c = cost(v), d = Math.abs(v - want);
+            if (c < bc || (c === bc && d < bd)) { bc = c; bd = d; best = v; }
+          }
+          return best;
+        }
+        const railCost = (bands, y, xLo, xHi, sx, tx, sy, ty, skipS, skipT) =>
+          bands.filter(n => y > n.y0 && y < n.y1 && n.x1 > xLo && n.x0 < xHi).length +
+          bands.filter(n => n.id !== skipS && sx > n.x0 && sx < n.x1 &&
+            Math.max(y, sy) > n.y0 && Math.min(y, sy) < n.y1).length +
+          bands.filter(n => n.id !== skipT && tx > n.x0 && tx < n.x1 &&
+            Math.max(y, ty) > n.y0 && Math.min(y, ty) < n.y1).length;
+        // 轨道 y：横向段不能压在任何一个词框上（含两端自己的框），两端竖直短段（s.x→轨道、轨道→t.x）也不能穿框。
+        // 窗口内没有空隙时（词性 All 之类密集布局）把搜索扩到整张画布，而不是退回压框的 want。
+        function pickRail(bands, want, yLo, yHi, xLo, xHi, sx, tx, sy, ty, skipS, skipT, lim) {
+          const clean = (y) => !hitH(bands, y, xLo, xHi, null, null) &&
+            !hitV(bands, sx, Math.min(y, sy), Math.max(y, sy), skipS, null) &&
+            !hitV(bands, tx, Math.min(y, ty), Math.max(y, ty), skipT, null);
+          const best = scanNearest(yLo, yHi, want, clean);
+          if (best !== null) return best;
+          if (!lim) return want;
+          const wide = scanNearest(lim.y0, lim.y1, want, y =>
+            !hitH(bands, y, xLo, xHi, null, null) &&
+            !hitV(bands, sx, Math.min(y, sy), Math.max(y, sy), skipS, null) &&
+            !hitV(bands, tx, Math.min(y, ty), Math.max(y, ty), skipT, null));
+          return wide === null ? scanCheapest(lim.y0, lim.y1, want,
+            y => railCost(bands, y, xLo, xHi, sx, tx, sy, ty, skipS, skipT)) : wide;
+        }
+        const laneCost = (bands, x, yLo, yHi, skipS, skipT) =>
+          bands.filter(n => n.id !== skipS && n.id !== skipT &&
+            x > n.x0 && x < n.x1 && yHi > n.y0 && yLo < n.y1).length;
+        // 竖向通道 x：找离 want 最近、整段纵向都不穿词框的 x（侧边栏 spine、下位/同位下落段共用）
+        function pickLane(bands, want, xLo, xHi, yLo, yHi, skipS, skipT, lim) {
+          const clean = (x) => !hitV(bands, x, yLo, yHi, skipS, skipT);
+          const best = scanNearest(xLo, xHi, want, clean);
+          if (best !== null) return best;
+          if (!lim) return want;
+          const wide = scanNearest(lim.x0, lim.x1, want, clean);
+          return wide === null ? scanCheapest(lim.x0, lim.x1, want,
+            x => laneCost(bands, x, yLo, yHi, skipS, skipT)) : wide;
+        }
+        // 同一行父子的水平缝是否被第三个词框占用（ elbowPath 走线用这一判定）
+        function sideCorridorOpen(bands, s, t) {
+          const dir = t.x > s.x ? 1 : -1;
+          const p = s.x + dir * (s.w / 2 + 2), q = t.x - dir * (t.w / 2 + 3);
+          return !hitH(bands, s.y, Math.min(p, q), Math.max(p, q), s.id, t.id);
+        }
+        /* 竖段让路：框的正上方/正下方被别的词框压住时，先横挪一步（挪线走 jogY），
+           再沿一条不被压的竖线走完全程；优先离原点近的空隙，实在没有才回退原 x */
+        function detourX(bands, x0, fromY, toY, jogY, skip, lim) {
+          const ok = (x) => !hitV(bands, x, Math.min(fromY, toY), Math.max(fromY, toY), skip, null) &&
+            !hitH(bands, jogY, Math.min(x0, x), Math.max(x0, x), skip, null);
+          const near = scanNearest(x0 - 95, x0 + 95, x0, ok);
+          if (near !== null) return near;
+          const wide = lim && scanNearest(lim.x0, lim.x1, x0, ok);
+          return wide === null || wide === undefined ? x0 : wide;
+        }
+
+        function render(container, opts) {
+          if (!window.d3 || !hasGraph(opts.rel)) return false;
+          const d3lib = window.d3;
+          const { rel, word, isLocal, onDrill } = opts;
+          const uid = ++uidSeq;
+          const family = getComputedStyle(container).fontFamily || "system-ui, sans-serif";
+          const plist = posListOf(rel);
+          const pref = (opts.posPref || []).map(l => keyOfLabel[l]).find(p => plist.includes(p));
+          const state = { pos: pref || plist[0], open: {}, chain: {} };
+
+          function build(poss) {
+            const nodes = new Map(), links = [];
+            const add = (w, p) => {
+              const k = String(w).toLowerCase();
+              if (!nodes.has(k))
+                nodes.set(k, { id: k, label: String(w).replace(/_/g, " "), posSet: new Set(), local: isLocal(w), zone: "side" });
+              const nd = nodes.get(k);
+              if (p) nd.posSet.add(REL_POS_LABEL[p]);
+              return nd;
+            };
+            const center = add(word);
+            center.center = true; center.x = 0; center.y = 0; center.zone = "fixed";
+
+            /* ── 上位：链 → 向上行（row = 深度），共享祖先合并 ── */
+            const chains = [], seenChain = new Set();
+            poss.forEach(p => (rel.hyper && rel.hyper[p] || []).forEach((ch, ci) => {
+              const sig = p + "|" + ch.join(">");
+              if (seenChain.has(sig) || !ch.length) return;
+              seenChain.add(sig);
+              chains.push({ key: p + "#" + ci, words: ch, p });
+            }));
+            const depthOf = new Map();
+            chains.forEach(c => {
+              const vis = Math.min(c.words.length, state.chain[c.key] || CHAIN_VIS);
+              let prev = center;
+              for (let d = 0; d < vis; d++) {
+                const nd = add(c.words[d], c.p);
+                const dep = d + 1;
+                nd.hyper = true;
+                if (!depthOf.has(nd) || depthOf.get(nd) > dep) depthOf.set(nd, dep);
+                if (nd !== prev) links.push({ kind: "hyper", s: prev, t: nd });
+                prev = nd;
+              }
+              if (c.words.length > vis) {
+                const bub = { bubble: true, id: "bub#" + c.key, chainKey: c.key, label: "+" + (c.words.length - vis), zone: "row", dep: vis + 1 };
+                nodes.set("bub#" + c.key, bub);
+                links.push({ kind: "hyper", s: prev, t: bub, ghost: true });
+              }
+            });
+
+            /* ── 四类关系：syn 右列 / ant 左列 / hypo 中心正下方横排（单行从左到右，
+               画布随内容加宽横向滚动，中段留出中央通道）/ coord 最底部独立横排（远离其他区）── */
+            const seqs = {};
+            ["syn", "ant", "hypo", "coord"].forEach(kind => {
+              const items = [], seen = new Set();
+              poss.forEach(p => (rel[kind] && rel[kind][p] || []).forEach(w => {
+                const k = String(w).toLowerCase();
+                if (!seen.has(k)) { seen.add(k); items.push({ w, p }); }
+              }));
+              if (!items.length) return;
+              const openN = state.open[kind] ? items.length : Math.min(items.length, CAP);
+              const seq = [];
+              for (let i = 0; i < openN; i++) {
+                const nd = add(items[i].w, items[i].p);
+                seq.push(nd);
+                links.push({ kind, s: center, t: nd });
+              }
+              if (openN < items.length) {
+                const bub = { bubble: true, id: "bub#" + kind, kind, label: "+" + (items.length - openN), zone: kind };
+                nodes.set("bub#" + kind, bub);
+                seq.push(bub);
+                links.push({ kind, s: center, t: bub, ghost: true });
+              }
+              seq.forEach(nd => { nd.wnKind = kind; });
+              seqs[kind] = seq;
+            });
+
+            /* ── 尺寸（须在定位前）── */
+            nodes.forEach(nd => {
+              if (nd.bubble) { nd.w = Math.max(30, measure(nd.label, 11, "600", family) + 10); nd.h = 26; return; }
+              const tag = poss.length > 1 && nd.posSet.size ? " " + [...nd.posSet].join("/") : "";
+              nd.tag = tag;
+              const tw = measure(nd.label + tag, nd.center ? 16 : 13, nd.center ? "700" : "600", family);
+              nd.w = Math.round(tw + (nd.center ? 40 : 24));
+              nd.h = nd.center ? 36 : 26;
+            });
+
+            /* ── 分区定位（结构性零重叠）：上位行在上 / ant 左列 / syn 右列 /
+               hypo 单行横排（左→右，画布增宽，中央留 120px 通道供同位曲线穿过）/
+               coord 更下方独立横排，圆角虚线走专属水平轨道 ── */
+            const rowMap = {};
+            nodes.forEach(nd => {
+              if (nd.bubble && nd.chainKey) (rowMap[nd.dep] = rowMap[nd.dep] || []).push(nd);
+              else if (nd.hyper) { const dep = depthOf.get(nd); (rowMap[dep] = rowMap[dep] || []).push(nd); }
+            });
+            let rowHalf = 0;
+            Object.keys(rowMap).map(Number).sort((a, b) => a - b).forEach(dep => {
+              const row = rowMap[dep];
+              const total = row.reduce((s, nd) => s + nd.w, 0) + 18 * (row.length - 1);
+              let x = -total / 2;
+              row.forEach(nd => { nd.x = x + nd.w / 2; nd.y = -dep * RH; x += nd.w + 18; });
+              rowHalf = Math.max(rowHalf, total / 2);
+            });
+            const colBase = rowHalf + 80;
+            const sidePlace = (kind, sign) => {
+              const seq = seqs[kind]; if (!seq) return -1e9;
+              const y0 = -((seq.length - 1) * LP) / 2;
+              seq.forEach((nd, i) => {
+                nd.zone = kind; nd.y = y0 + i * LP;
+                nd.x = sign > 0 ? colBase + nd.w / 2 : -colBase - nd.w / 2;
+              });
+              return y0 + (seq.length - 1) * LP + seq[seq.length - 1].h / 2;
+            };
+            const sideBottom = Math.max(sidePlace("syn", 1), sidePlace("ant", -1));
+            /* 横排带：保持左→右词序；withGap 时跳过中央通道区（通道内不摆节点） */
+            const CORR = 120, GAPX = 18;
+            function rowBand(seq, y, withGap) {
+              const sim = (x0) => {
+                let cur = x0; const xs = [];
+                for (const nd of seq) {
+                  if (withGap && cur < CORR / 2 && cur + nd.w > -CORR / 2) cur = CORR / 2;
+                  xs.push(cur); cur += nd.w + GAPX;
+                }
+                return { xs, total: cur - GAPX - x0 };
+              };
+              const start = -sim(0).total / 2;
+              const { xs } = sim(start);
+              seq.forEach((nd, i) => { nd.zone = "down"; nd.x = xs[i] + nd.w / 2; nd.y = y; });
+            }
+            const hypoY = Math.max(sideBottom, center.h / 2) + 76;
+            let hypoBottom = -1e9;
+            if (seqs.hypo) {
+              rowBand(seqs.hypo, hypoY, true);
+              hypoBottom = seqs.hypo.reduce((m, nd) => Math.max(m, nd.y + nd.h / 2), -1e9);
+            }
+            const coordY = Math.max(hypoBottom, sideBottom, center.h / 2) + 108;
+            if (seqs.coord) rowBand(seqs.coord, coordY, false);
+            const meta = {
+              synSpine: colBase - 34, antSpine: -(colBase - 34),
+              hypoRail: hypoY - 34, coordRail: coordY - 44
+            };
+
+            /* ── 碰撞推挤：非上位侧项沿自身轴（纵列=下移，左右列=外侧移）── */
+            const placeable = [];
+            nodes.forEach(nd => { if (!nd.center && nd.x !== undefined) placeable.push(nd); });
+            const movable = (nd) => nd.zone === "down" || nd.zone === "syn" || nd.zone === "ant" || nd.zone === "hypo" || nd.zone === "coord";
+            for (let iter = 0; iter < 16; iter++) {
+              let dirty = false;
+              for (let i = 0; i < placeable.length; i++) {
+                for (let j = i + 1; j < placeable.length; j++) {
+                  let a = placeable[i], b = placeable[j];
+                  const ox = (a.w + b.w) / 2 + GAP - Math.abs(a.x - b.x);
+                  const oy = (a.h + b.h) / 2 + GAP - Math.abs(a.y - b.y);
+                  if (ox <= 0 || oy <= 0) continue;
+                  if (a.hyper && b.hyper) continue;
+                  if (!movable(a) && !movable(b)) continue;
+                  let mv = movable(a) ? a : b;
+                  const other = mv === a ? b : a;
+                  dirty = true;
+                  if (mv.zone === "down") mv.y = other.y + other.h / 2 + mv.h / 2 + 10;
+                  else { const dir = mv.y >= other.y ? 1 : -1; mv.y = other.y + dir * (other.h / 2 + mv.h / 2 + 10); }
+                }
+              }
+              if (!dirty) break;
+            }
+
+            /* ── 走线走廊：词框四周各外扩 4px 呼吸位，连线只在空隙里走 ──
+               用函数取：拖拽后坐标变了，走廊要跟着当前坐标重算（nodes 是 Map） */
+            meta.bandsOf = () => {
+              const arr = [];
+              nodes.forEach(nd => {
+                if (nd.x === undefined) return;
+                arr.push({ id: nd.id, x0: nd.x - nd.w / 2 - 4, x1: nd.x + nd.w / 2 + 4,
+                  y0: nd.y - nd.h / 2 - 4, y1: nd.y + nd.h / 2 + 4 });
+              });
+              return arr;
+            };
+
+            /* ── 尺寸盒（bbox）── */
+            let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+            nodes.forEach(nd => {
+              if (nd.x === undefined) return;
+              minX = Math.min(minX, nd.x - nd.w / 2); maxX = Math.max(maxX, nd.x + nd.w / 2);
+              minY = Math.min(minY, nd.y - nd.h / 2); maxY = Math.max(maxY, nd.y + nd.h / 2);
+            });
+            /* 走线可用范围：画布比内容盒各侧多留 40/45px，绕行的轨道/通道不能越出这个盒子 */
+            meta.route = { x0: minX - 38, x1: maxX + 38, y0: minY - 42, y1: maxY + 42 };
+            return { nodes, links, center, bbox: { minX, minY, maxX, maxY }, meta };          }
+
+          // 连接线路径：肘线统一加 8px 圆角（coord 轨道保留原有更宽的圆角）
+          // 完全由节点当前坐标驱动 → 拖拽任意节点时连线实时跟随
+          const RND = 8;
+          function roundPath(pts) {
+            let d = `M${pts[0][0]},${pts[0][1]}`;
+            for (let i = 1; i < pts.length - 1; i++) {
+              const [px, py] = pts[i - 1], [ax, ay] = pts[i], [bx, by] = pts[i + 1];
+              const inL = Math.abs(ax - px) + Math.abs(ay - py);
+              const outL = Math.abs(bx - ax) + Math.abs(by - ay);
+              const r = Math.min(RND, inL / 2, outL / 2);
+              if (r < 1) { d += `L${ax},${ay}`; continue; }
+              d += `L${ax + (px - ax) * r / inL},${ay + (py - ay) * r / inL}`
+                + `Q${ax},${ay} ${ax + (bx - ax) * r / outL},${ay + (by - ay) * r / outL}`;
+            }
+            const last = pts[pts.length - 1];
+            return d + `L${last[0]},${last[1]}`;
+          }
+
+          function elbowPath(L, center, meta) {
+            const cx = center.x, cy = center.y;
+            const bands = meta.bandsOf ? meta.bandsOf() : [];
+            const lim = meta.route;
+            const t = L.t;
+            if (L.kind === "hyper") {
+              const s = L.s;
+              const xLo = Math.min(s.x, t.x), xHi = Math.max(s.x, t.x);
+              if (Math.abs(s.y - t.y) < 2) { // 父子同一行：走两框之间的水平缝，被占则从行的上方绕
+                if (sideCorridorOpen(bands, s, t)) {
+                  const dir = t.x > s.x ? 1 : -1;
+                  return `M${s.x + dir * (s.w / 2 + 2)},${s.y}H${t.x - dir * (t.w / 2 + 3)}`;
+                }
+                const top = Math.min(s.y - s.h / 2, t.y - t.h / 2) - 2;
+                const sy2 = s.y - s.h / 2 - 2, ty2 = t.y - t.h / 2 - 3;
+                const rail = pickRail(bands, top - 14, top - 40, top - 5, xLo - 4, xHi + 4, s.x, t.x, sy2, ty2, s.id, t.id, lim);
+                return roundPath([[s.x, sy2], [s.x, rail], [t.x, rail], [t.x, ty2]]);
+              }
+              const sy = s.y - s.h / 2 - 2, ty = t.y + t.h / 2 + 3;
+              const lo = Math.min(sy, ty) + 1, hi = Math.max(sy, ty) - 1;
+              if (Math.abs(s.x - t.x) < 2) { // 同列直上：中间夹着别的词时先侧移让路
+                if (!hitV(bands, s.x, lo, hi, s.id, t.id)) return `M${s.x},${sy}V${ty}`;
+                const jog = s.x + 30;
+                const rail = pickRail(bands, (sy + ty) / 2, lo, hi, Math.min(s.x, jog), Math.max(s.x, jog), s.x, t.x, sy, ty, s.id, t.id, lim);
+                return roundPath([[s.x, sy], [s.x, rail], [jog, rail], [jog, ty], [t.x, ty]]);
+              }
+              const wantY = (sy + ty) / 2;
+              const midY = pickRail(bands, wantY, lo, hi, xLo, xHi, s.x, t.x, sy, ty, s.id, t.id, lim);
+              if (!hitV(bands, s.x, midY, sy, s.id, t.id) && !hitV(bands, t.x, midY, ty, t.id, s.id)) {
+                return roundPath([[s.x, sy], [s.x, midY], [t.x, midY], [t.x, ty]]);
+              }
+              // 竖段仍被第三个词框压住（父子之间夹着别的列）：两端各自横挪一步再走轨道
+              const sJog = sy + Math.sign(wantY - sy) * 9, tJog = ty + Math.sign(wantY - ty) * 9;
+              const sLane = detourX(bands, s.x, sy, wantY, sJog, s.id, lim);
+              const tLane = detourX(bands, t.x, ty, wantY, tJog, t.id, lim);
+              const rail = pickRail(bands, wantY, Math.min(sJog, tJog) + 1, Math.max(sJog, tJog) - 1,
+                Math.min(sLane, tLane), Math.max(sLane, tLane), sLane, tLane, sJog, tJog, s.id, t.id, lim);
+              return roundPath([[s.x, sy], [s.x, sJog], [sLane, sJog], [sLane, rail],
+                [tLane, rail], [tLane, tJog], [t.x, tJog], [t.x, ty]]);
+            }
+            const sy = cy + center.h / 2 + 2;
+            if (L.kind === "hypo") {
+              const ty = t.y - t.h / 2 - 3;
+              if (Math.abs(t.x - cx) < 6 && !hitV(bands, cx, sy, ty, center.id, t.id)) return `M${cx},${sy}V${ty}`;
+              const rail = pickRail(bands, meta.hypoRail, Math.min(sy, ty) + 1, Math.max(sy, ty) - 1,
+                Math.min(cx, t.x), Math.max(cx, t.x), cx, t.x, sy, ty, center.id, t.id, lim);
+              return roundPath([[cx, sy], [cx, rail], [t.x, rail], [t.x, ty]]);
+            }
+            if (L.kind === "coord") {
+              const ty = t.y - t.h / 2 - 3;
+              if (Math.abs(t.x - cx) < 26 && !hitV(bands, cx, sy, ty, center.id, t.id)) return `M${cx},${sy}V${ty}`;
+              const g = t.x > cx ? 1 : -1;
+              const rail = pickRail(bands, meta.coordRail, sy + 19, Math.max(ty - 19, sy + 19),
+                Math.min(cx, t.x), Math.max(cx, t.x), cx, t.x, sy, ty, center.id, t.id, lim);
+              // 目标框正上方被别的词框挡住：竖线整体挪到最近的空隙，再从框上方横向进框
+              if (Math.abs(t.x - cx) < 26 || hitV(bands, t.x, rail + 18, ty, center.id, t.id)) {
+                const lane = pickLane(bands, cx, cx - 70, cx + 70, sy, ty, center.id, t.id, lim);
+                return roundPath([[cx, sy], [lane, sy], [lane, ty - 20], [t.x, ty - 20], [t.x, ty]]);
+              }
+              return `M${cx},${sy}V${rail - 18}Q${cx},${rail} ${cx + g * 18},${rail}H${t.x - g * 18}Q${t.x},${rail} ${t.x},${rail + 18}V${ty}`;
+            }
+            const spineWanted = L.kind === "syn" ? meta.synSpine : meta.antSpine;
+            const startX = L.kind === "syn" ? cx + center.w / 2 + 2 : cx - center.w / 2 - 2;
+            const endX = L.kind === "syn" ? t.x - t.w / 2 - 3 : t.x + t.w / 2 + 3;
+            // 竖向通道：从中心行一路拉到目标行，压到别的词框就换旁边最近的一条空隙；
+            // 同一段还要保证中心→通道的横向进料不压框
+            const laneWant = spineWanted;
+            const laneOk = (x) => !hitV(bands, x, Math.min(cy, t.y), Math.max(cy, t.y), center.id, t.id) &&
+              !hitH(bands, cy, Math.min(startX, x), Math.max(startX, x), center.id, t.id);
+            let lane = scanNearest(laneWant - 60, laneWant + 60, laneWant, laneOk);
+            if (lane === null && lim) lane = scanNearest(lim.x0, lim.x1, laneWant, laneOk);
+            if (lane === null) lane = pickLane(bands, laneWant, laneWant - 60, laneWant + 60,
+              Math.min(cy, t.y), Math.max(cy, t.y), center.id, t.id, lim);
+            const loX = Math.min(lane, endX), hiX = Math.max(lane, endX);
+            if (hitH(bands, t.y, loX, hiX, center.id, t.id)) { // 侧向进料被挡：改从该词的外侧边进入
+              const dirY = t.y > cy ? 1 : -1; // 词在中心下方 → 绕到它的下边
+              const side = t.y + dirY * (t.h / 2 + 3);
+              const yLo = dirY > 0 ? side + 4 : side - 40;
+              const yHi = dirY > 0 ? side + 40 : side - 4;
+              const rail = pickRail(bands, side + dirY * 14, yLo, yHi, loX, hiX, lane, t.x, cy, side, center.id, t.id, lim);
+              return roundPath([[startX, cy], [lane, cy], [lane, rail], [t.x, rail], [t.x, side]]);
+            }
+            return roundPath([[startX, cy], [lane, cy], [lane, t.y], [endX, t.y]]);
+          }
+
+          let scrEl = null, firstPaint = true;
+          // 展开后画布变高 → 页面自动上移恰好等于新增高度，视野里的内容原地不动
+          function growPage(px) {
+            if (px <= 1) return;
+            let a = container.parentElement;
+            while (a) {
+              const oy = getComputedStyle(a).overflowY;
+              if ((oy === "auto" || oy === "scroll") && a.scrollHeight > a.clientHeight + 1) { a.scrollBy({ top: px, behavior: "smooth" }); return; }
+              a = a.parentElement;
+            }
+            (document.scrollingElement || document.documentElement).scrollBy({ top: px, behavior: "smooth" });
+          }
+
+          function paint() {
+            const prevSL = scrEl ? scrEl.scrollLeft : null;
+            container.innerHTML = "";
+            // 图卡片：不透明背景 + 系统色边框 + 裁剪，滚动时不与释义穿叠
+            const card = document.createElement("div");
+            card.className = "wn-graph";
+            container.appendChild(card);
+            const poss = state.pos === "all" ? plist : [state.pos];
+            const { nodes, links, center, bbox, meta } = build(poss);
+            const W0 = Math.max(320, (container.clientWidth || 480) - 14); // 扣除卡片内边距/边框
+            const W = Math.max(W0, (bbox.maxX - bbox.minX) + 80); // 空间不够 → 画布随内容加宽
+            const H = Math.max(BASE_H, (bbox.maxY - bbox.minY) + 90);
+
+            if (plist.length > 1) {
+              const bar = document.createElement("div");
+              bar.className = "wn-posbar";
+              plist.forEach(p => {
+                const b = document.createElement("button");
+                b.type = "button"; b.textContent = REL_POS_LABEL[p];
+                b.className = state.pos === p ? "on" : "";
+                b.addEventListener("click", () => { state.pos = p; paint(); });
+                bar.appendChild(b);
+              });
+              const bAll = document.createElement("button");
+              bAll.type = "button"; bAll.textContent = "All";
+              bAll.className = state.pos === "all" ? "on" : "";
+              bAll.addEventListener("click", () => { state.pos = "all"; paint(); });
+              bar.appendChild(bAll);
+              card.appendChild(bar);
+            }
+
+            const scr = d3lib.select(card).append("div").attr("class", "wn-scroll")
+              .style("width", W0 + "px").style("height", H + "px");
+            const svg = scr.append("svg")
+              .attr("class", "wn-svg").attr("viewBox", `0 0 ${W} ${H}`)
+              .style("width", W + "px").style("height", H + "px");
+            const centerScroll = () => { scr.node().scrollLeft = Math.max(0, (W - W0) / 2); };
+            scrEl = scr.node();
+            if (firstPaint) { centerScroll(); firstPaint = false; }
+            else scrEl.scrollLeft = prevSL; // 重绘（展开/换词性）保持横向视野
+            const defs = svg.append("defs");
+            const filt = defs.append("filter").attr("id", `wnGlow${uid}`)
+              .attr("x", "-70%").attr("y", "-70%").attr("width", "240%").attr("height", "240%");
+            filt.append("feDropShadow").attr("class", "wn-glow")
+              .attr("dx", 0).attr("dy", 0)
+              .attr("stdDeviation", 7).attr("flood-opacity", 0.4);
+            const mkMarker = (name, cls) => {
+              defs.append("marker").attr("id", name).attr("viewBox", "0 0 10 10")
+                .attr("refX", 5).attr("refY", 5).attr("markerWidth", 7).attr("markerHeight", 7)
+                .attr("orient", "auto-start-reverse")
+                .append("circle").attr("cx", 5).attr("cy", 5).attr("r", 2.6).attr("class", cls);
+            };
+            mkMarker(`wnAH${uid}`, "wn-mk-hyper");
+            mkMarker(`wnAG${uid}`, "wn-mk-hypo");
+
+            const g = svg.append("g");
+            const lg = g.append("g");
+            const linkItems = [];
+            links.forEach(L => {
+              const pel = lg.append("path").attr("class", "wn-link wn-link-" + L.kind)
+                .attr("d", elbowPath(L, center, meta))
+                .attr("fill", "none")
+                .attr("stroke-width", 1)
+                .attr("stroke-dasharray", L.kind === "ant" ? "5 4" : L.kind === "coord" ? "6 5" : L.ghost ? "2 3" : null)
+                .attr("opacity", L.ghost ? 0.55 : 0.85)
+                .attr("data-s", L.s.id).attr("data-t", L.t.id)
+                .attr("marker-end", !L.ghost && L.kind === "hyper" ? `url(#wnAH${uid})`
+                  : !L.ghost && L.kind === "hypo" && L.s.center ? `url(#wnAG${uid})` : null);
+              linkItems.push({ L, el: pel });
+            });
+
+            // 拖拽：任意节点（含中心词/气泡）可拖动，相关连线逐帧重算路径
+            const dragBehavior = d3lib.drag()
+              .on("drag", function (ev, nd) {
+                nd.x = ev.x; nd.y = ev.y;
+                d3lib.select(this).attr("transform", `translate(${nd.x},${nd.y})`);
+                linkItems.forEach(it => {
+                  if (it.L.s === nd || it.L.t === nd) it.el.attr("d", elbowPath(it.L, center, meta));
+                });
+              });
+
+            let moved = false, downXY = null;
+            const svgNode = svg.node();
+            svgNode.addEventListener("pointerdown", e => { downXY = [e.clientX, e.clientY]; moved = false; });
+            svgNode.addEventListener("pointermove", e => {
+              if (downXY && Math.hypot(e.clientX - downXY[0], e.clientY - downXY[1]) > 4) moved = true;
+            });
+
+            const ng = g.append("g");
+            nodes.forEach(nd => {
+              const kindCls = (nd.hyper || nd.chainKey) ? " wn-k-hyper" : nd.wnKind ? " wn-k-" + nd.wnKind : "";
+              const el = ng.append("g").datum(nd)
+                .attr("transform", `translate(${nd.x},${nd.y})`)
+                .attr("class", (nd.bubble ? "wn-bub"
+                  : "wn-node" + (nd.center ? " wn-center" : nd.local ? "" : " wn-ext")) + kindCls);
+              el.call(dragBehavior);
+              if (nd.bubble) {
+                el.append("circle").attr("r", 14);
+                el.append("text").attr("text-anchor", "middle").attr("dominant-baseline", "central")
+                  .attr("font-size", 11).attr("font-weight", 600)
+                  .text(nd.label);
+                el.on("click", () => {
+                  if (moved) return;
+                  const before = container.offsetHeight;
+                  if (nd.kind) state.open[nd.kind] = true;
+                  else state.chain[nd.chainKey] = (state.chain[nd.chainKey] || CHAIN_VIS) + 2;
+                  paint();
+                  growPage(container.offsetHeight - before);
+                });
+                return;
+              }
+              el.append("rect").attr("x", -nd.w / 2).attr("y", -nd.h / 2)
+                .attr("width", nd.w).attr("height", nd.h).attr("rx", nd.h / 2)
+                .attr("class", nd.center ? "wn-core" : null)
+                .attr("stroke-dasharray", !nd.center && !nd.local ? "4 3" : null);
+              if (nd.center) el.append("rect").attr("class", "wn-halo")
+                .attr("x", -nd.w / 2).attr("y", -nd.h / 2)
+                .attr("width", nd.w).attr("height", nd.h).attr("rx", nd.h / 2)
+                .attr("fill", "none").attr("filter", `url(#wnGlow${uid})`);
+              const txt = el.append("text").attr("text-anchor", "middle")
+                .attr("dominant-baseline", "central")
+                .attr("font-size", nd.center ? 16 : 13).attr("font-weight", nd.center ? 700 : 600);
+              txt.append("tspan").text(nd.label);
+              if (nd.tag) txt.append("tspan").attr("class", "wn-tag")
+                .attr("font-size", 10).attr("font-weight", 500).text(nd.tag);
+              if (!nd.center) {
+                el.on("click", () => { if (!moved) onDrill(nd.id); });
+                el.on("mouseenter", () => {
+                  svg.classed("wn-hovering", true);
+                  lg.selectAll(".wn-link").classed("wn-lit", function () {
+                    return this.getAttribute("data-s") === nd.id || this.getAttribute("data-t") === nd.id;
+                  });
+                }).on("mouseleave", () => {
+                  svg.classed("wn-hovering", false);
+                  lg.selectAll(".wn-link.wn-lit").classed("wn-lit", false);
+                });
+              }
+            });
+
+            // 自动适配可见区域 + 缩放/平移
+            const bw = bbox.maxX - bbox.minX, bh = bbox.maxY - bbox.minY;
+            const k = Math.min(1, (W - 24) / bw, (H - 24) / bh);
+            const cxm = (bbox.minX + bbox.maxX) / 2, cym = (bbox.minY + bbox.maxY) / 2;
+            const baseT = d3lib.zoomIdentity.translate(W / 2 - cxm * k, H / 2 - cym * k).scale(k);
+            const zoom = d3lib.zoom().scaleExtent([0.35, 2.5])
+              .on("zoom", ev => g.attr("transform", ev.transform));
+            svg.call(zoom).call(zoom.transform, baseT);
+
+            const rst = document.createElement("button");
+            rst.type = "button"; rst.className = "wn-reset"; rst.textContent = "Reset view";
+            rst.addEventListener("click", () => { svg.transition().duration(250).call(zoom.transform, baseT); centerScroll(); });
+
+            const kindsPresent = KINDS.filter(kd => links.some(L => L.kind === kd && !L.ghost));
+            const legend = document.createElement("div");
+            legend.className = "wn-legend";
+            legend.innerHTML = `<span class="wn-lg-row">` + kindsPresent.map(kd =>
+              `<span class="wn-lg wn-lg-${kd}"><i></i>${LABELS[kd]}</span>`).join("") +
+              `<span class="wn-lg wn-lg-ext"><i class="wn-dash"></i>WordNet extension</span>` +
+              `</span>` +
+              `<span class="wn-hint"><button type="button" class="wn-hint-btn" aria-expanded="false">ⓘ Approximate relations</button>` +
+              `<span class="wn-tip" role="tooltip">These relations come from the WordNet database. They are approximate &mdash; judge each one in context.</span></span>`;
+            const hintBtn = legend.querySelector(".wn-hint-btn");
+            const tip = legend.querySelector(".wn-tip");
+            const closeTip = () => { tip.classList.remove("on"); hintBtn.setAttribute("aria-expanded", "false"); };
+            hintBtn.addEventListener("click", () => {
+              const open = !tip.classList.contains("on");
+              tip.classList.toggle("on", open);
+              hintBtn.setAttribute("aria-expanded", open ? "true" : "false");
+            });
+            card.addEventListener("click", (e) => { if (!e.target.closest(".wn-hint")) closeTip(); });
+            card.addEventListener("keydown", (e) => { if (e.key === "Escape") closeTip(); });
+            card.appendChild(legend);
+            card.appendChild(rst); // 绝对定位于卡片右上角
+          }
+
+          paint();
+          return true;
+        }
+
+        return { render, hasGraph };
+      })();
 
       const Explorer = (() => {
         let path = []; // 探索路径（词串），栈顶 = 当前主词
@@ -2527,15 +3189,15 @@ function renderSuffixControls(filterText = "") {
             .map(p => `<span class="detail-pos-tag">${POS_ZH[p] || p}</span>`)
             .join("");
           const defHTML = item.def
-            ? `<div class="detail-section"><div class="detail-section-title">释义</div><div class="detail-def">${esc(item.def)}</div></div>`
+            ? `<div class="detail-section"><div class="detail-section-title">Definition</div><div class="detail-def">${esc(item.def)}</div></div>`
             : "";
           const examples = buildDetailExamples(item.word);
           const exampleHTML = examples.length
-            ? `<div class="detail-section"><div class="detail-section-title">例句</div>` +
+            ? `<div class="detail-section"><div class="detail-section-title">Examples</div>` +
               examples.map(({ text, source }) => {
                 let icon = "•", cls = "";
-                if (source === "ai-spoken") { icon = "口语"; cls = "spoken"; }
-                else if (source === "ai-written") { icon = "书面"; cls = "written"; }
+                if (source === "ai-spoken") { icon = "Spoken"; cls = "spoken"; }
+                else if (source === "ai-written") { icon = "Written"; cls = "written"; }
                 else if (source === "ecdict") { icon = "ECD"; cls = "ecdict"; }
                 const wordRegex = new RegExp(`(${esc(item.word).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
                 const hl = esc(text).replace(wordRegex, '<span class="example-hl">$1</span>');
@@ -2555,14 +3217,10 @@ function renderSuffixControls(filterText = "") {
               <div class="detail-word">${detailWordHTML}</div>
               ${posTags ? `<div class="detail-pos">${posTags}</div>` : ""}
               ${phonetic ? `<span class="detail-phonetic">${esc(phonetic)}</span>` : ""}
-              <button class="detail-play-btn" type="button" title="播放发音" aria-label="播放发音">
+              <button class="detail-play-btn" type="button" title="Play pronunciation" aria-label="Play pronunciation">
                 ${icon("speaker-wave", 16)}
               </button>
-              <div class="detail-links">
-                <a href="https://dict.eudic.net/dicts/en/${w}" target="_blank" class="dict-link-btn"><span>Eudic</span></a>
-                <a href="https://www.onelook.com/?w=${w}&phrases=1" target="_blank" class="dict-link-btn"><span>OneLook</span></a>
-                <a href="https://www.ldoceonline.com/dictionary/${w}" target="_blank" class="dict-link-btn"><span>Longman</span></a>
-              </div>
+              <div class="detail-links">${dictLinksHTML(w)}</div>
             </div>
           </div>
           <div class="detail-body">
@@ -2611,7 +3269,7 @@ function renderSuffixControls(filterText = "") {
             });
             inner += `</div>`;
           }
-          return inner ? `<div class="exp-group"><div class="exp-group-title">上位词链</div>${inner}</div>` : "";
+          return inner ? `<div class="exp-group"><div class="exp-group-title">Hypernym chain</div>${inner}</div>` : "";
         }
 
         // 关系区块（近/反义 + 上位词链/同位词/精选下位词），浮层与行内展开共用
@@ -2621,7 +3279,7 @@ function renderSuffixControls(filterText = "") {
           const hasAnt = rel && rel.ant && Object.keys(rel.ant).length;
           // 无近义 / 反义关系时不显示任何提示
           const explore = hasSyn || hasAnt
-            ? `<div class="exp-section">${relBlock("近义词", "syn", rel)}${relBlock("反义词", "ant", rel)}</div>`
+            ? `<div class="exp-section">${relBlock("Synonyms", "syn", rel)}${relBlock("Antonyms", "ant", rel)}</div>`
             : "";
 
           // 词库层级：上位词链 / 同位词 / 精选下位词（空缺组不渲染、无提示）
@@ -2629,14 +3287,62 @@ function renderSuffixControls(filterText = "") {
           const hasCoord = rel && rel.coord && Object.keys(rel.coord).length;
           const hasHypo = rel && rel.hypo && Object.keys(rel.hypo).length;
           const hierarchy = hasHyper || hasCoord || hasHypo
-            ? `<div class="exp-section">${hyperBlock(rel)}${relBlock("同位词", "coord", rel)}${relBlock("精选下位词", "hypo", rel)}</div>`
+            ? `<div class="exp-section">${hyperBlock(rel)}${relBlock("Coordinate terms", "coord", rel)}${relBlock("Selected hyponyms", "hypo", rel)}</div>`
             : "";
           return explore + hierarchy;
         }
 
         // 行内展开用：某词的完整详情 HTML（无面包屑、无关闭按钮）
         function inlineHTML(w) {
-          return coreHTML(buildItem(w), false) + relationsHTML(w);
+          return coreHTML(buildItem(w), false) + relationsSection(w);
+        }
+
+        // 关系区 + List/Graph 双 tab 外壳（窄容器/无 d3 时由 bindWnUI 退化为纯列表）
+        function relationsSection(w) {
+          const list = relationsHTML(w);
+          if (!list) return "";
+          return `<div class="wn-wrap" data-word="${esc(w)}">` +
+            `<div class="wn-tabs"><button class="wn-tab" type="button" data-mode="list">List</button>` +
+            `<button class="wn-tab" type="button" data-mode="graph">Graph</button></div>` +
+            `<div class="wn-rel-body">${list}</div></div>`;
+        }
+
+        function bindWnUI(scope, onDrill) {
+          scope.querySelectorAll(".wn-wrap").forEach(wrap => {
+            // 关联区（tab/词性/折叠气泡/图节点/关系词）内的点击不得冒泡到卡片行，
+            // 否则会触发 toggleRowDetail 收起；部分控件点击即重渲染、目标被 detach，
+            // 卡片层 .card-detail 判定失效，故统一在此截断冒泡。
+            wrap.addEventListener("click", (e) => e.stopPropagation());
+            const w = wrap.dataset.word;
+            const rel = relOf(w);
+            const body = wrap.querySelector(".wn-rel-body");
+            const tabs = wrap.querySelector(".wn-tabs");
+            const ok = !!window.d3 && WnGraph.hasGraph(rel) && wrap.clientWidth >= 480;
+            if (!ok) { tabs.remove(); return; }
+            let mounted = false;
+            const setMode = (mode) => {
+              wrap.classList.toggle("wn-graph-mode", mode === "graph");
+              tabs.querySelectorAll(".wn-tab").forEach(t => t.classList.toggle("on", t.dataset.mode === mode));
+              if (mode === "graph") {
+                if (!mounted) {
+                  WnGraph.render(body, { word: w, rel, isLocal, onDrill, posPref: buildItem(w).pos });
+                  mounted = true;
+                }
+              } else {
+                body.innerHTML = relationsHTML(w);
+                mounted = false; // 图形 DOM 已被列表替换，切回 Graph 时必须重渲染
+                body.querySelectorAll(".rel-word").forEach(b =>
+                  b.addEventListener("click", () => onDrill(b.dataset.word)));
+              }
+            };
+            tabs.querySelectorAll(".wn-tab").forEach(t => t.addEventListener("click", () => {
+              try { localStorage.setItem("wn-view-mode", t.dataset.mode); } catch (e) {}
+              setMode(t.dataset.mode);
+            }));
+            let saved = "list";
+            try { saved = localStorage.getItem("wn-view-mode") === "graph" ? "graph" : "list"; } catch (e) {}
+            setMode(saved);
+          });
         }
 
         function render() {
@@ -2652,7 +3358,7 @@ function renderSuffixControls(filterText = "") {
           const isMobile = window.innerWidth <= 1024;
 
           // 面包屑（顶部常驻单行可滚动）
-          let crumbs = `<button class="exp-crumb exp-home" data-act="home">首页</button>`;
+          let crumbs = `<button class="exp-crumb exp-home" data-act="home">Home</button>`;
           path.forEach((ww, i) => {
             const cur = i === path.length - 1;
             crumbs += `<span class="exp-sep">›</span>` +
@@ -2663,7 +3369,7 @@ function renderSuffixControls(filterText = "") {
 
           const core = coreHTML(item, isMobile);
 
-          content.innerHTML = `<div class="exp-breadcrumb">${crumbs}</div>${core}${relationsHTML(word)}`;
+          content.innerHTML = `<div class="exp-breadcrumb">${crumbs}</div>${core}${relationsSection(word)}`;
 
           // 事件绑定
           content.querySelector(".detail-play-btn")?.addEventListener("click", () => playDetailWord(word));
@@ -2673,6 +3379,7 @@ function renderSuffixControls(filterText = "") {
             b.addEventListener("click", () => goto(parseInt(b.dataset.i, 10))));
           content.querySelectorAll(".rel-word").forEach(b =>
             b.addEventListener("click", () => drill(b.dataset.word)));
+          bindWnUI(content, w => drill(w));
         }
 
         function start(w) { path = [w]; render(); }
@@ -2683,9 +3390,8 @@ function renderSuffixControls(filterText = "") {
         function goto(i) { path = path.slice(0, i + 1); render(); }
         function home() { path = []; closeDetailPanel(); }
 
-        return { start, drill, goto, home, render, inlineHTML };
+        return { start, drill, goto, home, render, inlineHTML, bindWn: bindWnUI };
       })();
-
       // IntersectionObserver-based IPA — no hard cap, loads as cards enter viewport
       const ipaObserver = new IntersectionObserver(
         (entries) => {
@@ -2811,7 +3517,7 @@ function renderSuffixControls(filterText = "") {
           }
           const head = document.createElement("div");
           head.className = "category-head";
-          head.innerHTML = `<span class="category-head-name">${esc(title)}</span><span class="category-head-count">${filteredVocab.length} 词</span>`;
+          head.innerHTML = `<span class="category-head-name">${esc(title)}</span><span class="category-head-count">${filteredVocab.length} words</span>`;
           document.getElementById("grid").appendChild(head);
         }
 
@@ -2865,6 +3571,7 @@ function renderSuffixControls(filterText = "") {
         }
 
         if (showAllDef) grid.classList.add("show-all-def");
+        requestAnimationFrame(() => fitDictLinks(grid));
       }
 
       /* ═══════════════════════════════════════
@@ -2913,32 +3620,30 @@ function renderSuffixControls(filterText = "") {
           : "";
 
         card.innerHTML = `
-    <button class="card-review" type="button" title="加入生词本" aria-label="加入生词本" aria-pressed="false">${icon("check", 12)}</button>
+    <button class="card-review" type="button" title="Add to wordlist" aria-label="Add to wordlist" aria-pressed="false">${icon("check", 12)}</button>
     <div class="card-inner">
         <div class="word-header">
             <div class="word-text">${wordHTML}</div>
             ${comboTag}
         </div>
         <div class="word-phonetic" data-word="${esc(item.word)}">...</div>
-        <button class="word-speak" type="button" title="播放发音" aria-label="播放发音">${icon("speaker-wave", 13)}</button>
+        <button class="word-speak" type="button" title="Play pronunciation" aria-label="Play pronunciation">${icon("speaker-wave", 13)}</button>
         <div class="word-def">${esc(item.def)}</div>
         <div class="card-examples" style="display:none">
           <div class="example-skeleton"></div>
         </div>
         <div class="card-links">
-            <a href="https://dict.eudic.net/dicts/en/${w}" target="_blank" class="dict-link en-cn" title="Eudic">中文</a>
-            <a href="https://www.onelook.com/?w=${w}&phrases=1" target="_blank" class="dict-link en-en" title="OneLook">EN</a>
-            <a href="https://www.ldoceonline.com/dictionary/${w}" target="_blank" class="dict-link en-cn" title="Longman">Longman</a>
-            <button type="button" class="dict-link review-link" title="加入生词本" aria-pressed="false">${icon("check", 10)}生词</button>
+            ${dictLinksHTML(w)}
+            <button type="button" class="review-link" title="Add to wordlist" aria-pressed="false">${icon("check", 10)}<span class="review-label">Add</span></button>
         </div>
         <div class="card-detail"></div>
     </div>`;
-        // ── 生词本切换：桌面 = 右上角圆圈；平板/手机(≤1024px) = 链接排里的「生词」按钮（圆圈隐藏，避免与 Longman 重叠）──
+        // ── 生词本切换：桌面 = 右上角圆圈；平板/手机(≤1024px) = 链接排末尾的圆形勾选按钮（窄屏只留图标，给三个词典名让出宽度）──
         const reviewCircle = card.querySelector(".card-review");
         const reviewPill = card.querySelector(".review-link");
         const paintReview = (on) => {
           card.classList.toggle("reviewed", on);
-          const label = on ? "移出生词本" : "加入生词本";
+          const label = on ? "Remove from wordlist" : "Add to wordlist";
           [reviewCircle, reviewPill].forEach((el) => {
             if (!el) return;
             el.setAttribute("aria-pressed", on ? "true" : "false");
@@ -3013,6 +3718,8 @@ function renderSuffixControls(filterText = "") {
                card.addEventListener("click", (e) => {
           if (e.target.closest("a")) return;
           if (e.target.closest(".word-speak")) { playWord(); return; }
+          // 已展开时，详情区内部的点击（tab/折叠气泡/图节点/关系词）不触发收起
+          if (card.classList.contains("expanded") && e.target.closest(".card-detail")) return;
 
           // ✅ 手机端行式模式：点行 → 行内展开/收起完整详情（播放、拼写模式下不拦截）
           if (window.innerWidth <= 1024 &&
@@ -3723,7 +4430,7 @@ function openSpellExitDialog(words) {
       `<input type="checkbox" class="se-check" data-key="${esc(reviewKey(v.word))}"${inReview ? " checked disabled" : " checked"}>` +
       `<span class="se-word">${esc(v.word)}</span>` +
       `<span class="se-def">${esc(v.def || "")}</span>` +
-      (inReview ? `<span class="se-tag">已在生词本</span>` : "");
+      (inReview ? `<span class="se-tag">Already in wordlist</span>` : "");
     listEl.appendChild(label);
   });
   document.getElementById("spellExitCount").textContent = words.length;
@@ -4159,4 +4866,123 @@ document.addEventListener("keydown", (e) => {
         document.getElementById("grid").innerHTML =
           `<div class="empty-state"><div class="icon">${icon("exclamation-triangle", 40)}</div><p>${msg}</p></div>`;
       }
+
+      /* ══════════════════════════════════════════════
+         CUSTOM TOOLTIP — 接管全站原生 title 提示
+         单个浮层挂 body + 事件委托：不动那 70+ 处 title，
+         且绕开侧栏/标签栏的 overflow 裁剪。
+      ══════════════════════════════════════════════ */
+      const Tip = (() => {
+        const SHOW_DELAY = 400;
+        const GAP = 8;
+        const EDGE = 8;
+        let el = null;
+        let target = null;
+        let saved = null;
+        let timer = null;
+
+        function node() {
+          if (!el) {
+            el = document.createElement("div");
+            el.className = "app-tip";
+            el.setAttribute("role", "tooltip");
+            document.body.appendChild(el);
+          }
+          return el;
+        }
+
+        function place(rect) {
+          const n = el;
+          const w = n.offsetWidth;
+          const h = n.offsetHeight;
+          const vw = window.innerWidth;
+          const vh = window.innerHeight;
+          let top = rect.top - h - GAP;
+          let side = "top";
+          if (top < EDGE) {
+            top = rect.bottom + GAP;
+            side = "bottom";
+          }
+          if (top + h > vh - EDGE) top = Math.max(EDGE, vh - EDGE - h);
+          let left = rect.left + rect.width / 2 - w / 2;
+          left = Math.min(Math.max(left, EDGE), Math.max(EDGE, vw - EDGE - w));
+          n.style.top = Math.round(top) + "px";
+          n.style.left = Math.round(left) + "px";
+          n.dataset.place = side;
+        }
+
+        function show(t) {
+          const text = t.title;
+          if (!text) return;
+          target = t;
+          saved = text;
+          t.title = ""; // 抑制原生提示，避免同时出现两个
+          const n = node();
+          n.textContent = text;
+          n.classList.add("show");
+          place(t.getBoundingClientRect());
+        }
+
+        function hide() {
+          if (timer) {
+            clearTimeout(timer);
+            timer = null;
+          }
+          if (target && saved !== null) target.title = saved; // 交还给读屏与原生行为
+          target = null;
+          saved = null;
+          if (el) el.classList.remove("show");
+        }
+
+        function titled(e) {
+          const src = e.target;
+          return src && src.closest ? src.closest("[title]") : null;
+        }
+
+        document.addEventListener(
+          "pointerover",
+          (e) => {
+            if (e.pointerType === "touch") return;
+            const t = titled(e);
+            if (!t || t === target || !t.title) return;
+            hide();
+            timer = setTimeout(() => {
+              timer = null;
+              if (t.isConnected) show(t);
+            }, SHOW_DELAY);
+          },
+          true,
+        );
+
+        document.addEventListener(
+          "pointerout",
+          (e) => {
+            const t = titled(e);
+            if (!t || t !== target) return;
+            if (e.relatedTarget && t.contains(e.relatedTarget)) return; // 移入子元素不打断
+            hide();
+          },
+          true,
+        );
+
+        // 键盘用户：聚焦即显，不等延迟
+        document.addEventListener("focusin", (e) => {
+          const t = titled(e);
+          if (!t || !t.title) return;
+          hide();
+          show(t);
+        });
+        document.addEventListener("focusout", hide);
+
+        ["pointerdown", "wheel", "dragstart"].forEach((ev) =>
+          document.addEventListener(ev, hide, { passive: true, capture: true }),
+        );
+        window.addEventListener("blur", hide);
+        window.addEventListener("resize", hide);
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") hide();
+        });
+
+        return { hide };
+      })();
  
