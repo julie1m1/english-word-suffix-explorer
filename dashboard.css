@@ -3,12 +3,13 @@
    自包含：含 CSS 变量定义 + 主题切换按钮 + 全部 .dash-* 样式
 ══════════════════════════════════════════════════════ */
 
-/* ══ MATERIAL DESIGN 3 — DARK THEME ══ */
+/* ══ MATERIAL DESIGN 3 — DARK THEME ══
+   与 style.css :root/[data-theme=dark] 逐行同源（WordNet --wn-* 除外） */
 :root,
 [data-theme="dark"] {
   --md-primary: #d0bcff;
   --md-on-primary: #381e72;
-  --md-primary-container: #6750a4;
+  --md-primary-container: #4f378b;
   --md-on-primary-container: #eaddff;
   --md-secondary: #ccc2dc;
   --md-tertiary: #efb8c8;
@@ -23,6 +24,8 @@
   --md-error: #f2b8b8;
   --md-tonal-spot: rgba(208, 188, 255, 0.12);
   --md-scrim: rgba(0, 0, 0, 0.4);
+  --md-inverse-surface: #e6e0e9;
+  --md-on-inverse-surface: #312d35;
 
   --bg: var(--md-surface);
   --surface: var(--md-surface-1);
@@ -37,12 +40,15 @@
   --text-2: var(--md-on-surface-var);
   --text-3: var(--md-outline);
   --shadow: rgba(0, 0, 0, 0.45);
+  --topbar-bg: var(--md-surface-1);
+  --scrollbar: rgba(208, 188, 255, 0.14);
   --state-hover: rgba(208, 188, 255, 0.08);
   --state-focus: rgba(208, 188, 255, 0.12);
   --state-press: rgba(208, 188, 255, 0.16);
 }
 
-/* ══ MATERIAL DESIGN 3 — LIGHT THEME ══ */
+/* ══ MATERIAL DESIGN 3 — LIGHT THEME ══
+   与 style.css [data-theme=light] 逐行同源（WordNet --wn-* 除外） */
 [data-theme="light"] {
   --md-primary: #6750a4;
   --md-on-primary: #ffffff;
@@ -61,6 +67,8 @@
   --md-error: #b3261e;
   --md-tonal-spot: rgba(103, 80, 164, 0.1);
   --md-scrim: rgba(0, 0, 0, 0.25);
+  --md-inverse-surface: #303034;
+  --md-on-inverse-surface: #f5eff7;
 
   --bg: var(--md-surface);
   --surface: var(--md-surface-1);
@@ -75,6 +83,8 @@
   --text-2: var(--md-on-surface-var);
   --text-3: var(--md-outline);
   --shadow: rgba(103, 80, 164, 0.12);
+  --topbar-bg: var(--md-surface-1);
+  --scrollbar: rgba(103, 80, 164, 0.14);
   --state-hover: rgba(103, 80, 164, 0.08);
   --state-focus: rgba(103, 80, 164, 0.12);
   --state-press: rgba(103, 80, 164, 0.16);
@@ -498,7 +508,7 @@ body {
   width: 38px;
   height: 20px;
   border-radius: 999px;
-  background: var(--surface-3);
+  background: var(--md-surface-3);
   border: 1px solid var(--md-outline);
   transition: background 0.2s ease, border-color 0.2s ease;
 }
@@ -802,7 +812,7 @@ body {
 }
 
 .mini-toggle-btn.is-on {
-  background: var(--surface-3);
+  background: var(--md-surface-3);
   color: var(--text-1);
   font-weight: 600;
   box-shadow: 0 1px 2px var(--shadow);
@@ -1316,8 +1326,8 @@ body {
 }
 
 .derive-list-item.is-active {
-  background: var(--accent);
-  color: #fff;
+  background: var(--md-primary);
+  color: var(--md-on-primary);
 }
 
 .derive-list-item .n {
@@ -1327,7 +1337,8 @@ body {
 }
 
 .derive-list-item.is-active .n {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--md-on-primary);
+  opacity: 0.75;
 }
 
 .derive-viz {
