@@ -20,14 +20,17 @@
      THEME — 跟随主页 localStorage('vocab-theme')
   ══════════════════════════════════════════════════════ */
   const themeBtn = document.getElementById("dashThemeToggle");
+  var onThemeApplied = null; // initCards 赋值：主题切换后重绘已渲染图表（canvas 色值按新主题重新解析）
 
   function applyTheme(t) {
     document.documentElement.setAttribute("data-theme", t);
     localStorage.setItem("vocab-theme", t);
+    clearTokenCache();
     if (themeBtn) {
       themeBtn.innerHTML = t === "light" ? ICONS.moon : ICONS.sun;
       themeBtn.title = t === "light" ? "Switch to Dark" : "Switch to Light";
     }
+    if (onThemeApplied) onThemeApplied();
   }
   function currentTheme() {
     return document.documentElement.getAttribute("data-theme") || "dark";
@@ -229,6 +232,37 @@
     interj: "int", num: "num", other: "·",
   };
   const POS_COLOR = (k) => "var(--pos-" + k + ")";
+
+  /* ══════════════════════════════════════════════════════
+     M3 数据色 token 读取（canvas 不能直接用 CSS var，绘制时解析当前主题值；
+     主题切换会触发图表重绘 → 见文件末 redrawRenderedCharts / applyTheme）
+     DOM/SVG 内联样式仍可直接写 var(--pos-*)，浏览器实时解析。
+  ══════════════════════════════════════════════════════ */
+  function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+  var _tokCache = {}; // var 声明：applyTheme 在脚本初始化期就会调用 clearTokenCache，早于本行执行
+  function clearTokenCache() {
+    if (_tokCache) Object.keys(_tokCache).forEach((k) => delete _tokCache[k]);
+  }
+  function tokenRGBA(name, alpha) {
+    let h = _tokCache[name];
+    if (!h) {
+      h = cssVar(name).replace("#", "");
+      _tokCache[name] = h;
+    }
+    return "rgba(" + parseInt(h.substr(0, 2), 16) + "," + parseInt(h.substr(2, 2), 16) +
+      "," + parseInt(h.substr(4, 2), 16) + "," + (alpha == null ? 1 : alpha) + ")";
+  }
+  // 分类色板：按簇 id 循环取 12 个词性 token（取代黄金角随机色，纳入 M3 色调梯）
+  const CATEG_TOKENS = [
+    "--pos-noun", "--pos-verb", "--pos-adj", "--pos-adv", "--pos-pron", "--pos-det",
+    "--pos-prep", "--pos-conj", "--pos-interj", "--pos-num", "--pos-other", "--pos-unknown",
+  ];
+  function categToken(id) {
+    if (id < 0) return "--pos-other";
+    return CATEG_TOKENS[((id % CATEG_TOKENS.length) + CATEG_TOKENS.length) % CATEG_TOKENS.length];
+  }
 
   /** 生成环形扇区 path（原生 SVG，无外部依赖） */
   function arcPath(cx, cy, rOut, rIn, a0, a1) {
@@ -641,7 +675,7 @@
   /* ══════════════════════════════════════════════════════
      ⑨ n-gram 字符模式热力图
   ══════════════════════════════════════════════════════ */
-  const HEAT_BASE = "139,124,246"; // 紫罗兰，深浅主题通用
+  const HEAT_TOKEN = "--pos-noun"; // 紫罗兰主数据色，随主题取 tone 40/80
 
   function drawNgramHeat(body, corpus) {
     const ng = corpus.ngram;
@@ -670,7 +704,7 @@
         if (n > 0) {
           // sqrt 让低值也能看见，高值不至于爆白
           const a = 0.08 + Math.sqrt(n / maxN) * 0.82;
-          cellEl.style.background = "rgba(" + HEAT_BASE + "," + a.toFixed(3) + ")";
+          cellEl.style.background = tokenRGBA(HEAT_TOKEN, a);
         }
         if (n > 0) {
           const ex = c.ex.map((w) => "<b>" + w + "</b>").join("、") || "—";
@@ -698,7 +732,7 @@
     const scale = el("div", "heat-scale");
     [0.08, 0.3, 0.5, 0.7, 0.9].forEach((a) => {
       const i = el("i");
-      i.style.background = "rgba(" + HEAT_BASE + "," + a + ")";
+      i.style.background = tokenRGBA(HEAT_TOKEN, a);
       scale.appendChild(i);
     });
     foot.appendChild(document.createTextNode("少"));
@@ -712,16 +746,11 @@
   }
 
   /* ══════════════════════════════════════════════════════
-     簇配色 — 黄金角步长，100 个簇比 3.6° 等间距更好分辨
+     簇配色 — 从 12 色 M3 数据色板循环取色（原黄金角随机色已废弃），
+     值为当前主题解析后的具体 rgba，主题切换时整图重绘
   ══════════════════════════════════════════════════════ */
-  const HUE_STEP = 137.508;
-  function clusterHue(id) {
-    return id < 0 ? 0 : (id * HUE_STEP) % 360;
-  }
-  function clusterColor(id, alpha, light) {
-    if (id < 0) return "rgba(154,160,166," + (alpha == null ? 1 : alpha) + ")";
-    return "hsla(" + clusterHue(id).toFixed(1) + ",62%," + (light || 58) + "%," +
-      (alpha == null ? 1 : alpha) + ")";
+  function clusterColor(id, alpha) {
+    return tokenRGBA(categToken(id), alpha == null ? 1 : alpha);
   }
 
   /* ══════════════════════════════════════════════════════
@@ -735,14 +764,14 @@
         id: "vowels",
         label: "单双元音",
         groups: [
-          { id: "mono-long", label: "长元音", color: "#8b5cf6", sounds: [
+          { id: "mono-long", label: "长元音", color: "var(--ph-1)", sounds: [
             { ipa: "[i:]", combos: ["ee", "ea", "e_e", "ie", "ei", "ey"] },
             { ipa: "[ɑ:]", combos: ["ar", "are", "al", "au", "aw"] },
             { ipa: "[ɔ:]", combos: ["or", "oar", "oor", "ore", "our", "al", "au", "aw"] },
             { ipa: "[u:]", combos: ["oo", "u_e", "ue", "ui", "ew", "ou"] },
             { ipa: "[ɜ:]", combos: ["ir", "ur", "er", "ear", "or", "yr"] },
           ] },
-          { id: "mono-short", label: "短元音", color: "#22a6b6", sounds: [
+          { id: "mono-short", label: "短元音", color: "var(--ph-2)", sounds: [
             { ipa: "[ʌ]", combos: ["u", "o", "oo", "ou", "oe"] },
             { ipa: "[ɪ]", combos: ["i", "y", "e", "u", "ui"] },
             { ipa: "[ʊ]", combos: ["oo", "u", "oul"] },
@@ -751,7 +780,7 @@
             { ipa: "[e]", combos: ["e", "ea", "a", "ai", "ie"] },
             { ipa: "[æ]", combos: ["a", "ai"] },
           ] },
-          { id: "mono-dip", label: "双元音", color: "#f0a93b", sounds: [
+          { id: "mono-dip", label: "双元音", color: "var(--ph-3)", sounds: [
             { ipa: "[eɪ]", combos: ["a", "a_e", "ai", "ay", "eigh", "ey", "ea"] },
             { ipa: "[aɪ]", combos: ["i", "i_e", "ie", "igh", "y", "eye", "uy"] },
             { ipa: "[ɔɪ]", combos: ["oi", "oy"] },
@@ -767,7 +796,7 @@
         id: "consonants",
         label: "辅音",
         groups: [
-          { id: "voiceless", label: "清辅音", color: "#ef5b5b", sounds: [
+          { id: "voiceless", label: "清辅音", color: "var(--ph-4)", sounds: [
             { ipa: "[p]", combos: ["p", "pp"] },
             { ipa: "[t]", combos: ["t", "tt", "ed"] },
             { ipa: "[k]", combos: ["c", "k", "ck", "ch", "que"] },
@@ -779,7 +808,7 @@
             { ipa: "[tr]", combos: ["tr"] },
             { ipa: "[ts]", combos: ["ts"] },
           ] },
-          { id: "voiced", label: "浊辅音", color: "#3fae6b", sounds: [
+          { id: "voiced", label: "浊辅音", color: "var(--ph-5)", sounds: [
             { ipa: "[b]", combos: ["b", "bb"] },
             { ipa: "[d]", combos: ["d", "dd"] },
             { ipa: "[g]", combos: ["g", "gg", "gh", "gu"] },
@@ -791,20 +820,20 @@
             { ipa: "[dr]", combos: ["dr"] },
             { ipa: "[dz]", combos: ["ds"] },
           ] },
-          { id: "semi-voiced", label: "半浊辅音", color: "#4f9be9", sounds: [
+          { id: "semi-voiced", label: "半浊辅音", color: "var(--ph-6)", sounds: [
             { ipa: "[h]", combos: ["h"] },
             { ipa: "[r]", combos: ["r", "rr", "wr", "rh"] },
           ] },
-          { id: "semivowel", label: "半元音", color: "#d96bb0", sounds: [
+          { id: "semivowel", label: "半元音", color: "var(--ph-7)", sounds: [
             { ipa: "[w]", combos: ["w", "wh"] },
             { ipa: "[j]", combos: ["y"] },
           ] },
-          { id: "nasal", label: "鼻音", color: "#16a3a3", sounds: [
+          { id: "nasal", label: "鼻音", color: "var(--ph-8)", sounds: [
             { ipa: "[m]", combos: ["m", "mm"] },
             { ipa: "[n]", combos: ["n", "nn"] },
             { ipa: "[ŋ]", combos: ["ng", "nk"] },
           ] },
-          { id: "lateral", label: "边音", color: "#a06bf0", sounds: [
+          { id: "lateral", label: "边音", color: "var(--ph-9)", sounds: [
             { ipa: "[l]", combos: ["l", "ll"] },
           ] },
         ],
@@ -1033,7 +1062,7 @@ return phonicsIndexCache;
     "move","prove","lose","whose","remove",
   ]);
   // 4 种起始辅音数对应的配色（0/1/2/3 辅音开头）
-  const SYL_ONSET_COLORS = ["#8b5cf6", "#22a6b6", "#f0a93b", "#ef5b5b"];
+  const SYL_ONSET_COLORS = ["var(--ph-1)", "var(--ph-2)", "var(--ph-3)", "var(--ph-4)"];
 
   // IPA → 音节骨架数组（如 /əˈbaʊt/ → ["V","CVC"]），失败返回 null
   function ipaSkeleton(ipa) {
@@ -1192,7 +1221,7 @@ return phonicsIndexCache;
     // chip 渲染：按起始辅音数着色
     const chipHTML = (skel) => {
       const onset = skel.indexOf("V");
-      const color = SYL_ONSET_COLORS[onset] || "#888";
+      const color = SYL_ONSET_COLORS[onset] || "var(--md-outline)";
       return '<span class="syl-chip" style="--c:' + color + '">' + skel + '</span>';
     };
     const comboHTML = (label) => label.split(".").map(chipHTML).join('<span class="syl-dot">·</span>');
@@ -1229,7 +1258,7 @@ return phonicsIndexCache;
         const sn = idx.skelWords[p] || 0;
         const sex = (idx.skelEx[p] || []).map((w) => "<b>" + w + "</b>").join("、") || "—";
         const onset = p.indexOf("V");
-        const color = SYL_ONSET_COLORS[onset] || "#888";
+        const color = SYL_ONSET_COLORS[onset] || "var(--md-outline)";
         const type = SYL_OPEN.has(p) ? "开音节" : (SYL_CLOSED.has(p) ? "闭音节" : "");
         return '<div class="syl-detail-skel"><span class="syl-chip" style="--c:' + color + '">' + p + '</span>' +
           '<span class="syl-detail-skel-n">' + fmtNum(sn) + ' 词</span>' +
@@ -1396,7 +1425,7 @@ return phonicsIndexCache;
     if (cs.indexOf(-1) >= 0) {
       const node = el("span", "cc-chip");
       node.innerHTML =
-        '<i class="cc-dot" style="background:#9aa0a6"></i>未成簇' +
+        '<i class="cc-dot" style="background:var(--pos-other)"></i>未成簇' +
         '<span class="cc-n">' + fmtNum(groups[-1].length) + "</span>";
       node.addEventListener("click", () => {
         enabled[-1] = !enabled[-1];
@@ -1479,7 +1508,7 @@ return phonicsIndexCache;
         if (!enabled[cid]) continue;
         const arr = groups[cid];
         const dim = focusCluster !== null && cid !== focusCluster;
-        ctx.fillStyle = dim ? "rgba(150,150,155,0.10)" : clusterColor(cid, 0.85);
+        ctx.fillStyle = dim ? clusterColor(cid, 0.12) : clusterColor(cid, 0.85);
         for (let k = 0; k < arr.length; k++) {
           const i = arr[k];
           const X = xs[i] * scale + tX, Y = ys[i] * scale + tY;
@@ -1497,7 +1526,6 @@ return phonicsIndexCache;
       // ── 高亮环
       if (hoverIdx >= 0) {
         const X = xs[hoverIdx] * scale + tX, Y = ys[hoverIdx] * scale + tY;
-        ctx.strokeStyle = "var(--text-1)";
         ctx.strokeStyle = getComputedStyle(document.body).color;
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -1507,7 +1535,7 @@ return phonicsIndexCache;
 
       // ── 标签层：放大到一定程度才渲染，并做粗略去重避免糊成一团
       if (zoom > 2.2) {
-        ctx.font = "11px system-ui, sans-serif";
+        ctx.font = "11px 'DM Sans', system-ui, sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         const cell = 74, cols = Math.ceil(W / cell) + 1;
@@ -1649,6 +1677,7 @@ return phonicsIndexCache;
 
     let rt = null;
     window.addEventListener("resize", () => {
+      if (!canvas.isConnected) return; // 主题重绘后旧监听自动失效
       clearTimeout(rt);
       rt = setTimeout(() => layout(), 180);
     });
@@ -1761,7 +1790,7 @@ return phonicsIndexCache;
       ring.setAttribute("cx", "0");
       ring.setAttribute("cy", "0");
       ring.setAttribute("r", (p.r + 3).toFixed(1));
-      ring.setAttribute("stroke", clusterColor(p.id, 1, 62));
+      ring.setAttribute("stroke", clusterColor(p.id, 1));
       g.appendChild(ring);
 
       // 小气泡放不下名字，强标只会互相打架；悬停可见
@@ -2094,7 +2123,7 @@ return phonicsIndexCache;
   /* ══════════════════════════════════════════════════════
      ⑥ 派生词树（径向树 + 碰撞松弛，无 D3）
   ══════════════════════════════════════════════════════ */
-  const DERIVE_COLOR = { pre: "#f08a4b", suf: "#35b3a3", both: "#8b7cf6", more: "#9aa0a6" };
+  const DERIVE_COLOR = { pre: "var(--pos-verb)", suf: "var(--pos-adj)", both: "var(--pos-noun)", more: "var(--pos-other)" };
 
   function deriveChildren(idx, root, cap) {
     const seen = {}, out = [];
@@ -2522,7 +2551,7 @@ return phonicsIndexCache;
   ══════════════════════════════════════════════════════ */
   function drawChord(body, idx) {
     const TOPP = 14, TOPS = 16;
-    const CHORD_PRE = "#8b7cf6", CHORD_SUF = "#35b3a3";
+    const CHORD_PRE = "var(--pos-noun)", CHORD_SUF = "var(--pos-adj)";
 
     const preList = Object.keys(idx.preCount)
       .map((k) => ({ a: k, n: idx.preCount[k], m: idx.ref.prefixes[k] || "" }))
@@ -2805,6 +2834,8 @@ return phonicsIndexCache;
     const cards = Array.prototype.slice.call(document.querySelectorAll(".card[data-chart]"));
     if (!cards.length) return;
 
+    const drawn = []; // 已成功渲染的 {body, draw}，供主题切换重绘
+
     const render = async (card) => {
       const key = card.getAttribute("data-chart");
       const body = card.querySelector(".card-body");
@@ -2812,10 +2843,25 @@ return phonicsIndexCache;
       if (!draw || !body) return;
       try {
         await draw(body);
+        drawn.push({ body: body, draw: draw });
       } catch (e) {
         body.innerHTML = '<div class="card-error">图表加载失败：' + (e && e.message ? e.message : e) + "</div>";
         console.error("[Dashboard] chart '" + key + "' failed:", e);
       }
+    };
+
+    // 主题切换 → 逐卡重绘。先清 hoverBus 旧句柄（drawScatter 重跑会重新 register），
+    // 避免重复挂载；旧 canvas 的 resize 监听靠 isConnected 自行失效（见 drawScatter）。
+    onThemeApplied = function () {
+      if (!drawn.length) return;
+      hoverBus.handlers.length = 0;
+      drawn.slice().forEach(function (r) {
+        try {
+          r.draw(r.body);
+        } catch (e) {
+          console.error("[Dashboard] redraw failed:", e);
+        }
+      });
     };
 
     if (!("IntersectionObserver" in window)) {
@@ -2833,6 +2879,9 @@ return phonicsIndexCache;
       { rootMargin: "200px 0px" }
     );
     cards.forEach((c) => io.observe(c));
+
+    // 开发钩子：IntersectionObserver 不触发的环境（内嵌预览）可手动全量渲染
+    window.__dashRenderAll = () => cards.forEach(render);
   }
 
   /* ══════════════════════════════════════════════════════

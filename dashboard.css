@@ -47,6 +47,29 @@
   --state-hover: rgba(208, 188, 255, 0.08);
   --state-focus: rgba(208, 188, 255, 0.12);
   --state-press: rgba(208, 188, 255, 0.16);
+
+  /* ══ 数据色 · dark = 各原色相的 M3 tone 80 档（浅底暗字规则见 PRD）══ */
+  --pos-noun: #bbb8fc;
+  --pos-adj: #74d5c6;
+  --pos-verb: #f3af89;
+  --pos-adv: #93c6fd;
+  --pos-det: #d7c078;
+  --pos-pron: #e6aadc;
+  --pos-prep: #9ad29b;
+  --pos-conj: #f8a8af;
+  --pos-interj: #a4c3f2;
+  --pos-num: #6fd4d4;
+  --pos-other: #bac2c9;
+  --pos-unknown: #b8c2d0;
+  --ph-1: #c2b6f9;
+  --ph-2: #6fd2e1;
+  --ph-3: #e6b87a;
+  --ph-4: #f9a9a4;
+  --ph-5: #90d3a4;
+  --ph-6: #93c6fd;
+  --ph-7: #eda8d0;
+  --ph-8: #6fd4d4;
+  --ph-9: #c9b4f6;
 }
 
 /* ══ MATERIAL DESIGN 3 — LIGHT THEME ══
@@ -91,6 +114,29 @@
   --state-hover: rgba(103, 80, 164, 0.08);
   --state-focus: rgba(103, 80, 164, 0.12);
   --state-press: rgba(103, 80, 164, 0.16);
+
+  /* ══ 数据色 · light = 各原色相的 M3 tone 40 档 ══ */
+  --pos-noun: #5e579e;
+  --pos-adj: #037267;
+  --pos-verb: #934d20;
+  --pos-adv: #2c659e;
+  --pos-det: #776002;
+  --pos-pron: #86487d;
+  --pos-prep: #347239;
+  --pos-conj: #964550;
+  --pos-interj: #446392;
+  --pos-num: #037171;
+  --pos-other: #5d636a;
+  --pos-unknown: #5a6370;
+  --ph-1: #65559b;
+  --ph-2: #026f7b;
+  --ph-3: #855801;
+  --ph-4: #974643;
+  --ph-5: #217444;
+  --ph-6: #2c659e;
+  --ph-7: #8d4672;
+  --ph-8: #047171;
+  --ph-9: #6c5298;
 }
 
 /* ══ RESET & BASE ══ */
@@ -112,20 +158,8 @@ body {
 :root {
   --dash-max-w: 1080px;
   --dash-gutter: 24px;
-
-  /* ══ ② 词性分布配色（跨主题通用中间调，深浅背景都可读）══ */
-  --pos-noun: #8b7cf6;
-  --pos-adj: #35b3a3;
-  --pos-verb: #f08a4b;
-  --pos-adv: #4f9be9;
-  --pos-det: #d9c27a;
-  --pos-pron: #d17fc4;
-  --pos-prep: #6fbf73;
-  --pos-conj: #c96f7a;
-  --pos-interj: #96b0d8;
-  --pos-num: #5fbfbf;
-  --pos-other: #9aa0a6;
-  --pos-unknown: #7d8590;
+  /* 数据色（--pos-* / --ph-*）已按 M3 色调梯规则移入各主题块：
+     色相沿用原调色盘，light 取 tone 40、dark 取 tone 80，chroma 统一 */
 }
 
 /* ══ THEME BUTTON (沿用 index.html 风格) ══ */
@@ -1607,15 +1641,15 @@ body {
 }
 
 .dl-badge.pre {
-  color: #c9612a;
-  background: rgba(240, 138, 75, 0.14);
-  border-color: rgba(240, 138, 75, 0.4);
+  color: var(--pos-verb);
+  background: color-mix(in srgb, var(--pos-verb) 14%, transparent);
+  border-color: color-mix(in srgb, var(--pos-verb) 40%, transparent);
 }
 
 .dl-badge.suf {
-  color: #1f8a7c;
-  background: rgba(53, 179, 163, 0.14);
-  border-color: rgba(53, 179, 163, 0.4);
+  color: var(--pos-adj);
+  background: color-mix(in srgb, var(--pos-adj) 14%, transparent);
+  border-color: color-mix(in srgb, var(--pos-adj) 40%, transparent);
 }
 
 /* 右对齐簇：设为词根 → 派生方式，整体贴右 */
