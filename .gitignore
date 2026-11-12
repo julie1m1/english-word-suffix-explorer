@@ -50,7 +50,7 @@ data/Suffix_Ref_检查报告.md
 21dictionary/
 data/dict21/
 
-# 商业字体 NB International Pro：CSS 已改用 Google Fonts 的 DM Sans / Fraunces
+# 本地商业字体（版权原因不入库）：CSS 已改用 Google Fonts 的 DM Sans / Fraunces
 fonts/
 
 # 独立可视化长页（无页面入口，暂不发布）

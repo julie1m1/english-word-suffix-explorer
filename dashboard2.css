@@ -269,7 +269,7 @@ html {
 }
 .dash-hero-title {
   margin: 0 0 10px;
-  font-family: "NB International Pro", "DM Sans", sans-serif;
+  font-family: "DM Sans", sans-serif;
   font-style: normal;
   font-weight: 700;
   font-size: clamp(30px, 4.4vw, 64px);
@@ -2381,7 +2381,7 @@ html {
   display: flex; align-items: center; justify-content: center;
   background: var(--cg); color: var(--cg-ink);
   font-size: 15px; font-weight: 500;
-  font-family: "NB International Pro", "DM Sans", sans-serif;
+  font-family: "DM Sans", sans-serif;
 }
 .cg-name { font-size: 14px; font-weight: 500; color: var(--text-1, #211b30); line-height: 1.2; }
 .cg-sub { font-size: 11px; color: var(--text-3, #9a93a8); margin-top: 2px; }

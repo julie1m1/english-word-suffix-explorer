@@ -207,7 +207,7 @@
         height: 18px;
       }
       .sidebar-header h2 {
-        font-family: "NB International Pro", "DM Sans", sans-serif;
+        font-family: "DM Sans", sans-serif;
         font-style: normal;
         font-weight: 700;
         font-size: 17px;
@@ -215,7 +215,7 @@
         line-height: 1.2;
       }
       .sidebar-header span {
-        font-family: "NB International Pro", "DM Sans", sans-serif;
+        font-family: "DM Sans", sans-serif;
         font-weight: 400;
         font-size: 10px;
         color: var(--text-3);
@@ -505,7 +505,7 @@
       /* --- 新增标题样式 --- */
 .top-bar-title {
   display: none; /* 默认隐藏（桌面端不显示） */
-  font-family: "NB International Pro", "DM Sans", sans-serif;
+  font-family: "DM Sans", sans-serif;
   font-style: normal;
   font-weight: 700;
   font-size: 16px;
