@@ -3,6 +3,8 @@
    自包含：含 CSS 变量定义 + 主题切换按钮 + 全部 .dash-* 样式
 ══════════════════════════════════════════════════════ */
 
+/* 字体改用 Google Fonts 的 DM Sans / Fraunces；本地商业字体不随仓库发布 */
+
 /* ══ MATERIAL DESIGN 3 — DARK THEME ══
    与 style.css :root/[data-theme=dark] 逐行同源（WordNet --wn-* 除外） */
 :root,
@@ -33,9 +35,12 @@
   --border: var(--md-outline-var);
   --accent: var(--md-primary);
   --accent-soft: var(--md-tonal-spot);
-  --green: #6dd58c;
-  --green-soft: rgba(109, 213, 140, 0.12);
-  --yellow: #f6c649;
+  /* 条形区状态层：悬停与展开共用一档，钉住只加描边不加第二色 */
+  --row-hover: color-mix(in srgb, var(--md-primary) 16%, transparent);
+  --row-line: color-mix(in srgb, var(--md-primary) 65%, transparent);
+  --green: #48bb86;
+  --green-soft: rgba(72, 187, 134, 0.14);
+  --yellow: #f8c33c;
   --text-1: var(--md-on-surface);
   --text-2: var(--md-on-surface-var);
   --text-3: var(--md-outline);
@@ -43,33 +48,51 @@
   --topbar-bg: var(--md-surface-1);
   /* 顶栏毛玻璃档（Q4 拍板保留 blur，仅把写死的 rgba 收进 token） */
   --topbar-glass: rgba(28, 27, 31, 0.85);
+  /* Hero 色块内的半透明底与描边（深色主题的 primary-container 是紫 #4f378b） */
+  --hero-tint: rgba(255, 255, 255, 0.09);
+  --hero-line: rgba(234, 221, 255, 0.22);
+  /* 覆盖率三档状态色 · 深底用亮档（实测 #6dd58c 在色块上 5.13:1，此处再提一档亮度） */
+  --hero-green: #8ce3a5;
+  --hero-yellow: #ffd479;
+  --hero-error: #ffc9c9;
   --scrollbar: rgba(208, 188, 255, 0.14);
   --state-hover: rgba(208, 188, 255, 0.08);
   --state-focus: rgba(208, 188, 255, 0.12);
   --state-press: rgba(208, 188, 255, 0.16);
 
-  /* ══ 数据色 · dark = 各原色相的 M3 tone 80 档（浅底暗字规则见 PRD）══ */
-  --pos-noun: #bbb8fc;
-  --pos-adj: #74d5c6;
-  --pos-verb: #f3af89;
-  --pos-adv: #93c6fd;
-  --pos-det: #d7c078;
-  --pos-pron: #e6aadc;
-  --pos-prep: #9ad29b;
-  --pos-conj: #f8a8af;
-  --pos-interj: #a4c3f2;
-  --pos-num: #6fd4d4;
-  --pos-other: #bac2c9;
-  --pos-unknown: #b8c2d0;
-  --ph-1: #c2b6f9;
-  --ph-2: #6fd2e1;
-  --ph-3: #e6b87a;
-  --ph-4: #f9a9a4;
-  --ph-5: #90d3a4;
-  --ph-6: #93c6fd;
-  --ph-7: #eda8d0;
-  --ph-8: #6fd4d4;
-  --ph-9: #c9b4f6;
+  /* ══ 数据色 · 用户提供的 7 色鲜艳调色盘（2026-10-26 截图取色）══
+     基础 7 色：紫#6750a4 柠檬#e3ed3e 绿#48bb86 橙#f69234 粉#fa5dae 红珊瑚#ff6464 蓝紫#7d79f8
+     扩展补充：琥珀#f8c33c 天蓝#38b6e8 青绿#22c3a6 浅紫#a78bfa 中性灰#9aa3b2
+     深色主题仅把紫提亮为 #9d8df1（原紫在深底上偏闷），其余与浅色一致 */
+  --pos-noun: #9d8df1;
+  --pos-adj: #fa5dae;
+  --pos-verb: #ff6464;
+  --pos-adv: #f69234;
+  --pos-det: #f8c33c;
+  --pos-pron: #e3ed3e;
+  --pos-prep: #48bb86;
+  --pos-conj: #22c3a6;
+  --pos-interj: #38b6e8;
+  --pos-num: #7d79f8;
+  --pos-other: #a78bfa;
+  --pos-unknown: #9aa3b2;
+  /* 派生树/派生列表专用：前缀＝橙、后缀＝青绿（冷暖对立对应词头/词尾），
+     刻意避开主色紫系，也避开互相太近的珊瑚红/粉红 */
+  --affix-pre: #f69234;
+  --affix-suf: #22c3a6;
+  --affix-both: #9d8df1;
+  --affix-more: #9aa3b2;
+  --affix-pre-ink: #f69234;
+  --affix-suf-ink: #5fd8bc;
+  --ph-1: #7d79f8;
+  --ph-2: #38b6e8;
+  --ph-3: #f8c33c;
+  --ph-4: #ff6464;
+  --ph-5: #48bb86;
+  --ph-6: #22c3a6;
+  --ph-7: #6B2D72;
+  --ph-8: #f69234;
+  --ph-9: #e3ed3e;
 }
 
 /* ══ MATERIAL DESIGN 3 — LIGHT THEME ══
@@ -101,8 +124,11 @@
   --border: var(--md-outline-var);
   --accent: var(--md-primary);
   --accent-soft: var(--md-tonal-spot);
-  --green: #23a64a;
-  --green-soft: rgba(35, 166, 74, 0.12);
+  /* 条形区状态层：悬停与展开共用一档，钉住只加描边不加第二色 */
+  --row-hover: color-mix(in srgb, var(--md-primary) 10%, transparent);
+  --row-line: color-mix(in srgb, var(--md-primary) 45%, transparent);
+  --green: #2e9e6b;
+  --green-soft: rgba(72, 187, 134, 0.12);
   --yellow: #7b5800;
   --text-1: var(--md-on-surface);
   --text-2: var(--md-on-surface-var);
@@ -110,33 +136,46 @@
   --shadow: rgba(103, 80, 164, 0.12);
   --topbar-bg: var(--md-surface-1);
   --topbar-glass: rgba(255, 251, 254, 0.85);
+  /* Hero 色块内的半透明底与描边（浅色主题的 primary-container 是淡紫 #eaddff） */
+  --hero-tint: rgba(255, 255, 255, 0.6);
+  --hero-line: rgba(33, 0, 93, 0.14);
+  /* 覆盖率三档状态色在淡紫底上要用深色档（页面级 --green #23a64a 只有 2.46:1） */
+  --hero-green: #006d35;
+  --hero-yellow: #5c4100;
+  --hero-error: #8f120c;
   --scrollbar: rgba(103, 80, 164, 0.14);
   --state-hover: rgba(103, 80, 164, 0.08);
   --state-focus: rgba(103, 80, 164, 0.12);
   --state-press: rgba(103, 80, 164, 0.16);
 
-  /* ══ 数据色 · light = 各原色相的 M3 tone 40 档 ══ */
-  --pos-noun: #5e579e;
-  --pos-adj: #037267;
-  --pos-verb: #934d20;
-  --pos-adv: #2c659e;
-  --pos-det: #776002;
-  --pos-pron: #86487d;
-  --pos-prep: #347239;
-  --pos-conj: #964550;
-  --pos-interj: #446392;
-  --pos-num: #037171;
-  --pos-other: #5d636a;
-  --pos-unknown: #5a6370;
-  --ph-1: #65559b;
-  --ph-2: #026f7b;
-  --ph-3: #855801;
-  --ph-4: #974643;
-  --ph-5: #217444;
-  --ph-6: #2c659e;
-  --ph-7: #8d4672;
-  --ph-8: #047171;
-  --ph-9: #6c5298;
+  /* ══ 数据色 · 用户提供的 7 色鲜艳调色盘（与深色主题一致，紫用原深值）══ */
+  --pos-noun: #6750a4;
+  --pos-adj: #fa5dae;
+  --pos-verb: #ff6464;
+  --pos-adv: #f69234;
+  --pos-det: #f8c33c;
+  --pos-pron: #e3ed3e;
+  --pos-prep: #48bb86;
+  --pos-conj: #22c3a6;
+  --pos-interj: #38b6e8;
+  --pos-num: #7d79f8;
+  --pos-other: #a78bfa;
+  --pos-unknown: #9aa3b2;
+  --affix-pre: #f69234;
+  --affix-suf: #22c3a6;
+  --affix-both: #a78bfa;
+  --affix-more: #9aa3b2;
+  --affix-pre-ink: #8a4200;
+  --affix-suf-ink: #0b6b57;
+  --ph-1: #7d79f8;
+  --ph-2: #38b6e8;
+  --ph-3: #f8c33c;
+  --ph-4: #ff6464;
+  --ph-5: #48bb86;
+  --ph-6: #22c3a6;
+  --ph-7: #fa5dae;
+  --ph-8: #f69234;
+  --ph-9: #e3ed3e;
 }
 
 /* ══ RESET & BASE ══ */
@@ -152,12 +191,13 @@ body {
   font-family: "DM Sans", "PingFang SC", system-ui, -apple-system, sans-serif;
 }
 
-/* ══ ★新增：布局变量 ══
-   导航条 / 统计条 / 主内容共用同一内容宽度 + 左右留白，
-   以后想整体调宽窄只改这一处 */
+/* ══ 布局变量 · V2 铺满自适应 ══
+   导航条 / 统计条 / 主内容共用同一内容宽度 + 左右留白。
+   V2 与 V1 的唯一差别在这里：不限死 1080px，铺到 1900px 后居中，
+   左右留白随屏宽在 16→44px 之间伸缩。观感（颜色/圆角/阴影/字号）沿用 V1。 */
 :root {
-  --dash-max-w: 1080px;
-  --dash-gutter: 24px;
+  --dash-max-w: 1900px;
+  --dash-gutter: clamp(16px, 2.6vw, 44px);
   /* 数据色（--pos-* / --ph-*）已按 M3 色调梯规则移入各主题块：
      色相沿用原调色盘，light 取 tone 40、dark 取 tone 80，chroma 统一 */
 }
@@ -193,106 +233,181 @@ body {
 /* ══ DASHBOARD BODY ══ */
 .dash-body {
   min-height: 100vh;
-  /* ★改动①：删除 padding-top: 104px。
-     navbar / header 是 sticky（占据文档流），不是 fixed，
-     body 不需要预留空间，之前它把整条导航从顶部推了下去 */
   background: var(--bg);
   color: var(--text-1);
   font-family: "DM Sans", "PingFang SC", system-ui, -apple-system, sans-serif;
 }
 
-/* ── 导航条（品牌 + 主题切换） ── */
-.dash-navbar {
-  position: sticky;
-  top: 0;
-  z-index: 101;
-  width: 100%;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  backdrop-filter: saturate(180%) blur(16px);
-  -webkit-backdrop-filter: saturate(180%) blur(16px);
-  background: var(--topbar-glass);
-  border-bottom: 1px solid var(--md-outline-var);
-  transition: background-color 0.2s ease;
+/* 模块胶囊是纯锚点：点一下就平滑滚到那张卡（Q1 拍板） */
+html {
+  scroll-behavior: smooth;
 }
-.dash-navbar-inner {
-  width: 100%;
-  max-width: var(--dash-max-w);   /* ★改动②：1440px → 统一内容宽度 */
-  margin: 0 auto;
-  padding: 0 var(--dash-gutter);  /* ★改动②：20px → 统一左右留白 */
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 100%;
+.card {
+  scroll-margin-top: clamp(14px, 2vw, 28px);
 }
-.dash-navbar-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.dash-navbar-logo {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+
+/* ── Hero 大色块（V9：取代原吸顶导航条 + 统计条，参考 m3.material.io/get-started 顶部） ──
+   圆角容器色块 + 大标题 + 副标题 + 统计一行 + 10 个模块胶囊；
+   原导航条右上角的四个入口改为绝对定位贴在色块右上角（Q3 拍板：不再有吸顶导航）。 ── */
+.dash-hero {
+  position: relative;
+  width: calc(100% - var(--dash-gutter) * 2);
+  max-width: calc(var(--dash-max-w) - var(--dash-gutter) * 2);
+  margin: clamp(14px, 2vw, 28px) auto 0;
+  padding: clamp(48px, 5vw, 88px) clamp(20px, 2.6vw, 44px) clamp(44px, 4.4vw, 76px);
   background: var(--md-primary-container);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  color: var(--md-on-primary-container);
+  border-radius: 24px;
 }
-.dash-navbar-logo svg {
-  width: 16px;
-  height: 16px;
-}
-.dash-navbar-text h2 {
-  font-family: "Fraunces", serif;
-  font-style: italic;
-  font-weight: 300;
-  font-size: 17px;
-  color: var(--text-1);
-  line-height: 1.2;
-  margin: 0;
-}
-.dash-navbar-text span {
-  font-size: 10px;
-  color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  display: block;
-  line-height: 1.2;
-}
-.dash-navbar-actions {
+.dash-hero-actions {
+  position: absolute;
+  top: clamp(14px, 1.6vw, 24px);
+  right: clamp(14px, 1.6vw, 24px);
   display: flex;
   align-items: center;
   gap: 8px;
 }
+.dash-hero-title {
+  margin: 0 0 10px;
+  font-family: "NB International Pro", "DM Sans", sans-serif;
+  font-style: normal;
+  font-weight: 700;
+  font-size: clamp(30px, 4.4vw, 64px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  max-width: 18ch;            /* 留出右上角图标的位置 */
+}
+.dash-hero-sub {
+  margin: 0;
+  font-size: clamp(14px, 1.15vw, 19px);
+  line-height: 1.5;
+  opacity: 0.85;
+  max-width: 62ch;
+}
 
-/* ── 顶部统计条（内部为描边卡片；不吸顶，仅导航吸顶） ── */
-.dash-header {
-  position: static;
-  width: 100%;
+/* 色块内的一切描边/底色都走 --hero-* token，不把 rgba 写死在规则里 */
+.dash-hero .theme-btn {
+  border-color: var(--hero-line);
+  background: var(--hero-tint);
+  color: var(--md-on-primary-container);
+}
+.dash-hero .theme-btn:hover {
+  border-color: var(--md-on-primary-container);
+  background: var(--md-on-primary-container);
+  color: var(--md-primary-container);
+}
+
+/* 语言切换：文字二分 toggle，描边/底色同样只走 --hero-* token。
+   选中态与悬停态共用一档底色（与主题按钮一致），避免出现第三种颜色 */
+.dash-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 34px;
+  padding: 0 3px;
+  border: 1px solid var(--hero-line);
+  border-radius: 8px;
+  background: var(--hero-tint);
+}
+.dash-lang-btn {
+  height: 26px;
+  min-width: 30px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--md-on-primary-container);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dash-lang-btn:hover,
+.dash-lang-btn.is-on {
+  background: var(--md-on-primary-container);
+  color: var(--md-primary-container);
+}
+
+/* ── 统计：Hero 底部纯文字概览（无卡片、左下角、小字、大间距隔离） ── */
+.dash-hero-stats {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  margin-top: clamp(34px, 4vw, 52px);   /* 大间距与上方模块导航隔离 */
+  justify-content: flex-start;            /* 左下角对齐 */
+}
+/* 统计条改为纯文字：去掉卡片描边/底色/固定高度，label 与 num 同行基线对齐 */
+.dash-hero .dash-seg {
+  border: none;
+  background: none;
+  border-radius: 0;
   height: auto;
-  padding: 12px 0;
-  display: flex;
-  align-items: center;
-  background: var(--topbar-glass);
-  border-bottom: 1px solid var(--md-outline-var);
-  transition: background-color 0.2s ease;
+  padding: 0;
+  min-width: 0;
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
 }
-.dash-header-inner {
-  width: 100%;
-  max-width: var(--dash-max-w);   /* ★改动②：与主区域同宽 */
-  margin: 0 auto;
-  padding: 0 var(--dash-gutter);  /* ★改动②：与主区域同留白 */
-  display: flex;
-  align-items: center;
-  gap: 10px;                      /* ★改动③：卡片间距 */
-  overflow-x: auto;
-  scrollbar-width: none;
+.dash-hero .dash-seg-label {
+  color: var(--md-on-primary-container);
+  opacity: 0.72;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-bottom: 0;
 }
-.dash-header-inner::-webkit-scrollbar {
-  display: none;
+.dash-hero .dash-seg-num {
+  font-size: 14px;
+}
+.dash-hero .dash-seg-sub {
+  color: var(--md-on-primary-container);
+  opacity: 0.85;
+}
+/* 纯文字模式下不再画左侧色条，覆盖率数字也不做特殊着色（与其余数字同色） */
+.dash-hero .dash-coverage { padding-left: 0 !important; }
+.dash-hero .dash-coverage::before { display: none; }
+
+.dash-hero .dash-info {
+  border-color: var(--md-on-primary-container);
+  color: var(--md-on-primary-container);
+}
+.dash-hero .dash-info:hover,
+.dash-hero .dash-info:focus-visible {
+  border-color: currentColor;
+  color: currentColor;
+  opacity: 0.7;
+}
+
+/* ── 模块胶囊（10 个，一排只显标题） ── */
+.dash-hero-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: clamp(16px, 1.8vw, 26px);
+}
+.dash-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 15px;
+  border: 1px solid var(--hero-line);
+  border-radius: 999px;
+  background: var(--hero-tint);
+  color: var(--md-on-primary-container);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.dash-chip:hover,
+.dash-chip:focus-visible {
+  border-color: var(--md-on-primary-container);
+  background: var(--md-on-primary-container);
+  color: var(--md-primary-container);
 }
 
 /* ── 单个统计卡片 ── */
@@ -362,7 +477,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── 覆盖率：卡片内左侧彩色竖条 + 着色数字（数值不变） ── */
+/* ── 覆盖率：卡片内左侧彩色竖条（数值与数字颜色都不特殊处理） ── */
 .dash-coverage {
   position: relative;
   padding-left: 28px !important;
@@ -379,15 +494,7 @@ body {
   background: var(--text-3);
   transition: background-color 0.2s ease;
 }
-.dash-coverage[data-tier="green"] .dash-seg-num {
-  color: var(--green);
-}
-.dash-coverage[data-tier="yellow"] .dash-seg-num {
-  color: var(--yellow);
-}
-.dash-coverage[data-tier="red"] .dash-seg-num {
-  color: var(--md-error);
-}
+/* 数字不着色：覆盖率与 Total / Phrases 等用同一颜色，特殊处理只保留在下面的竖条上 */
 .dash-coverage[data-tier="green"]::before {
   background: var(--green);
 }
@@ -412,21 +519,36 @@ body {
   :root {
     --dash-gutter: 16px; /* ★改动②：移动端统一窄留白，三条容器依旧对齐 */
   }
-  /* ★改动①：删除 .dash-body { padding-top: 160px }（原因同桌面端） */
-  .dash-header {
-    padding: 10px 0;
+  /* V9：窄屏下色块收小圆角，右上角图标改为流内右对齐（DOM 里本就在标题之前），
+     否则绝对定位的图标会压住 30px 的大标题 */
+  .dash-hero {
+    border-radius: 18px;
+    padding: 16px 16px 16px;
   }
-  .dash-header-inner {
-    flex-wrap: wrap;       /* 卡片两列换行 */
-    gap: 8px;
-    overflow-x: visible;
+  .dash-hero-actions {
+    position: static;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+  }
+  .dash-hero-stats {
+    flex-wrap: wrap;       /* 窄屏纯文字自动换行 */
+    gap: 8px 18px;
+  }
+  .dash-hero .theme-btn:hover {
+    background: var(--hero-tint);
+    color: var(--md-on-primary-container);
+  }
+  /* 触屏没有悬停：去掉 hover 反色，但选中语言仍保持反色 */
+  .dash-lang-btn:hover:not(.is-on) {
+    background: transparent;
+    color: var(--md-on-primary-container);
   }
   .dash-seg {
-    flex: 1 1 calc(50% - 4px); /* 一行两张；最后一张（覆盖率）自动占满整行 */
-    padding: 0 12px;
+    flex: 0 0 auto;        /* 纯文字：不再是一行两张的卡片 */
+    padding: 0;
   }
   .dash-seg-num {
-    font-size: 16px;
+    font-size: 14px;
   }
   .dash-coverage {
     padding-left: 24px !important; /* ★微调：适配卡片描边 */
@@ -687,6 +809,20 @@ body {
   font-size: 11.5px;
 }
 
+/* 派生树悬停卡里的词缀标记：与列表视图同款 chip */
+.dash-tip .tip-affix {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.dash-tip .tip-affix-label {
+  color: var(--text-3);
+  font-size: 10.5px;
+}
+
 .dash-tip .tip-hint {
   display: flex;
   align-items: center;
@@ -707,47 +843,53 @@ body {
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 10px 28px;   /* 纵向 10 / 横向 28：饼图与图例之间留足间距 */
 }
 
 .donut-svg {
   flex: 0 0 auto;
   display: block;
   overflow: visible;
+  /* viewBox 仍是 160，靠 CSS 放大；字号按显示像素折算见下方 .donut-center-* */
+  width: 274px;
+  max-width: 100%;
+  height: auto;
 }
 
 .donut-slice {
   cursor: pointer;
   transition: opacity 0.15s ease;
   stroke: var(--surface);
-  stroke-width: 1.5;
+  stroke-width: 0.4;   /* 原 1.5（×1.71 后 2.6px）会把 0.2% 的窄扇区整个吃掉 */
 }
 
 .donut-slice.is-dim {
   opacity: 0.28;
 }
 
+/* viewBox 160 → CSS 放大到 274（×1.7125），字号按显示像素折算：
+   12.5 / 7 / 6.6 → 实际显示 21.4 / 12.0 / 11.3px */
 .donut-center-main {
   fill: var(--text-1);
-  font-size: 22px;
+  font-size: 12.5px;
   font-weight: 700;
   text-anchor: middle;
 }
 
 .donut-center-sub {
   fill: var(--text-3);
-  font-size: 11px;
+  font-size: 6.6px;
   text-anchor: middle;
 }
 
 .donut-center-val {
   fill: var(--text-2);
-  font-size: 12px;
+  font-size: 7px;
   text-anchor: middle;
 }
 
 .donut-legend {
-  flex: 1 1 128px;
+  flex: 0 1 auto;            /* 不再吃满剩余宽度：图例收到内容宽度，紧贴饼图 */
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -757,8 +899,8 @@ body {
 .legend-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 4px;
+  gap: 5px;
+  padding: 4px 4px;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s ease;
@@ -778,7 +920,8 @@ body {
 }
 
 .legend-name {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
+  min-width: 3em;            /* 三字词性名刚好放下，数字紧跟其后 */
   font-size: 11.5px;
   color: var(--text-1);
   white-space: nowrap;
@@ -787,9 +930,25 @@ body {
 }
 
 .legend-num {
+  position: relative;
+  flex: 0 0 auto;
+  width: 98px;             /* border-box：42px 数字 + 56px 虚线引导 */
+  padding-left: 56px;
+  text-align: right;
   font-size: 10.5px;
   color: var(--text-3);
   font-variant-numeric: tabular-nums;
+}
+
+/* 词性名与数据之间的细虚线（点线 + 30% 不透明度，刻意做淡） */
+.legend-num::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  right: 44px;
+  top: 50%;
+  border-top: 1px dotted var(--text-3);
+  opacity: 0.3;
 }
 
 .legend-pct {
@@ -808,40 +967,68 @@ body {
   color: var(--text-3);
 }
 
+/* 词性卡内容比同行「Word Length」矮：让 body 吃满卡片剩余高度，
+   饼图+图例在上方剩余空间里垂直居中，底部说明贴着卡片底边（底对齐） */
+.card[data-chart="pos-donut"] {
+  display: flex;
+  flex-direction: column;
+}
+
+.card[data-chart="pos-donut"] .card-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.card[data-chart="pos-donut"] .donut-wrap {
+  flex: 1 1 auto;
+  justify-content: space-between;   /* 饼图贴左、图例贴右 → 与底部说明两端对齐 */
+  align-content: center;
+  column-gap: 20px;                 /* 窄屏换行时仍留间距 */
+}
+
+.card[data-chart="pos-donut"] .donut-footnote {
+  font-size: 11.5px;
+  margin-top: auto;          /* 空隙全给图与说明之间 → 说明底对齐 */
+}
+
 /* ══════════════════════════════════════════════════════
    ③④⑨ 共用小组件
 ══════════════════════════════════════════════════════ */
 
-/* ── 迷你切换开关（③ 单词/全部）── */
+/* ── 迷你切换开关（③ 单词/全部、⑩ 单双元音/辅音）──
+   观感与「树状图 / 列表」分段开关（.derive-seg + .hud-btn）完全对齐 */
 .mini-toggle {
   display: inline-flex;
+  align-items: center;
   gap: 2px;
   padding: 2px;
   margin-bottom: 10px;
+  border: 1px solid var(--border);
   background: var(--surface-2);
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .mini-toggle-btn {
-  border: 0;
+  border: none;
   background: transparent;
-  color: var(--text-3);
+  color: var(--text-2);
   font: inherit;
-  font-size: 11.5px;
-  padding: 3px 10px;
+  font-size: 11px;
+  padding: 3px 9px;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 .mini-toggle-btn:hover {
+  background: var(--state-hover);
   color: var(--text-1);
 }
 
 .mini-toggle-btn.is-on {
   background: var(--md-primary);
   color: var(--md-on-primary);
-  font-weight: 600;
 }
 
 /* ══════════════════════════════════════════════════════
@@ -977,10 +1164,26 @@ body {
    ⑨ n-gram 字符模式热力图
 ══════════════════════════════════════════════════════ */
 
+/* 卡片本身也要纵向 flex，否则同一行被弦图撑到 782 时，
+   热力图只守着 min-height 640，底下会空出 68px，说明文字就不贴底了 */
+.card[data-chart="ngram-heat"] {
+  display: flex;
+  flex-direction: column;
+}
+
+.card[data-chart="ngram-heat"] .card-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: var(--heat-h, 640px);   /* 保底高度，实际高度跟随同行那张卡 */
+}
+
 .heat {
   display: grid;
   gap: 2px;
   margin-bottom: 10px;
+  flex: 1 1 auto;                     /* 吃掉卡片剩余高度 */
 }
 
 .heat-head,
@@ -989,19 +1192,22 @@ body {
   color: var(--text-3);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding-right: 4px;
+  justify-content: flex-start;
   white-space: nowrap;
+}
+
+.heat-lab {
+  padding-left: 2px;
+  padding-right: 8px;    /* 标签列宽=max-content，这 8px 是它和第一个色块之间唯一的留白 */
 }
 
 .heat-head {
   justify-content: center;
-  padding: 0;
   font-variant-numeric: tabular-nums;
 }
 
 .heat-cell {
-  height: 24px;
+  min-height: 24px;
   border-radius: 3px;
   background: var(--surface-2);
   cursor: pointer;
@@ -1048,6 +1254,10 @@ body {
   position: relative;
   width: 100%;
 }
+
+/* ══ 散点 / 平铺 视图切换（语义地图） ══
+   复用「树状图 / 列表」同款分段控件：.derive-seg + .hud-btn（见下方 1489+），
+   激活态用 --md-primary，与词族树谱的切换完全一致 */
 
 .scatter-canvas {
   display: block;
@@ -1150,14 +1360,65 @@ body {
   border-color: var(--accent);
 }
 
+/* ── 语义地图顶部控制行：左 视图切换 / 右 搜索+全选+清空+计数（单行） ── */
+.sm-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 2px 0 12px;
+}
+
+.sm-filter {
+  margin-top: 0;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+}
+
+.sm-filter input[type="text"] {
+  flex: 1 1 150px;
+  min-width: 110px;
+  max-width: 260px;
+}
+
 .cluster-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  max-height: 92px;
-  overflow-y: auto;
   margin-top: 8px;
+}
+
+/* ── 语义地图：左图右簇（横向布局，5/5 分栏）──
+   V2 保持左右同排；色块放大由 dashboard.js drawTile 的格径算法负责铺满左栏。 */
+.sm-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-top: 4px;
+}
+.sm-layout .scatter-wrap {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.sm-layout .cluster-chips {
+  flex: 1 1 0;
+  min-width: 0;
+  margin-top: 0;
+  align-content: flex-start;
+  overflow-y: auto;
   padding-right: 2px;
+}
+
+@media (max-width: 760px) {
+  .sm-layout {
+    flex-direction: column;
+  }
+  .sm-layout .scatter-wrap,
+  .sm-layout .cluster-chips {
+    flex: none;
+    width: 100%;
+  }
 }
 
 .cc-chip {
@@ -1182,6 +1443,18 @@ body {
 
 .cc-chip.is-off {
   opacity: 0.32;
+}
+
+/* 点击锁定高亮的选中态：实心主题色，与 .hud-btn.is-on 同一套语言 */
+.cc-chip.is-sel {
+  background: var(--md-primary);
+  border-color: var(--md-primary);
+  color: var(--md-on-primary);
+}
+.cc-chip.is-sel .cc-id,
+.cc-chip.is-sel .cc-n {
+  color: inherit;
+  opacity: 0.75;
 }
 
 .cc-dot {
@@ -1237,11 +1510,7 @@ body {
   font-weight: 600;
   text-anchor: middle;
   pointer-events: none;
-  fill: var(--text-1);
-  paint-order: stroke fill;
-  stroke: var(--surface);
-  stroke-width: 3px;
-  stroke-linejoin: round;
+  fill: var(--md-on-primary);
 }
 
 .bubble-sub {
@@ -1249,7 +1518,6 @@ body {
   text-anchor: middle;
   pointer-events: none;
   fill: var(--md-on-primary);
-  opacity: 0.85;
 }
 
 /* ══════════════════════════════════════════════════════
@@ -1267,35 +1535,38 @@ body {
    颜色全部走 CSS 变量，随 light / dark 主题自动切换；
    Firefox 走 scrollbar-width:thin + scrollbar-color，
    WebKit 走 ::-webkit-scrollbar 系列 */
-.cluster-chips,
 .derive-list {
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar) transparent;
 }
-.cluster-chips::-webkit-scrollbar,
 .derive-list::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-.cluster-chips::-webkit-scrollbar-track,
 .derive-list::-webkit-scrollbar-track {
   background: transparent;
 }
-.cluster-chips::-webkit-scrollbar-thumb,
 .derive-list::-webkit-scrollbar-thumb {
   background: var(--scrollbar);
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: padding-box;   /* 细边留白，thumb 不贴边 */
 }
-.cluster-chips::-webkit-scrollbar-thumb:hover,
 .derive-list::-webkit-scrollbar-thumb:hover {
   background: var(--text-1);
 }
 
-.derive-list {
+/* 词根列表这一列只是定位盒：列表用绝对定位填满它，
+   这样 40 个词根的内容高度不会反过来把整行撑高，
+   列表底边就正好对齐右侧可视化的底边 */
+.derive-list-col {
+  position: relative;
   flex: 0 0 190px;
-  max-height: 560px;
+}
+
+.derive-list {
+  position: absolute;
+  inset: 0;
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -1472,18 +1743,18 @@ body {
 }
 
 .derive-node:hover circle {
-  stroke: var(--accent);
+  stroke: var(--affix, var(--accent));
   stroke-width: 2.5;
 }
 
-/* 朗读中的节点：外圈脉冲 */
+/* 朗读中的节点：按所属派生方式（加前缀/加后缀）同色外圈脉冲 */
 .derive-node.is-speaking circle {
   animation: derive-speaking 0.75s ease-in-out infinite alternate;
 }
 
 @keyframes derive-speaking {
-  from { stroke: var(--accent); stroke-width: 2; stroke-opacity: 1; }
-  to   { stroke: var(--accent); stroke-width: 9; stroke-opacity: 0.12; }
+  from { stroke: var(--affix, var(--accent)); stroke-width: 2; stroke-opacity: 1; }
+  to   { stroke: var(--affix, var(--accent)); stroke-width: 9; stroke-opacity: 0.12; }
 }
 
 .derive-label {
@@ -1497,20 +1768,21 @@ body {
   stroke-linejoin: round;
 }
 
+/* 配色提示：放在工具栏「收回深度 1」左边，与按钮一起靠右 */
 .derive-legend {
   display: flex;
-  gap: 14px;
+  align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-top: 8px;
+  margin-left: auto;
   font-size: 11px;
   color: var(--text-2);
 }
-
 .derive-legend i {
   display: inline-block;
-  width: 14px;
-  height: 3px;
-  border-radius: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
   vertical-align: middle;
   margin-right: 5px;
 }
@@ -1571,12 +1843,13 @@ body {
 }
 
 .dl-row:hover {
-  background: var(--state-hover);
+  background: color-mix(in srgb, var(--affix, var(--accent)) 10%, transparent);
 }
 
+/* 朗读中的行：左侧色条用该行派生方式的颜色（加前缀橙 / 加后缀青绿） */
 .dl-row.is-speaking {
   background: var(--accent-soft);
-  box-shadow: inset 3px 0 0 var(--accent);
+  box-shadow: inset 3px 0 0 var(--affix, var(--accent));
 }
 
 .dl-word {
@@ -1641,15 +1914,15 @@ body {
 }
 
 .dl-badge.pre {
-  color: var(--pos-verb);
-  background: color-mix(in srgb, var(--pos-verb) 14%, transparent);
-  border-color: color-mix(in srgb, var(--pos-verb) 40%, transparent);
+  color: var(--affix-pre-ink);
+  background: color-mix(in srgb, var(--affix-pre) 18%, transparent);
+  border-color: color-mix(in srgb, var(--affix-pre) 50%, transparent);
 }
 
 .dl-badge.suf {
-  color: var(--pos-adj);
-  background: color-mix(in srgb, var(--pos-adj) 14%, transparent);
-  border-color: color-mix(in srgb, var(--pos-adj) 40%, transparent);
+  color: var(--affix-suf-ink);
+  background: color-mix(in srgb, var(--affix-suf) 18%, transparent);
+  border-color: color-mix(in srgb, var(--affix-suf) 50%, transparent);
 }
 
 /* 右对齐簇：设为词根 → 派生方式，整体贴右 */
@@ -1762,8 +2035,14 @@ body {
     flex-direction: column;
   }
 
-  .derive-list {
+  /* 竖排时不能用绝对定位（列高由内容决定），恢复成普通滚动块 */
+  .derive-list-col {
+    position: static;
     flex: 0 0 auto;
+  }
+
+  .derive-list {
+    position: static;
     max-height: 200px;
   }
 }
@@ -1799,7 +2078,11 @@ body {
 .phonics-row:hover,
 .phonics-row.is-hot,
 .phonics-row.is-open {
-  background: var(--surface-2);
+  background: var(--row-hover);
+}
+/* 点击钉住：底色沿用 hover 那一档，只用 1px 主色细描边表意（inset 阴影，不占位不移版） */
+.phonics-row.is-pin {
+  box-shadow: inset 0 1px 0 var(--row-line), inset 1px 0 0 var(--row-line), inset -1px 0 0 var(--row-line);
 }
 .phonics-ipa {
   font-size: 14px;
@@ -1839,18 +2122,27 @@ body {
   /* 紧贴上方选中的音条（抵消列表 6px 间距），与之共用底色连成一个整体 */
   margin-top: -6px;
   padding: 2px 6px 12px;
-  background: var(--surface-2);
-  border-radius: 0 0 10px 10px;
+  background: var(--row-hover);
+  border-radius: 0 0 8px 8px;
   display: none;
 }
 .phonics-detail.is-on { display: block; }
+.phonics-detail.is-pin {
+  box-shadow: inset 0 -1px 0 var(--row-line), inset 1px 0 0 var(--row-line), inset -1px 0 0 var(--row-line);
+}
 .phonics-row.is-open { border-radius: 8px 8px 0 0; }
-.phonics-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+/* 定宽网格而不是 flex：组合名与词数要在同一行左右分别贴边，
+   必须有确定的列宽，shrink-to-fit 的盒子装不下 1fr auto */
+.phonics-pills {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
 .phonics-pill {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 92px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 2px 8px;
   padding: 8px 10px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1861,8 +2153,8 @@ body {
   font-weight: 700;
   color: var(--text-1);
 }
-.pill-n { font-size: 12px; color: var(--accent); font-weight: 600; }
-.pill-ex { font-size: 11px; color: var(--text-2); line-height: 1.3; }
+.pill-n { font-size: 12px; color: var(--accent); font-weight: 600; text-align: right; }
+.pill-ex { grid-column: 1 / -1; font-size: 11px; color: var(--text-2); line-height: 1.3; }
 @media (max-width: 760px) {
   .phonics-stage { grid-template-columns: 1fr; }
   .phonics-row { grid-template-columns: 42px 1fr auto; }
@@ -1875,7 +2167,7 @@ body {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
-  margin: 4px 0 12px;
+  margin: 26px 0 0;
 }
 .syl-stat {
   padding: 10px 12px;
@@ -1932,16 +2224,27 @@ body {
   display: grid; grid-template-columns: 168px 1fr auto; align-items: center; gap: 12px;
   padding: 4px 6px; border-radius: 8px; cursor: pointer; transition: background .15s ease;
 }
-.syl-combo-row:hover,
+.syl-combo-row:hover:not(.syl-combo-tail),
 .syl-combo-row.is-hot,
-.syl-combo-row.is-open { background: var(--surface-2); }
+.syl-combo-row.is-open { background: var(--row-hover); }
 .syl-combo-chips { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .syl-chip {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 30px; padding: 2px 7px; font-size: 12px; font-weight: 700;
   color: var(--md-on-primary); background: var(--c, var(--md-primary)); border-radius: 8px; letter-spacing: .02em;
 }
+/* 开音节＝实心主色；闭音节＝浅主色容器底 + 主色文字 */
+.syl-chip--open { background: var(--md-primary); color: var(--md-on-primary); }
+.syl-chip--closed { background: var(--md-primary-container); color: var(--md-on-primary-container); }
 .syl-dot { color: var(--text-2); font-size: 11px; padding: 0 1px; }
+.syl-legend {
+  display: flex; flex-wrap: wrap; gap: 6px 18px;
+  font-size: 11.5px; color: var(--text-2); margin: -6px 0 14px;
+}
+.syl-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.syl-legend-item i {
+  width: 10px; height: 10px; border-radius: 3px; flex: none;
+}
 .syl-val { font-size: 12.5px; font-weight: 600; color: var(--text-1); white-space: nowrap; text-align: right; }
 .syl-val small { display: block; font-weight: 400; font-size: 10.5px; color: var(--text-2); }
 .syl-combo-tail { cursor: default; }
@@ -1951,20 +2254,157 @@ body {
 .syl-row-detail {
   margin-top: -6px;
   padding: 2px 6px 12px;
-  background: var(--surface-2);
-  border-radius: 0 0 10px 10px;
+  background: var(--row-hover);
+  border-radius: 0 0 8px 8px;
   display: none;
 }
 .syl-row-detail.is-on { display: block; }
 .syl-combo-row.is-open { border-radius: 8px 8px 0 0; }
+/* 与音条同一套钉住样式：写在这里保证排在悬停规则之后，同权重时后者优先 */
+.syl-combo-row.is-pin {
+  box-shadow: inset 0 1px 0 var(--row-line), inset 1px 0 0 var(--row-line), inset -1px 0 0 var(--row-line);
+}
+.syl-row-detail.is-pin {
+  box-shadow: inset 0 -1px 0 var(--row-line), inset 1px 0 0 var(--row-line), inset -1px 0 0 var(--row-line);
+}
+.syl-detail-combo-ex { font-size: 12px; color: var(--text-2); margin-top: 10px; }
 .syl-detail-skel-title { font-size: 12px; color: var(--text-2); margin-bottom: 8px; }
 .syl-detail-skel-list { display: flex; flex-direction: column; gap: 6px; }
-.syl-detail-skel { display: flex; align-items: center; gap: 10px; font-size: 12px; flex-wrap: wrap; }
-.syl-detail-skel-n { font-weight: 600; color: var(--accent); }
-.syl-detail-skel-type { font-size: 11px; color: var(--text-2); background: var(--md-surface-3); padding: 1px 7px; border-radius: 8px; }
+/* 逐音节拆解：序号 / 骨架 / 开闭标签 三列对齐，说明文字单独成列 */
+.syl-detail-skel {
+  display: grid; grid-template-columns: 58px 46px 58px 1fr;
+  align-items: center; gap: 10px; font-size: 12px;
+}
+.syl-detail-skel-ord { color: var(--text-2); font-size: 11.5px; white-space: nowrap; }
+.syl-detail-skel-type { font-size: 11px; color: var(--text-2); background: var(--md-surface-3); padding: 1px 7px; border-radius: 8px; text-align: center; }
 .syl-detail-skel-ex { color: var(--text-2); }
 @media (max-width: 760px) {
   .syl-stats { grid-template-columns: repeat(2, 1fr); }
   .syl-combo-row { grid-template-columns: 132px 1fr auto; }
   .syl-ns-track { height: 120px; }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   ══ V2 唯一新增层 · 只改宽度与列数，观感全部沿用 V1 ══
+   颜色 / 圆角 / 阴影 / 字号 / 卡片头排版一律不动。
+   铺满：--dash-max-w 1080 → 1900px（留白 clamp 16→44px，见上方布局变量块）。
+   变列：<1500px 与 V1 完全一致（3 列基格，宽卡独占行），方便逐屏对照取舍。
+══════════════════════════════════════════════════════════════════ */
+@media (min-width: 1500px) {
+  .card-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .card-grid > .card { grid-column: span 2; }        /* 词性分布 */
+  .card.is-two { grid-column: span 4; }              /* 单词长度分布 */
+  .card.is-wide { grid-column: span 3; }             /* 其余宽卡两两并排（实测各 896px，V1 为 1032px） */
+  .card.is-wide.is-hero { grid-column: 1 / -1; }     /* 标了 is-hero 的仍独占整行 */
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ══ V2 迭代项 V8 · 首字母分布版式（只作用于这一张卡）══
+   照用户参考图：左侧一列向下排列的刻度短横、柱子上下两端都圆；
+   字母按用户第二轮指示放回柱底基线下方，逐柱居中对齐（底部横线已去掉）。
+   柱高比例不变：dashboard2.js 只是把 150px 的画布等比放大到容器实际高度。
+══════════════════════════════════════════════════════════════════ */
+
+.card[data-chart="initial-cloud"] .letter-chart {
+  position: relative;
+  padding-left: 22px;                    /* 左侧让出刻度栏 */
+}
+
+.card[data-chart="initial-cloud"] .letter-chart::before {
+  content: "";
+  position: absolute;                    /* 绝对定位 → 不参与网格排布，26 列不受影响 */
+  left: 0;
+  top: 4px;
+  bottom: 17px;                          /* 刻度只画到柱底，别一路淌到字母那一行（标签 13px + 间距 4px） */
+  width: 10px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--md-outline) 0 2px,
+    transparent 2px 14px
+  );
+}
+
+.card[data-chart="initial-cloud"] .letter-bar {
+  width: 72%;
+  max-width: 46px;
+  border-radius: 5px;                    /* 上下都圆 */
+  opacity: 1;
+  transition: filter 0.15s ease;
+}
+
+.card[data-chart="initial-cloud"] .letter-col:hover .letter-bar {
+  opacity: 1;
+  filter: brightness(1.12);
+}
+
+/* 字母在柱底下方，跟着柱子一起水平居中（.letter-col 已是 align-items:center） */
+.card[data-chart="initial-cloud"] .letter-ch {
+  font-size: 12.5px;
+  text-align: center;
+  width: 100%;
+}
+
+/* 窄屏 13 列时每列只剩 ~17px */
+@media (max-width: 640px) {
+  .card[data-chart="initial-cloud"] .letter-bar { width: 92%; }
+  .card[data-chart="initial-cloud"] .letter-ch { font-size: 11px; }
+  .card[data-chart="initial-cloud"] .letter-chart::before { bottom: 15px; }
+}
+
+/* ══ 近义词分组网格（⑦ 替代气泡图：图标分区 + 组内标签云）══ */
+.cluster-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+/* 9 类各自绑定 --ph-1..9，不新增色；亮色类（ph-3/ph-9）用深字 */
+.cg-ph1 { --cg: var(--ph-1); --cg-ink: #fff; }
+.cg-ph2 { --cg: var(--ph-2); --cg-ink: #fff; }
+.cg-ph3 { --cg: var(--ph-3); --cg-ink: #2b2535; }
+.cg-ph4 { --cg: var(--ph-4); --cg-ink: #fff; }
+.cg-ph5 { --cg: var(--ph-5); --cg-ink: #fff; }
+.cg-ph6 { --cg: var(--ph-6); --cg-ink: #fff; }
+.cg-ph7 { --cg: var(--ph-7); --cg-ink: #fff; }
+.cg-ph8 { --cg: var(--ph-8); --cg-ink: #fff; }
+.cg-ph9 { --cg: var(--ph-9); --cg-ink: #2b2535; }
+
+.cg-class {
+  border: 1px solid var(--card-border, #ece8f3);
+  border-radius: 16px;
+  padding: 14px 14px 16px;
+  background: var(--surface, #fff);
+  background: color-mix(in srgb, var(--cg) 7%, var(--surface, #fff));
+}
+.cg-head { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
+.cg-icon {
+  width: 34px; height: 34px; border-radius: 10px; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--cg); color: var(--cg-ink);
+  font-size: 15px; font-weight: 500;
+  font-family: "NB International Pro", "DM Sans", sans-serif;
+}
+.cg-name { font-size: 14px; font-weight: 500; color: var(--text-1, #211b30); line-height: 1.2; }
+.cg-sub { font-size: 11px; color: var(--text-3, #9a93a8); margin-top: 2px; }
+.cg-chips { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.cg-chip {
+  border: 0; cursor: pointer; font-family: inherit; line-height: 1;
+  padding: 6px 11px; border-radius: 999px;
+  background: var(--cg); color: var(--cg-ink);
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+  white-space: nowrap;
+}
+.cg-chip:hover, .cg-chip.is-hot {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0,0,0,.14);
+}
+.cg-chip.is-dim { opacity: .4; }
+.cg-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.cg-stat {
+  font-size: 11px; line-height: 1; color: var(--text-2);
+  background: var(--surface-2); border: 1px solid var(--border);
+  padding: 5px 11px; border-radius: 999px;
+}
+.cg-stat b { color: var(--text-1); font-weight: 600; margin-right: 3px; }
+@media (max-width: 900px) { .cluster-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .cluster-grid { grid-template-columns: 1fr; } }

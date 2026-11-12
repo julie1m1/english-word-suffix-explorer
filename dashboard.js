@@ -9,6 +9,14 @@
   "use strict";
 
   /* ══════════════════════════════════════════════════════
+     文案取词 — i18n.js 提供 window.t（脚本顺序：i18n.js 必须早于本文件）
+     别名用 T：本文件多处把 t 当形参名，直接用 t 会被遮蔽
+  ══════════════════════════════════════════════════════ */
+  const T = typeof window.t === "function"
+    ? window.t
+    : function (key) { return key; };
+
+  /* ══════════════════════════════════════════════════════
      ICONS — 与 index.html 保持一致的太阳/月亮
   ══════════════════════════════════════════════════════ */
   const ICONS = {
@@ -22,14 +30,27 @@
   const themeBtn = document.getElementById("dashThemeToggle");
   var onThemeApplied = null; // initCards 赋值：主题切换后重绘已渲染图表（canvas 色值按新主题重新解析）
 
+  /* 语言切换复用同一条重绘通道：文案在绘制时取词，重画即换语言。
+     initCards 之前 onThemeApplied 仍为 null，此时没有已渲染图表，无需重绘。 */
+  window.onLangChange = function () {
+    syncThemeBtnLabel(currentTheme());
+    if (onThemeApplied) onThemeApplied();
+  };
+
+  /* 主题按钮的 tooltip 带方向（切到深色/浅色），两边都要跟着当前主题与语言走 */
+  function syncThemeBtnLabel(t) {
+    if (!themeBtn) return;
+    const tip = T(t === "light" ? "page.toDark" : "page.toLight");
+    themeBtn.title = tip;
+    themeBtn.setAttribute("aria-label", tip);
+  }
+
   function applyTheme(t) {
     document.documentElement.setAttribute("data-theme", t);
     localStorage.setItem("vocab-theme", t);
     clearTokenCache();
-    if (themeBtn) {
-      themeBtn.innerHTML = t === "light" ? ICONS.moon : ICONS.sun;
-      themeBtn.title = t === "light" ? "Switch to Dark" : "Switch to Light";
-    }
+    if (themeBtn) themeBtn.innerHTML = t === "light" ? ICONS.moon : ICONS.sun;
+    syncThemeBtnLabel(t);
     if (onThemeApplied) onThemeApplied();
   }
   function currentTheme() {
@@ -145,10 +166,7 @@
   (function bindOovInfo() {
     const btn = document.getElementById("oovInfo");
     if (!btn) return;
-    const html =
-      '<b>OOV</b>（Out Of Vocabulary · 词表外词）<br>' +
-      '词嵌入模型中找不到对应语义向量的单词：无法进入「单词语义地图」和近义词簇，' +
-      '在语义分类中被归入「其他」类别。';
+    const html = T("oov.tip");
     function show() {
       const el = ensureTip();
       el.classList.add("is-below");
@@ -220,11 +238,11 @@
     "noun", "verb", "adj", "adv", "pron", "det",
     "prep", "conj", "interj", "num", "other",
   ];
-  const POS_LABEL = {
-    noun: "名词", verb: "动词", adj: "形容词", adv: "副词",
-    pron: "代词", det: "限定词", prep: "介词", conj: "连词",
-    interj: "感叹词", num: "数词", other: "其他",
-  };
+  /* 词性显示名在「绘制时」按当前语言取词：聚合结果会被缓存，
+     文案若烘进缓存，切换语言后图上的词性名不会跟着变 */
+  function posLabel(k) {
+    return POS_ORDER.indexOf(k) >= 0 ? T("pos." + k) : k;
+  }
   // 列表视图用词性缩写（不翻译中文）：n / v / adj / adv ...
   const POS_ABBR = {
     noun: "n", verb: "v", adj: "adj", adv: "adv",
@@ -299,7 +317,7 @@
 
     const rows = POS_ORDER.filter((k) => counts[k] > 0).map((k) => ({
       key: k,
-      label: POS_LABEL[k] || k,
+      label: posLabel(k),
       count: counts[k],
       samples: samples[k] || [],
     }));
@@ -314,12 +332,16 @@
     rows.forEach((r) => {
       r.pct = totalTags ? (r.count / totalTags) * 100 : 0;
     });
-    return { rows, totalTags, multi, meta: payload.meta || {} };
+    return { rows, totalTags, multi, posWords: words, meta: payload.meta || {} };
   }
 
   function drawPosDonut(body, agg) {
     const SIZE = 160, CX = 80, CY = 80, R_OUT = 74, R_IN = 46;
-    const PAD = 0.012; // 扇区间缝隙（弧度）
+    const PAD = 0.004; // 扇区间缝隙（弧度），间隙收小
+    // 0.2% 的类（感叹词/数词/其他…）真实弧长只有 1.3px，会被描边吃干净；
+    // 给一个显示下限，让它们至少留一条可辨的色带（占比数字仍是真值）
+    const MIN_SPAN = 0.045;
+    const posWords = Object.keys(agg.posWords).length;
 
     body.innerHTML = "";
     const wrap = document.createElement("div");
@@ -339,8 +361,17 @@
     let angle = -Math.PI / 2; // 12 点起笔
     const slices = [];
 
-    agg.rows.forEach((r) => {
-      const span = (r.count / total) * Math.PI * 2;
+    // 真实占比 → 抬到显示下限 → 多出来的角度按各类占比等比扣回，整圈仍是 360°
+    const TWO_PI = Math.PI * 2;
+    const rawSpan = agg.rows.map((r) => (r.count / total) * TWO_PI);
+    const floored = rawSpan.map((s) => (s > 0 ? Math.max(s, MIN_SPAN) : s));
+    const excess = floored.reduce((a, b) => a + b, 0) - TWO_PI;
+    const spans = floored.map((s, i) =>
+      Math.max(MIN_SPAN, s - excess * (rawSpan[i] / TWO_PI))
+    );
+
+    agg.rows.forEach((r, i) => {
+      const span = spans[i];
       const pad = Math.min(PAD, span / 4);
       const a0 = angle + pad;
       const a1 = angle + span - pad;
@@ -354,7 +385,7 @@
       slices.push({ node: p, row: r, mid: (a0 + a1) / 2 });
     });
 
-    // ── 圆心文字 ──
+    // ── 圆心文字（严格落在内圈中心）──
     const mkText = (cls, y, txt) => {
       const t = document.createElementNS(NS, "text");
       t.setAttribute("class", cls);
@@ -364,15 +395,15 @@
       svg.appendChild(t);
       return t;
     };
-    const tMain = mkText("donut-center-main", CY - 4, "");
-    const tVal = mkText("donut-center-val", CY + 14, "");
-    const tSub = mkText("donut-center-sub", CY + 30, "");
+    const tMain = mkText("donut-center-main", CY - 5.5, "");
+    const tVal = mkText("donut-center-val", CY + 5.5, "");
+    const tSub = mkText("donut-center-sub", CY + 15.5, "");
 
     function setCenter(row) {
       if (!row) return;
       tMain.textContent = row.pct.toFixed(1) + "%";
-      tVal.textContent = row.label + " " + row.key;
-      tSub.textContent = fmtNum(row.count) + " 次计入";
+      tVal.textContent = T("pos.centerName", { label: row.label, key: row.key });
+      tSub.textContent = T("pos.centerCount", { n: fmtNum(row.count) });
     }
     const topRow = agg.rows.slice().sort((a, b) => b.count - a.count)[0];
     setCenter(topRow);
@@ -410,12 +441,12 @@
 
     function tipHTML(r) {
       const ex = r.samples.length
-        ? r.samples.map((w) => "<b>" + w + "</b>").join("、")
+        ? r.samples.map((w) => "<b>" + w + "</b>").join(T("list.sep"))
         : "—";
       return (
-        "<div><b>" + r.label + " " + r.key + "</b></div>" +
-        "<div>" + fmtNum(r.count) + " 次计入 · " + r.pct.toFixed(1) + "%</div>" +
-        '<div style="margin-top:4px;color:var(--text-2)">示例：' + ex + "</div>"
+        "<div><b>" + T("pos.centerName", { label: r.label, key: r.key }) + "</b></div>" +
+        "<div>" + T("pos.tipLine", { n: fmtNum(r.count), pct: r.pct.toFixed(1) }) + "</div>" +
+        '<div style="margin-top:4px;color:var(--text-2)">' + T("tip.examples") + ex + "</div>"
       );
     }
 
@@ -450,9 +481,11 @@
     const foot = document.createElement("p");
     foot.className = "donut-footnote";
     const m = agg.meta;
-    foot.innerHTML =
-      "说明：一个词若有多个词性会分别计数，所以总次数会多于单词数。" +
-      '<br>本图只统计单词（短语不计入），另有 ' + fmtNum(m.unknown || 0) + " 个词性未能识别的词未纳入。";
+    foot.innerHTML = T("pos.foot", {
+      w: fmtNum(posWords),
+      total: fmtNum(total),
+      unknown: fmtNum(m.unknown || 0),
+    });
     body.appendChild(foot);
   }
 
@@ -546,8 +579,8 @@
 
     body.innerHTML = "";
     const toggle = el("div", "mini-toggle");
-    const btnWord = el("button", "mini-toggle-btn is-on", "单词");
-    const btnAll = el("button", "mini-toggle-btn", "全部（含短语）");
+    const btnWord = el("button", "mini-toggle-btn is-on", T("len.modeWord"));
+    const btnAll = el("button", "mini-toggle-btn", T("len.modeAll"));
     btnWord.dataset.mode = "word";
     btnAll.dataset.mode = "all";
     toggle.appendChild(btnWord);
@@ -578,11 +611,11 @@
           '<div class="bar-track"><i class="bar-fill" style="width:' + pct + '%"></i></div>' +
           '<span class="bar-val">' + fmtNum(hist[k]) + "</span>";
 
-        const samples = (ex[k] || []).map((w) => "<b>" + w + "</b>").join("、") || "—";
+        const samples = (ex[k] || []).map((w) => "<b>" + w + "</b>").join(T("list.sep")) || "—";
         const tipHTML =
-          "<div><b>" + (k === 15 ? "15 个字母及以上" : k + " 个字母") + "</b></div>" +
-          "<div>" + fmtNum(hist[k]) + " 条 · " + ((hist[k] / total) * 100).toFixed(1) + "%</div>" +
-          '<div style="margin-top:4px;color:var(--text-2)">示例：' + samples + "</div>";
+          "<div><b>" + T(k === 15 ? "len.title15" : "len.titleN", { k: k }) + "</b></div>" +
+          "<div>" + T("tip.entriesPct", { n: fmtNum(hist[k]), pct: ((hist[k] / total) * 100).toFixed(1) }) + "</div>" +
+          '<div style="margin-top:4px;color:var(--text-2)">' + T("tip.examples") + samples + "</div>";
 
         const enter = (ev) => {
           hoverBus.emit({ type: "len", key: k });
@@ -599,9 +632,9 @@
 
       foot.innerHTML =
         (mode === "word"
-          ? "口径：仅单词 " + fmtNum(corpus.totalWords) + " 条，短语不计。"
-          : "口径：全部 " + fmtNum(corpus.totalEntries) + " 条，短语按含空格总长度计算；因此 15+ 桶会被拉高。") +
-        "<br>横轴为字母数，≥15 合并为一栏以避免长尾。";
+          ? T("len.footWord", { n: fmtNum(corpus.totalWords) })
+          : T("len.footAll", { n: fmtNum(corpus.totalEntries) })) +
+        T("len.footAxis");
     }
 
     toggle.addEventListener("click", (ev) => {
@@ -645,10 +678,14 @@
         '<span class="letter-ch" style="font-size:' + size.toFixed(1) + 'px">' + c.toUpperCase() + "</span>";
 
       const tipHTML =
-        "<div><b>" + c.toUpperCase() + " 开头</b></div>" +
-        "<div>" + fmtNum(n) + " 条 · " + ((n / counted) * 100).toFixed(1) + "%</div>" +
-        '<div style="margin-top:4px;color:var(--text-2)">占全部 ' + fmtNum(corpus.totalEntries) + " 条的 " +
-        ((n / corpus.totalEntries) * 100).toFixed(1) + "%</div>";
+        "<div><b>" + T("ini.tipTitle", { c: c.toUpperCase() }) + "</b></div>" +
+        "<div>" + T("tip.entriesPct", { n: fmtNum(n), pct: ((n / counted) * 100).toFixed(1) }) + "</div>" +
+        '<div style="margin-top:4px;color:var(--text-2)">' +
+        T("ini.tipShare", {
+          total: fmtNum(corpus.totalEntries),
+          pct: ((n / corpus.totalEntries) * 100).toFixed(1),
+        }) +
+        "</div>";
 
       const enter = (ev) => {
         hoverBus.emit({ type: "initial", key: c });
@@ -664,11 +701,11 @@
     });
 
     const foot = el("p", "donut-footnote");
-    foot.innerHTML =
-      "A–Z 横向排列，柱高正比于该字母词条数，字号同步放大。<br>" +
-      "已剔除引号 / 括号等非 [a-z] 开头的词条，实际计入 " + fmtNum(counted) +
-      " 条（共 " + fmtNum(corpus.totalEntries) + " 条，剔除 " +
-      fmtNum(corpus.totalEntries - counted) + " 条）。";
+    foot.innerHTML = T("ini.foot", {
+      dropped: fmtNum(corpus.totalEntries - counted),
+      counted: fmtNum(counted),
+      total: fmtNum(corpus.totalEntries),
+    });
     body.appendChild(foot);
   }
 
@@ -687,9 +724,9 @@
 
     body.innerHTML = "";
     const grid = el("div", "heat");
-    grid.style.gridTemplateColumns = "44px repeat(" + cols.length + ", minmax(0, 1fr))";
+    // 行标签列按文字实际宽度收（原先固定 44px，"ion" 只有 16px 宽，色块被推远 30px）
+    grid.style.gridTemplateColumns = "max-content repeat(" + cols.length + ", minmax(0, 1fr))";
     body.appendChild(grid);
-
     // 表头：横向 = 起始 3-gram
     grid.appendChild(el("div", "heat-head"));
     cols.forEach((p) => grid.appendChild(el("div", "heat-head", p)));
@@ -707,11 +744,11 @@
           cellEl.style.background = tokenRGBA(HEAT_TOKEN, a);
         }
         if (n > 0) {
-          const ex = c.ex.map((w) => "<b>" + w + "</b>").join("、") || "—";
+          const ex = c.ex.map((w) => "<b>" + w + "</b>").join(T("list.sep")) || "—";
           const tipHTML =
             "<div><b>" + p + " … " + s + "</b></div>" +
-            "<div>" + fmtNum(n) + " 词 · 占全部组合 " + ((n / ng.total) * 100).toFixed(2) + "%</div>" +
-            '<div style="margin-top:4px;color:var(--text-2)">示例：' + ex + "</div>";
+            "<div>" + T("ng.tipLine", { n: fmtNum(n), pct: ((n / ng.total) * 100).toFixed(2) }) + "</div>" +
+            '<div style="margin-top:4px;color:var(--text-2)">' + T("tip.examples") + ex + "</div>";
           const enter = (ev) => {
             hoverBus.emit({ type: "ngram", key: p + "|" + s, words: c.ex });
             showTip(tipHTML, ev.clientX, ev.clientY);
@@ -735,12 +772,11 @@
       i.style.background = tokenRGBA(HEAT_TOKEN, a);
       scale.appendChild(i);
     });
-    foot.appendChild(document.createTextNode("少"));
+    foot.appendChild(document.createTextNode(T("ng.low")));
     foot.appendChild(scale);
-    foot.appendChild(document.createTextNode("多"));
+    foot.appendChild(document.createTextNode(T("ng.high")));
     const note = el("span", null,
-      " · 横轴是出现最多的 " + cols.length + " 种「开头 3 字母」、纵轴是 " + rows.length +
-      " 种「结尾 3 字母」；仅统计单词，共 " + fmtNum(ng.total) + " 个词参与。");
+      T("ng.note", { cols: cols.length, rows: rows.length, total: fmtNum(ng.total) }));
     foot.appendChild(note);
     body.appendChild(foot);
   }
@@ -753,25 +789,31 @@
     return tokenRGBA(categToken(id), alpha == null ? 1 : alpha);
   }
 
+  /* 簇显示名：数据里的簇名（中文词义）原样保留，无名与未成簇按当前语言取词 */
+  function clusterLabel(names, c) {
+    return c >= 0 ? names[String(c)] || T("cluster.name", { c: c }) : T("cluster.unclustered");
+  }
+
   /* ══════════════════════════════════════════════════════
      ⑩ 自然拼读 · 音素分布（Phase 1：单双元音 + 辅音）
      分类定义镜像自 index.html / script.js 的 PHONICS_GROUPS
      （仅取「单双元音」「辅音」两个分区，保证与首页 Phonics 面板口径一致）
   ══════════════════════════════════════════════════════ */
   const PHONICS_VIZ = {
+    /* label 存的是 i18n key：分区/分组索引会被缓存，显示名必须在绘制时才翻译 */
     sections: [
       {
         id: "vowels",
-        label: "单双元音",
+        label: "ph.sectionVowels",
         groups: [
-          { id: "mono-long", label: "长元音", color: "var(--ph-1)", sounds: [
+          { id: "mono-long", label: "ph.longVowel", color: "var(--ph-1)", sounds: [
             { ipa: "[i:]", combos: ["ee", "ea", "e_e", "ie", "ei", "ey"] },
             { ipa: "[ɑ:]", combos: ["ar", "are", "al", "au", "aw"] },
             { ipa: "[ɔ:]", combos: ["or", "oar", "oor", "ore", "our", "al", "au", "aw"] },
             { ipa: "[u:]", combos: ["oo", "u_e", "ue", "ui", "ew", "ou"] },
             { ipa: "[ɜ:]", combos: ["ir", "ur", "er", "ear", "or", "yr"] },
           ] },
-          { id: "mono-short", label: "短元音", color: "var(--ph-2)", sounds: [
+          { id: "mono-short", label: "ph.shortVowel", color: "var(--ph-2)", sounds: [
             { ipa: "[ʌ]", combos: ["u", "o", "oo", "ou", "oe"] },
             { ipa: "[ɪ]", combos: ["i", "y", "e", "u", "ui"] },
             { ipa: "[ʊ]", combos: ["oo", "u", "oul"] },
@@ -780,7 +822,7 @@
             { ipa: "[e]", combos: ["e", "ea", "a", "ai", "ie"] },
             { ipa: "[æ]", combos: ["a", "ai"] },
           ] },
-          { id: "mono-dip", label: "双元音", color: "var(--ph-3)", sounds: [
+          { id: "mono-dip", label: "ph.diphthong", color: "var(--ph-3)", sounds: [
             { ipa: "[eɪ]", combos: ["a", "a_e", "ai", "ay", "eigh", "ey", "ea"] },
             { ipa: "[aɪ]", combos: ["i", "i_e", "ie", "igh", "y", "eye", "uy"] },
             { ipa: "[ɔɪ]", combos: ["oi", "oy"] },
@@ -794,9 +836,9 @@
       },
       {
         id: "consonants",
-        label: "辅音",
+        label: "ph.sectionConsonants",
         groups: [
-          { id: "voiceless", label: "清辅音", color: "var(--ph-4)", sounds: [
+          { id: "voiceless", label: "ph.voiceless", color: "var(--ph-4)", sounds: [
             { ipa: "[p]", combos: ["p", "pp"] },
             { ipa: "[t]", combos: ["t", "tt", "ed"] },
             { ipa: "[k]", combos: ["c", "k", "ck", "ch", "que"] },
@@ -808,7 +850,7 @@
             { ipa: "[tr]", combos: ["tr"] },
             { ipa: "[ts]", combos: ["ts"] },
           ] },
-          { id: "voiced", label: "浊辅音", color: "var(--ph-5)", sounds: [
+          { id: "voiced", label: "ph.voiced", color: "var(--ph-5)", sounds: [
             { ipa: "[b]", combos: ["b", "bb"] },
             { ipa: "[d]", combos: ["d", "dd"] },
             { ipa: "[g]", combos: ["g", "gg", "gh", "gu"] },
@@ -820,20 +862,20 @@
             { ipa: "[dr]", combos: ["dr"] },
             { ipa: "[dz]", combos: ["ds"] },
           ] },
-          { id: "semi-voiced", label: "半浊辅音", color: "var(--ph-6)", sounds: [
+          { id: "semi-voiced", label: "ph.semiVoiced", color: "var(--ph-6)", sounds: [
             { ipa: "[h]", combos: ["h"] },
             { ipa: "[r]", combos: ["r", "rr", "wr", "rh"] },
           ] },
-          { id: "semivowel", label: "半元音", color: "var(--ph-7)", sounds: [
+          { id: "semivowel", label: "ph.semivowel", color: "var(--ph-7)", sounds: [
             { ipa: "[w]", combos: ["w", "wh"] },
             { ipa: "[j]", combos: ["y"] },
           ] },
-          { id: "nasal", label: "鼻音", color: "var(--ph-8)", sounds: [
+          { id: "nasal", label: "ph.nasal", color: "var(--ph-8)", sounds: [
             { ipa: "[m]", combos: ["m", "mm"] },
             { ipa: "[n]", combos: ["n", "nn"] },
             { ipa: "[ŋ]", combos: ["ng", "nk"] },
           ] },
-          { id: "lateral", label: "边音", color: "var(--ph-9)", sounds: [
+          { id: "lateral", label: "ph.lateral", color: "var(--ph-9)", sounds: [
             { ipa: "[l]", combos: ["l", "ll"] },
           ] },
         ],
@@ -920,7 +962,7 @@ return phonicsIndexCache;
 
     const toggle = el("div", "mini-toggle");
     idx.sections.forEach((sec) => {
-      const b = el("button", "mini-toggle-btn" + (sec.id === active ? " is-on" : ""), sec.label);
+      const b = el("button", "mini-toggle-btn" + (sec.id === active ? " is-on" : ""), T(sec.label));
       b.dataset.sec = sec.id;
       toggle.appendChild(b);
     });
@@ -930,11 +972,7 @@ return phonicsIndexCache;
     body.appendChild(stage);
 
     const foot = el("p", "donut-footnote");
-    foot.innerHTML =
-      "口径：仅单词 " + fmtNum(idx.N) + " 条，短语不计。每条 = 含该发音拼写组合的单词数（去重）；" +
-      "同一单词常同时含多个音，各音计数互相独立，故占比之和可 &gt; 100%。<br>" +
-      "元音段剔除裸单字母 a/e/i/o/u（几乎每词都有、无区分度），仅保留有辨识度的拼写；辅音段保留全部拼写。" +
-      "点击音条可展开其拼写组合与示例词。";
+    foot.innerHTML = T("ph.foot", { n: fmtNum(idx.N) });
     body.appendChild(foot);
 
     function renderSection(secId) {
@@ -942,7 +980,7 @@ return phonicsIndexCache;
       stage.innerHTML = "";
       sec.groups.forEach((grp) => {
         const block = el("div", "phonics-group");
-        block.appendChild(el("div", "phonics-group-label", grp.label));
+        block.appendChild(el("div", "phonics-group-label", T(grp.label)));
         const list = el("div", "phonics-list");
         const rows = [];
         grp.sounds.forEach((snd) => {
@@ -955,51 +993,57 @@ return phonicsIndexCache;
             '<span class="phonics-val">' + fmtNum(snd.n) +
             '<small>' + fmtPct(snd.pct) + "</small></span>";
 
-          const tipHTML = () => {
-            const combos = snd.combos.map((c) => c.combo + " " + fmtNum(c.n)).join("、");
-            const ex = snd.samples.map((w) => "<b>" + w + "</b>").join("、") || "—";
-            return (
-              "<div><b>" + snd.ipa + "</b> · " + grp.label + "</div>" +
-              "<div>" + fmtNum(snd.n) + " 词 · " + fmtPct(snd.pct) + "</div>" +
-              '<div style="margin-top:4px;color:var(--text-2)">拼写：' + combos + "</div>" +
-              '<div style="margin-top:4px;color:var(--text-2)">示例：' + ex + "</div>"
-            );
-          };
-          const enter = (ev) => {
+          const enter = () => {
+            if (grp._pinRow && grp._pinRow !== row) return; // 已钉住时，悬停不抢展开位
             hoverBus.emit({ type: "phonics", sound: snd.ipa });
-            showTip(tipHTML(), ev.clientX, ev.clientY);
+            if (grp._openIpa !== snd.ipa) {
+              grp._openIpa = snd.ipa;
+              rows.forEach((r) => r.classList.toggle("is-open", r._snd === snd));
+              list.insertBefore(grp.detailEl, row.nextSibling);
+            }
+            showGroupDetail(grp, snd);
             row.classList.add("is-hot");
           };
           row.addEventListener("mouseenter", enter);
-          row.addEventListener("mousemove", enter);
           row.addEventListener("mouseleave", () => {
             hoverBus.emit(null);
-            hideTip();
             row.classList.remove("is-hot");
+            if (grp._pinRow) return; // 本分区有钉住的行时，其它行移出不动展开区
+            grp._openIpa = null;
+            grp.detailEl.classList.remove("is-on");
+            grp.detailEl.innerHTML = "";
+            row.classList.remove("is-open");
           });
           row._snd = snd;
+          let lastClick = 0;
           row.addEventListener("click", () => {
-            if (grp._openIpa === snd.ipa) {
-              // 再次点击：收起本行下方详情
+            if (grp._pinRow === row && Date.now() - lastClick < 400) {
+              // 再次点击：取消钉住并收起（触屏上一次点按会补发 click，靠时间窗区分）
+              grp._pinRow = null;
+              grp.detailEl.classList.remove("is-pin");
+              row.classList.remove("is-pin");
               grp._openIpa = null;
               grp.detailEl.classList.remove("is-on");
               grp.detailEl.innerHTML = "";
               row.classList.remove("is-open");
             } else {
-              // 展开：详情插到被点击音条的正下方，就近查看
-              grp._openIpa = snd.ipa;
-              rows.forEach((r) => r.classList.toggle("is-open", r._snd === snd));
-              list.insertBefore(grp.detailEl, row.nextSibling);
-              showGroupDetail(grp, snd);
+              if (grp._pinRow && grp._pinRow !== row) grp._pinRow.classList.remove("is-open", "is-pin");
+              grp._pinRow = null; // 解除钉住后才能把展开位让给新点击的行
+              enter();
+              grp._pinRow = row;
+              grp.detailEl.classList.add("is-pin");
+              row.classList.add("is-pin");
             }
+            lastClick = Date.now();
           });
           rows.push(row);
           list.appendChild(row);
         });
         block.appendChild(list);
         const detailEl = el("div", "phonics-detail");
-        grp.detailEl = detailEl; // 初始不挂载，展开时移到所点音条下方
+        grp.detailEl = detailEl; // 初始不挂载，悬停时移到所读音条下方
         grp._openIpa = null;
+        grp._pinRow = null;
         stage.appendChild(block);
       });
     }
@@ -1007,7 +1051,7 @@ return phonicsIndexCache;
     function showGroupDetail(grp, snd) {
       const pills = snd.combos
         .map((c) => {
-          const ex = c.ex.map((w) => "<b>" + w + "</b>").join("、") || "—";
+          const ex = c.ex.map((w) => "<b>" + w + "</b>").join(T("list.sep")) || "—";
           return (
             '<div class="phonics-pill">' +
             '<span class="pill-combo">' + c.combo + "</span>" +
@@ -1061,8 +1105,12 @@ return phonicsIndexCache;
     "are","were","there","where","sure","chore","yore",
     "move","prove","lose","whose","remove",
   ]);
-  // 4 种起始辅音数对应的配色（0/1/2/3 辅音开头）
-  const SYL_ONSET_COLORS = ["var(--ph-1)", "var(--ph-2)", "var(--ph-3)", "var(--ph-4)"];
+  // 开/闭音节判定：V 结尾＝开音节，辅音结尾＝闭音节（着色见 dashboard2.css 的 .syl-chip--open/closed）
+  function sylType(skel) {
+    if (SYL_OPEN.has(skel)) return "open";
+    if (SYL_CLOSED.has(skel)) return "closed";
+    return "";
+  }
 
   // IPA → 音节骨架数组（如 /əˈbaʊt/ → ["V","CVC"]），失败返回 null
   function ipaSkeleton(ipa) {
@@ -1148,7 +1196,7 @@ return phonicsIndexCache;
     const t0 = (window.performance || Date).now();
     const words = entries.filter((w) => typeof w === "string" && w.indexOf(" ") === -1);
     const N = words.length;
-    const skelWords = {}, skelEx = {}, nsCount = {}, comboCount = {}, comboEx = {};
+    const nsCount = {}, comboCount = {}, comboEx = {};
     let total = 0, openCount = 0, closedCount = 0, vceCount = 0, diphCount = 0;
 
     for (const w of words) {
@@ -1164,9 +1212,6 @@ return phonicsIndexCache;
       const seen = new Set(r.parts);
       let hasOpen = false, hasClosed = false;
       seen.forEach((p) => {
-        skelWords[p] = (skelWords[p] || 0) + 1;
-        if (!skelEx[p]) skelEx[p] = [];
-        if (skelEx[p].length < 5) skelEx[p].push(w);
         if (SYL_OPEN.has(p)) hasOpen = true;
         if (SYL_CLOSED.has(p)) hasClosed = true;
       });
@@ -1193,7 +1238,7 @@ return phonicsIndexCache;
     const ms = Math.round(((window.performance || Date).now()) - t0);
     console.info("[Dashboard] syllable index built in " + ms + "ms; parsed " + total + "/" + N);
     syllableIndexCache = {
-      N, total, nsCount, skelWords, skelEx, comboCount, comboEx,
+      N, total, nsCount, comboCount, comboEx,
       topCombos, tailN, tailWords, openCount, closedCount, vceCount, diphCount,
     };
     return syllableIndexCache;
@@ -1204,75 +1249,67 @@ return phonicsIndexCache;
     const N = idx.N, parsed = idx.total;
     const pct = (x) => (parsed ? (x / parsed) * 100 : 0);
 
-    // ── 顶部 4 个 stat ──
+    // chip 渲染：按开/闭音节着色（实心主色＝开音节，浅底主色文字＝闭音节）
+    const chipHTML = (skel) => {
+      const type = sylType(skel);
+      return '<span class="syl-chip' + (type ? " syl-chip--" + type : "") + '">' + skel + '</span>';
+    };
+    const comboHTML = (label) => label.split(".").map(chipHTML).join('<span class="syl-dot">·</span>');
+
+    // ── 常见组合 Top 排行（放在卡片最上方：左组合串、右进度条，与 Phonics 的音条同构）──
+    const comboWrap = el("div", "syl-block");
+    const nsWrap = el("div", "syl-block");
     const stats = el("div", "syl-stats");
     const mkStat = (label, n, sub) => {
       const s = el("div", "syl-stat");
       s.innerHTML = '<div class="syl-stat-num">' + fmtNum(n) + '</div><div class="syl-stat-label">' + label + '</div><div class="syl-stat-sub">' + sub + '</div>';
       return s;
     };
-    stats.appendChild(mkStat("可解析词", parsed, "共 " + fmtNum(N) + " 词"));
-    stats.appendChild(mkStat("开音节", idx.openCount, fmtPct(pct(idx.openCount)) + " 元音结尾"));
-    stats.appendChild(mkStat("闭音节", idx.closedCount, fmtPct(pct(idx.closedCount)) + " 辅音结尾"));
-    stats.appendChild(mkStat("VCe 魔法-e", idx.vceCount, "词尾 e 不发音"));
-    stats.appendChild(mkStat("含双元音", idx.diphCount, fmtPct(pct(idx.diphCount))));
-    body.appendChild(stats);
+    stats.appendChild(mkStat(T("syl.parsed"), parsed, T("syl.parsedSub", { n: fmtNum(N) })));
+    stats.appendChild(mkStat(T("syl.openStat"), idx.openCount, T("syl.openSub", { pct: fmtPct(pct(idx.openCount)) })));
+    stats.appendChild(mkStat(T("syl.closedStat"), idx.closedCount, T("syl.closedSub", { pct: fmtPct(pct(idx.closedCount)) })));
+    stats.appendChild(mkStat(T("syl.vceStat"), idx.vceCount, T("syl.vceSub")));
+    stats.appendChild(mkStat(T("syl.diphStat"), idx.diphCount, fmtPct(pct(idx.diphCount))));
 
-    // chip 渲染：按起始辅音数着色
-    const chipHTML = (skel) => {
-      const onset = skel.indexOf("V");
-      const color = SYL_ONSET_COLORS[onset] || "var(--md-outline)";
-      return '<span class="syl-chip" style="--c:' + color + '">' + skel + '</span>';
-    };
-    const comboHTML = (label) => label.split(".").map(chipHTML).join('<span class="syl-dot">·</span>');
-
-    // ── 音节数分布（垂直柱状图）──
-    const nsWrap = el("div", "syl-block");
-    nsWrap.appendChild(el("div", "syl-block-title", "音节数分布"));
-    const nsChart = el("div", "syl-ns-chart");
-    const nsMax = Math.max.apply(null, [1].concat(Object.keys(idx.nsCount).map((k) => idx.nsCount[k])));
-    const nsLabels = { 1: "1 音节", 2: "2 音节", 3: "3 音节", 4: "4 音节", 5: "5+ 音节" };
-    [1, 2, 3, 4, 5].forEach((k) => {
-      const n = idx.nsCount[k] || 0;
-      const h = nsMax ? (n / nsMax) * 100 : 0;
-      const col = el("div", "syl-ns-col");
-      col.innerHTML =
-        '<span class="syl-ns-val">' + fmtNum(n) + '<small>' + fmtPct(pct(n)) + '</small></span>' +
-        '<div class="syl-ns-track"><i class="syl-ns-bar" style="height:' + h.toFixed(2) + '%"></i></div>' +
-        '<span class="syl-ns-label">' + nsLabels[k] + '</span>';
-      nsChart.appendChild(col);
-    });
-    nsWrap.appendChild(nsChart);
-    body.appendChild(nsWrap);
-
-    // ── 常见组合 Top 排行 ──
-    const comboWrap = el("div", "syl-block");
-    comboWrap.appendChild(el("div", "syl-block-title", "常见音节组合 · Top " + idx.topCombos.length));
+    const comboTitle = el("div", "syl-block-title");
+    comboTitle.textContent = T("syl.comboTitle", { n: idx.topCombos.length });
+    const comboLegend = el("div", "syl-legend");
+    comboLegend.innerHTML =
+      '<span class="syl-legend-item"><i class="syl-chip--open"></i>' + T("syl.legendOpen") + '</span>' +
+      '<span class="syl-legend-item"><i class="syl-chip--closed"></i>' + T("syl.legendClosed") + '</span>';
+    comboWrap.appendChild(comboTitle);
+    comboWrap.appendChild(comboLegend);
     const comboRows = el("div", "syl-combo-rows");
     const comboMax = idx.topCombos.length ? idx.topCombos[0].n : 1;
     let selected = null;
 
-    function renderDetail(label, container) {
+    function renderDetail(label, container, comboN, comboExHTML) {
       if (!label) { container.classList.remove("is-on"); container.innerHTML = ""; return; }
-      const skelLines = label.split(".").map((p) => {
-        const sn = idx.skelWords[p] || 0;
-        const sex = (idx.skelEx[p] || []).map((w) => "<b>" + w + "</b>").join("、") || "—";
-        const onset = p.indexOf("V");
-        const color = SYL_ONSET_COLORS[onset] || "var(--md-outline)";
-        const type = SYL_OPEN.has(p) ? "开音节" : (SYL_CLOSED.has(p) ? "闭音节" : "");
-        return '<div class="syl-detail-skel"><span class="syl-chip" style="--c:' + color + '">' + p + '</span>' +
-          '<span class="syl-detail-skel-n">' + fmtNum(sn) + ' 词</span>' +
-          (type ? '<span class="syl-detail-skel-type">' + type + '</span>' : '') +
-          '<span class="syl-detail-skel-ex">示例：' + sex + '</span></div>';
+      const parts = label.split(".");
+      const skelLines = parts.map((p, i) => {
+        const type = sylType(p);
+        const v = p.indexOf("V");
+        const onset = v < 0 ? "" : p.slice(0, v);
+        const coda = v < 0 ? "" : p.slice(v + 1);
+        return '<div class="syl-detail-skel">' +
+          '<span class="syl-detail-skel-ord">' + T("syl.skelOrd", { i: i + 1 }) + '</span>' +
+          '<span class="syl-chip' + (type ? " syl-chip--" + type : "") + '">' + p + '</span>' +
+          (type ? '<span class="syl-detail-skel-type">' + T(type === "open" ? "syl.typeOpen" : "syl.typeClosed") + '</span>' : '<span></span>') +
+          '<span class="syl-detail-skel-ex">' +
+          T("syl.skelEx", { onset: onset || T("syl.none"), coda: coda || T("syl.none") }) +
+          '</span></div>';
       }).join("");
-      // 组合串/词数/占比与所在行重复，示例词也已在悬停提示里，展开区只保留组成音节明细
+      // 骨架在全库的计数与组合无关（一个 CV 会同时出现在几十种组合里），
+      // 明细只做「逐音节拆解 + 本组合示例词」，不给全库骨架数字，避免误读成组合内部词数
       container.innerHTML =
-        '<div class="syl-detail-skel-title">组成音节（含该骨架的词数，各音节独立计数）</div>' +
-        '<div class="syl-detail-skel-list">' + skelLines + '</div>';
+        '<div class="syl-detail-skel-title">' + T("syl.detailTitle", { parts: parts.length, n: fmtNum(comboN) }) + '</div>' +
+        '<div class="syl-detail-skel-list">' + skelLines + '</div>' +
+        (comboExHTML ? '<div class="syl-detail-combo-ex">' + T("tip.examples") + comboExHTML + '</div>' : "");
       container.classList.add("is-on");
     }
 
     let openDetail = null;
+    let pinRow = null;
     idx.topCombos.forEach((c) => {
       const w = comboMax ? (c.n / comboMax) * 100 : 0;
       const row = el("div", "syl-combo-row");
@@ -1280,33 +1317,57 @@ return phonicsIndexCache;
         '<span class="syl-combo-chips">' + comboHTML(c.label) + '</span>' +
         '<div class="syl-track"><i class="syl-fill" style="width:' + w.toFixed(2) + '%"></i></div>' +
         '<span class="syl-val">' + fmtNum(c.n) + '<small>' + fmtPct(pct(c.n)) + '</small></span>';
-      const tipHTML = () => {
-        const ex = (c.ex || []).map((w) => "<b>" + w + "</b>").join("、") || "—";
-        return '<div><b>' + c.label + '</b></div><div>' + fmtNum(c.n) + ' 词 · ' + fmtPct(pct(c.n)) +
-          '</div><div style="margin-top:4px;color:var(--text-2)">示例：' + ex + '</div>';
-      };
-      row.addEventListener("mouseenter", (ev) => { showTip(tipHTML(), ev.clientX, ev.clientY); row.classList.add("is-hot"); });
-      row.addEventListener("mousemove", (ev) => { showTip(tipHTML(), ev.clientX, ev.clientY); });
-      row.addEventListener("mouseleave", () => { hideTip(); row.classList.remove("is-hot"); });
-      // 每个组合条下方直接挂一块内联详情，展开时显示在本条正下方（不再堆到卡片最底部）
+      const comboEx = () => (c.ex || []).map((w) => "<b>" + w + "</b>").join(T("list.sep")) || "—";
+      // 每个组合条下方直接挂一块内联详情：悬停即在本条正下方展开（不再用跟随鼠标的浮层提示）
       const rowDetail = el("div", "syl-row-detail");
-      row.addEventListener("click", () => {
-        if (selected === c.label) {
-          selected = null;
-          rowDetail.classList.remove("is-on");
-          rowDetail.innerHTML = "";
-          row.classList.remove("is-open");
-        } else {
+      const open = () => {
+        if (pinRow && pinRow !== row) return; // 已钉住时，悬停不抢展开位
+        if (selected !== c.label) {
           if (openDetail && openDetail !== rowDetail) {
             openDetail.classList.remove("is-on");
             openDetail.innerHTML = "";
           }
           Array.prototype.forEach.call(comboRows.querySelectorAll(".syl-combo-row.is-open"), (r) => r.classList.remove("is-open"));
           selected = c.label;
-          row.classList.add("is-open");
-          renderDetail(c.label, rowDetail);
           openDetail = rowDetail;
         }
+        row.classList.add("is-open");
+        renderDetail(c.label, rowDetail, c.n, comboEx());
+      };
+      row.addEventListener("mouseenter", open);
+      row.addEventListener("mouseleave", () => {
+        if (pinRow) return; // 有钉住的行时，其它行移出不收展开区
+        selected = null;
+        openDetail = null;
+        rowDetail.classList.remove("is-on");
+        rowDetail.innerHTML = "";
+        row.classList.remove("is-open");
+      });
+      // 点击＝钉住本行，再点取消并收起
+      let lastClick = 0;
+      row.addEventListener("click", () => {
+        if (pinRow === row && Date.now() - lastClick < 400) {
+          pinRow = null;
+          rowDetail.classList.remove("is-pin");
+          selected = null;
+          openDetail = null;
+          rowDetail.classList.remove("is-on");
+          rowDetail.innerHTML = "";
+          row.classList.remove("is-open", "is-pin");
+        } else {
+          if (pinRow && pinRow !== row) {
+            pinRow.classList.remove("is-pin");
+            pinRow.nextElementSibling.classList.remove("is-on", "is-pin");
+            pinRow = null; // 解除钉住后才能把展开位让给新点击的行
+            selected = null;
+            openDetail = null;
+          }
+          open();
+          pinRow = row;
+          rowDetail.classList.add("is-pin");
+          row.classList.add("is-pin");
+        }
+        lastClick = Date.now();
       });
       comboRows.appendChild(row);
       comboRows.appendChild(rowDetail);
@@ -1315,7 +1376,7 @@ return phonicsIndexCache;
     if (idx.tailN > 0) {
       const row = el("div", "syl-combo-row syl-combo-tail");
       row.innerHTML =
-        '<span class="syl-combo-chips syl-tail-label">其它 ' + fmtNum(idx.tailN) + ' 种组合</span>' +
+        '<span class="syl-combo-chips syl-tail-label">' + T("syl.tail", { n: fmtNum(idx.tailN) }) + '</span>' +
         '<div class="syl-track"><i class="syl-fill" style="width:100%"></i></div>' +
         '<span class="syl-val">' + fmtNum(idx.tailWords) + '</span>';
       comboRows.appendChild(row);
@@ -1323,23 +1384,40 @@ return phonicsIndexCache;
     comboWrap.appendChild(comboRows);
     body.appendChild(comboWrap);
 
+    // ── 音节数分布（垂直柱状图，排在排行之下）──
+    nsWrap.appendChild(el("div", "syl-block-title", T("syl.nsTitle")));
+    const nsChart = el("div", "syl-ns-chart");
+    const nsMax = Math.max.apply(null, [1].concat(Object.keys(idx.nsCount).map((k) => idx.nsCount[k])));
+    [1, 2, 3, 4, 5].forEach((k) => {
+      const n = idx.nsCount[k] || 0;
+      const h = nsMax ? (n / nsMax) * 100 : 0;
+      const col = el("div", "syl-ns-col");
+      col.innerHTML =
+        '<span class="syl-ns-val">' + fmtNum(n) + '<small>' + fmtPct(pct(n)) + '</small></span>' +
+        '<div class="syl-ns-track"><i class="syl-ns-bar" style="height:' + h.toFixed(2) + '%"></i></div>' +
+        '<span class="syl-ns-label">' + T("syl.ns" + k) + '</span>';
+      nsChart.appendChild(col);
+    });
+    nsWrap.appendChild(nsChart);
+    body.appendChild(nsWrap);
+
+    // ── 总结 stat（排在最后，先看图再收口）──
+    body.appendChild(stats);
+
     const foot = el("p", "donut-footnote");
-    foot.innerHTML =
-      "口径：词库 " + fmtNum(N) + " 词，其中 " + fmtNum(parsed) + " 词有本地音标且可解析为音节骨架（其余无音标、不参与）。" +
-      "骨架用 V=元音音素、C=辅音音素描述每个音节，如 CVC=辅-元-辅；组合 = 多音节的骨架串（· 连接，如 CVC·CV）。" +
-      "同一单词可计入多个骨架（各骨架独立计数，占比之和可 &gt; 100%）；点击组合条可展开其组成音节与示例词。";
+    foot.innerHTML = T("syl.foot", { n: fmtNum(N), parsed: fmtNum(parsed) });
     body.appendChild(foot);
   }
 
   /* ══════════════════════════════════════════════════════
      ⑤ 词嵌入降维散点图（UMAP · Canvas）
   ══════════════════════════════════════════════════════ */
-  function drawScatter(body, payload, names) {
+  function drawSemanticMap(body, payload, names) {
     const coords = payload.coords || {};
     const meta = payload.meta || {};
     const words = Object.keys(coords);
     const N = words.length;
-    if (!N) throw new Error("word_coords.json 为空");
+    if (!N) throw new Error(T("err.empty.coords"));
 
     // ── 打平成 TypedArray，按簇分组（一次遍历，绘制时按组批处理 fillStyle）
     const xs = new Float32Array(N), ys = new Float32Array(N), cs = new Int16Array(N);
@@ -1364,47 +1442,68 @@ return phonicsIndexCache;
 
     // ── DOM
     body.innerHTML = "";
-    const wrap = el("div", "scatter-wrap");
-    const canvas = document.createElement("canvas");
-    canvas.className = "scatter-canvas";
-    wrap.appendChild(canvas);
+    let mode = "tile"; // "scatter" | "tile"（默认平铺，对齐 viz 方块网格观感）
 
-    const hudTip = el("div", "hud-tip", "滚轮缩放 · 拖拽平移 · 悬停查看词条");
-    wrap.appendChild(hudTip);
-
-    const hud = el("div", "scatter-hud");
-    const hudRow = el("div", "scatter-hud-row");
-    const badge = el("span", "hud-badge", "×1.0");
-    const btnReset = el("button", "hud-btn", "重置视图");
-    hudRow.appendChild(badge);
-    hudRow.appendChild(btnReset);
-    hud.appendChild(hudRow);
-    if (meta.oov) hud.appendChild(el("div", "hud-badge", fmtNum(meta.oov) + " 个词未显示（暂无语义向量）"));
-    wrap.appendChild(hud);
-    body.appendChild(wrap);
-
-    const filterBar = el("div", "cluster-filter");
+    // ── 顶部控制行：左 = 视图切换(平铺/散点)，右 = 搜索 + 全选 + 清空 + 计数
+    const controls = el("div", "sm-controls");
+    // 左：视图切换，复用「树状图 / 列表」同款分段控件（.derive-seg + .hud-btn，见 dashboard2.css:1489）
+    const seg = el("div", "derive-seg");
+    const btnTile = el("button", "hud-btn is-on", T("sm.tile"));
+    const btnScatter = el("button", "hud-btn", T("sm.scatter"));
+    seg.appendChild(btnTile);
+    seg.appendChild(btnScatter);
+    controls.appendChild(seg);
+    // 右：搜索 + 全选 + 清空 + 计数（整组右对齐、可伸缩）
+    const filterBar = el("div", "cluster-filter sm-filter");
     const input = document.createElement("input");
     input.type = "text";
-    input.placeholder = "搜索簇名 / 编号";
-    const btnAll = el("button", "hud-btn", "全选");
-    const btnNone = el("button", "hud-btn", "清空");
+    input.placeholder = T("sm.searchPh");
+    const btnAll = el("button", "hud-btn", T("sm.all"));
+    const btnNone = el("button", "hud-btn", T("sm.none"));
     const info = el("span", "hud-badge", "");
     filterBar.appendChild(input);
     filterBar.appendChild(btnAll);
     filterBar.appendChild(btnNone);
     filterBar.appendChild(info);
-    body.appendChild(filterBar);
+    controls.appendChild(filterBar);
+    body.appendChild(controls);
+
+    // ── 画布
+    const wrap = el("div", "scatter-wrap");
+    const canvas = document.createElement("canvas");
+    canvas.className = "scatter-canvas";
+    wrap.appendChild(canvas);
+
+    const hudTip = el("div", "hud-tip", T("sm.hudTile"));
+    wrap.appendChild(hudTip);
+
+    const hud = el("div", "scatter-hud");
+    const hudRow = el("div", "scatter-hud-row");
+    const badge = el("span", "hud-badge", "×1.0");
+    const btnReset = el("button", "hud-btn", T("sm.reset"));
+    hudRow.appendChild(badge);
+    hudRow.appendChild(btnReset);
+    hud.appendChild(hudRow);
+    if (meta.oov) hud.appendChild(el("div", "hud-badge", T("sm.oovHidden", { n: fmtNum(meta.oov) })));
+    wrap.appendChild(hud);
 
     const chipWrap = el("div", "cluster-chips");
-    body.appendChild(chipWrap);
 
     // ── 簇 chips（按词数降序，最有用的簇排前面）
+    /* 交互模型：点击 chip = 选中该簇并锁定高亮（左边点亮、其余压暗），再点取消；
+       悬停只做临时预览，松开后回到选中态。enabled 显隐保留给 全选/清空 两个按钮。 */
+    function setSelected(c) {
+      selectedCluster = selectedCluster === c ? null : c;
+      chipWrap.querySelectorAll(".cc-chip").forEach((n) => {
+        n.classList.toggle("is-sel", Number(n.dataset.c) === selectedCluster);
+      });
+      requestDraw();
+    }
     const chips = present
       .filter((c) => c >= 0)
       .sort((a, b) => (countsByCluster[b] || 0) - (countsByCluster[a] || 0))
       .map((c) => {
-        const nm = names[String(c)] || ("簇 " + c);
+        const nm = clusterLabel(names, c);
         const node = el("span", "cc-chip");
         node.dataset.c = c;
         node.title = nm;
@@ -1412,34 +1511,35 @@ return phonicsIndexCache;
           '<i class="cc-dot" style="background:' + clusterColor(c) + '"></i>' +
           '<span class="cc-id">' + c + "</span>" + nm +
           '<span class="cc-n">' + fmtNum(countsByCluster[c] || 0) + "</span>";
-        node.addEventListener("click", () => {
-          enabled[c] = !enabled[c];
-          node.classList.toggle("is-off", !enabled[c]);
-          updateInfo();
-          requestDraw();
-        });
+        node.addEventListener("click", () => setSelected(c));
+        node.addEventListener("mouseenter", () => { focusCluster = c; requestDraw(); });
+        node.addEventListener("mouseleave", () => { focusCluster = null; requestDraw(); });
         chipWrap.appendChild(node);
         return { node: node, id: c, name: nm };
       });
 
     if (cs.indexOf(-1) >= 0) {
       const node = el("span", "cc-chip");
+      node.dataset.c = -1;
       node.innerHTML =
-        '<i class="cc-dot" style="background:var(--pos-other)"></i>未成簇' +
+        '<i class="cc-dot" style="background:var(--pos-other)"></i>' + T("cluster.unclustered") +
         '<span class="cc-n">' + fmtNum(groups[-1].length) + "</span>";
-      node.addEventListener("click", () => {
-        enabled[-1] = !enabled[-1];
-        node.classList.toggle("is-off", !enabled[-1]);
-        updateInfo();
-        requestDraw();
-      });
+      node.addEventListener("click", () => setSelected(-1));
+      node.addEventListener("mouseenter", () => { focusCluster = -1; requestDraw(); });
+      node.addEventListener("mouseleave", () => { focusCluster = null; requestDraw(); });
       chipWrap.appendChild(node);
     }
+
+    // ── 左图右簇：横向布局（图在左、101 簇 chips 在右，全部展示无滚动）
+    const panel = el("div", "sm-layout");
+    panel.appendChild(wrap);
+    panel.appendChild(chipWrap);
+    body.appendChild(panel);
 
     function updateInfo() {
       const on = present.filter((c) => enabled[c]).length;
       const shown = present.reduce((s, c) => s + (enabled[c] ? groups[c].length : 0), 0);
-      info.textContent = "显示 " + fmtNum(shown) + " / " + fmtNum(N) + " 词 · " + on + "/" + present.length + " 簇";
+      info.textContent = T("sm.info", { shown: fmtNum(shown), n: fmtNum(N), on: on, all: present.length });
     }
 
     input.addEventListener("input", () => {
@@ -1452,22 +1552,42 @@ return phonicsIndexCache;
 
     function setAll(v) {
       present.forEach((c) => (enabled[c] = v));
-      chips.forEach((c) => c.node.classList.toggle("is-off", !v));
+      chipWrap.querySelectorAll(".cc-chip").forEach((n) => {
+        n.classList.toggle("is-off", !v);
+        n.classList.remove("is-sel");
+      });
+      selectedCluster = null;
       updateInfo();
       requestDraw();
     }
     btnAll.addEventListener("click", () => setAll(true));
     btnNone.addEventListener("click", () => setAll(false));
 
+    function setMode(m) {
+      mode = m;
+      btnScatter.classList.toggle("is-on", m === "scatter");
+      btnTile.classList.toggle("is-on", m === "tile");
+      canvas.style.cursor = m === "scatter" ? "grab" : "default";
+      hudTip.textContent = m === "tile" ? T("sm.hudTile") : T("sm.hudScatter");
+      tileHoverSlot = -1; hoverIdx = -1; hideTip();
+      requestDraw();
+    }
+    btnScatter.addEventListener("click", () => setMode("scatter"));
+    btnTile.addEventListener("click", () => setMode("tile"));
+
     // ── 画布
     const ctx = canvas.getContext("2d");
     const H = 460;
+    // 右侧 chips 窄栏的滚动高度与画布同高，两列顶部对齐
+    chipWrap.style.maxHeight = H + "px";
     let W = 900, dpr = Math.min(2, window.devicePixelRatio || 1);
     let scale = 1, baseScale = 1, tX = 0, tY = 0;
-    let hoverIdx = -1, focusCluster = null, drawQueued = false;
+    let hoverIdx = -1, focusCluster = null, selectedCluster = null, drawQueued = false;
 
     function measure() {
-      const w = body.clientWidth || wrap.clientWidth || 900;
+      /* V2：内部坐标宽取 wrap 实际显示宽（左栏 2/3），
+         保证平铺网格 1 画布像素 = 1 屏幕像素、铺满左栏不留白 */
+      const w = wrap.clientWidth || body.clientWidth || 900;
       W = Math.max(320, w);
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
@@ -1496,18 +1616,20 @@ return phonicsIndexCache;
     }
 
     function draw() {
+      if (mode === "tile") { drawTile(); return; }
       ctx.clearRect(0, 0, W, H);
       const zoom = scale / baseScale;
       const size = Math.max(1.2, Math.min(5.5, 1.7 * Math.pow(zoom, 0.42)));
       const useArc = size > 2.4;
       const half = size / 2;
 
-      // ── 点层
+      // ── 点层（悬停预览优先，其次落在锁定的选中簇上）
+      const active = focusCluster !== null ? focusCluster : selectedCluster;
       for (let g = 0; g < present.length; g++) {
         const cid = present[g];
         if (!enabled[cid]) continue;
         const arr = groups[cid];
-        const dim = focusCluster !== null && cid !== focusCluster;
+        const dim = active !== null && cid !== active;
         ctx.fillStyle = dim ? clusterColor(cid, 0.12) : clusterColor(cid, 0.85);
         for (let k = 0; k < arr.length; k++) {
           const i = arr[k];
@@ -1565,6 +1687,94 @@ return phonicsIndexCache;
       badge.textContent = "×" + zoom.toFixed(1);
     }
 
+    // ── 平铺视图：每词一格的方块网格（移植 viz unitsCanvas 思路，语义簇上色）
+    let tileL = null, tileOrder = null, tileHoverSlot = -1;
+    function drawTile() {
+      ctx.clearRect(0, 0, W, H);
+      if (!tileL || tileL.W !== W || tileL.H !== H) {
+        const margin = 12;
+        /* 格径从大到小试探：取「能装进容器」的最大方块；
+           装不下的词按 stride 等距抽样，保证网格始终铺满整个画布 */
+        let step = 10, cell = 9, cols, rows, stride, cap;
+        do {
+          cols = Math.max(1, Math.floor((W - margin) / step));
+          cap = cols * Math.floor((H * 0.92) / step);
+          stride = N > cap ? Math.ceil(N / cap) : 1;
+          rows = Math.ceil(Math.ceil(N / stride) / cols);
+          if (rows * step <= H * 0.94) break;
+          step--; cell = Math.max(1, step - 1);
+        } while (step > 2);
+        const totalW = cols * step;
+        const left = Math.max(margin / 2, (W - totalW) / 2);
+        const top = margin;
+        tileL = { W, H, step, cell, cols, rows, stride, left, top, slotWord: {} };
+      }
+      const L = tileL;
+      const active = focusCluster !== null ? focusCluster : selectedCluster;
+      if (!tileOrder) {
+        tileOrder = [];
+        present.slice().sort((a, b) => a - b).forEach((c) => {
+          if (c < 0) return;
+          const arr = groups[c];
+          for (let k = 0; k < arr.length; k++) tileOrder.push(arr[k]);
+        });
+        if (groups[-1]) { const u = groups[-1]; for (let k = 0; k < u.length; k++) tileOrder.push(u[k]); }
+      }
+      L.slotWord = {};
+      /* 抽样必须按「槽位」连续编号：若用 k%stride 过滤后再算 k%cols，
+         当 stride 与 cols 有公因子时色块会挤在少数几列里，网格铺不满 */
+      let slot = 0;
+      for (let k = 0; k < tileOrder.length; k += L.stride, slot++) {
+        const i = tileOrder[k];
+        const col = slot % L.cols, row = (slot / L.cols) | 0;
+        const x = L.left + col * L.step, y = L.top + row * L.step;
+        const c = cs[i];
+        const on = enabled[c];
+        const dim = active !== null && c !== active;
+        ctx.globalAlpha = on ? (dim ? 0.1 : 1) : 0.06;
+        ctx.fillStyle = clusterColor(c);
+        ctx.fillRect(x, y, L.cell, L.cell);
+        L.slotWord[row * L.cols + col] = i;
+      }
+      ctx.globalAlpha = 1;
+      if (tileHoverSlot >= 0 && L.slotWord[tileHoverSlot] !== undefined) {
+        const row = (tileHoverSlot / L.cols) | 0, col = tileHoverSlot % L.cols;
+        ctx.strokeStyle = getComputedStyle(document.body).color;
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(L.left + col * L.step - 1, L.top + row * L.step - 1, L.cell + 2, L.cell + 2);
+      }
+    }
+    function handleTileHover(mx, my, r) {
+      if (!tileL) return;
+      const L = tileL;
+      const col = Math.floor((mx - L.left) / L.step);
+      const row = Math.floor((my - L.top) / L.step);
+      if (col < 0 || col >= L.cols || row < 0 || row >= L.rows) { setTileHover(-1, r, mx, my); return; }
+      const slot = row * L.cols + col;
+      const i = L.slotWord[slot];
+      if (i === undefined) { setTileHover(-1, r, mx, my); return; }
+      setTileHover(slot, r, mx, my, i);
+    }
+    function setTileHover(slot, r, mx, my, i) {
+      if (slot === tileHoverSlot) return;
+      tileHoverSlot = slot;
+      if (slot >= 0 && i !== undefined) {
+        const c = cs[i];
+        const nm = clusterLabel(names, c);
+        showTip(
+          '<div><b>' + words[i] + "</b></div><div>" +
+          '<i class="cc-dot" style="display:inline-block;background:' + clusterColor(c) + '"></i> ' +
+          nm + (c >= 0 ? T("cluster.tagId", { c: c }) : "") + "</div>",
+          r.left + mx, r.top + my - 6
+        );
+        hoverBus.emit({ type: "word", word: words[i], cluster: c });
+      } else {
+        hideTip();
+        hoverBus.emit(null);
+      }
+      requestDraw();
+    }
+
     // ── 交互：缩放 / 平移 / 悬停
     function pick(mx, my) {
       const thr = Math.max(8, (sizeCache() * 2));
@@ -1584,6 +1794,7 @@ return phonicsIndexCache;
     }
 
     canvas.addEventListener("wheel", (ev) => {
+      if (mode === "tile") return;
       ev.preventDefault();
       const r = canvas.getBoundingClientRect();
       const mx = ev.clientX - r.left, my = ev.clientY - r.top;
@@ -1600,6 +1811,7 @@ return phonicsIndexCache;
 
     let dragging = false, lastX = 0, lastY = 0, moved = false;
     canvas.addEventListener("pointerdown", (ev) => {
+      if (mode === "tile") return; // 平铺模式不进入拖拽平移
       dragging = true; moved = false;
       lastX = ev.clientX; lastY = ev.clientY;
       canvas.classList.add("is-dragging");
@@ -1617,16 +1829,17 @@ return phonicsIndexCache;
         return;
       }
       const mx = ev.clientX - r.left, my = ev.clientY - r.top;
+      if (mode === "tile") { handleTileHover(mx, my, r); return; }
       const i = pick(mx, my);
       if (i !== hoverIdx) {
         hoverIdx = i;
         if (i >= 0) {
           const c = cs[i];
-          const nm = c >= 0 ? names[String(c)] || ("簇 " + c) : "未成簇";
+          const nm = clusterLabel(names, c);
           showTip(
             '<div><b>' + words[i] + "</b></div><div>" +
             '<i class="cc-dot" style="display:inline-block;background:' + clusterColor(c) + '"></i> ' +
-            nm + (c >= 0 ? " · 簇 " + c : "") + "</div>",
+            nm + (c >= 0 ? T("cluster.tagId", { c: c }) : "") + "</div>",
             r.left + mx, r.top + my - 6
           );
           hoverBus.emit({ type: "word", word: words[i], cluster: c });
@@ -1646,6 +1859,7 @@ return phonicsIndexCache;
     canvas.addEventListener("pointerleave", () => {
       endDrag();
       hoverIdx = -1;
+      tileHoverSlot = -1;
       hideTip();
       hoverBus.emit(null);
       requestDraw();
@@ -1689,7 +1903,7 @@ return phonicsIndexCache;
   function drawBubbles(body, payload, names) {
     const centers = payload.centers || {}, counts = payload.counts || {}, tops = payload.top || {};
     const ids = Object.keys(centers).map(Number).sort((a, b) => a - b);
-    if (!ids.length) throw new Error("cluster_centers.json 为空");
+    if (!ids.length) throw new Error(T("err.empty.centers"));
 
     const W = Math.max(360, body.clientWidth || 960), H = 560;
     const maxC = Math.max.apply(null, ids.map((i) => counts[String(i)] || 1));
@@ -1771,7 +1985,7 @@ return phonicsIndexCache;
 
     const nodeEls = [];
     nodes.sort((a, b) => b.r - a.r).forEach((p) => {
-      const nm = names[String(p.id)] || ("簇 " + p.id);
+      const nm = clusterLabel(names, p.id);
       const g = document.createElementNS(NS, "g");
       g.setAttribute("class", "bubble-node");
       g.setAttribute("transform", "translate(" + p.x.toFixed(2) + "," + p.y.toFixed(2) + ")");
@@ -1780,9 +1994,7 @@ return phonicsIndexCache;
       circle.setAttribute("cx", "0");
       circle.setAttribute("cy", "0");
       circle.setAttribute("r", p.r.toFixed(1));
-      circle.setAttribute("fill", clusterColor(p.id, 0.45));
-      circle.setAttribute("stroke", clusterColor(p.id, 0.9));
-      circle.setAttribute("stroke-width", "1.5");
+      circle.setAttribute("fill", clusterColor(p.id));
       g.appendChild(circle);
 
       const ring = document.createElementNS(NS, "circle");
@@ -1812,11 +2024,10 @@ return phonicsIndexCache;
       }
 
       const tipHTML =
-        '<div><b>' + nm + "</b> · 簇 " + p.id + "</div>" +
-        "<div>" + fmtNum(p.n) + " 词 · 占全量 " +
-        ((p.n / (payload.meta.totalMemberWords || 1)) * 100).toFixed(1) + "%</div>" +
-        '<div style="margin-top:4px;color:var(--text-2)">代表词：' +
-        ((tops[String(p.id)] || []).map((w) => "<b>" + w + "</b>").join("、") || "—") +
+        '<div><b>' + nm + T("cluster.tagId", { c: p.id }) + "</div>" +
+        "<div>" + T("cluster.tipLine", { n: fmtNum(p.n), pct: ((p.n / (payload.meta.totalMemberWords || 1)) * 100).toFixed(1) }) + "</div>" +
+        '<div style="margin-top:4px;color:var(--text-2)">' + T("cluster.reps") +
+        ((tops[String(p.id)] || []).map((w) => "<b>" + w + "</b>").join(T("list.sep")) || "—") +
         "</div>";
 
       const enter = (ev) => {
@@ -1843,6 +2054,107 @@ return phonicsIndexCache;
       nodeEls.push(g);
       p.g = g;
     });
+  }
+
+  /* ══════════════════════════════════════════════════════
+     ⑦ 近义词分组网格（替代气泡图：图标分区 + 组内标签云）
+        hover chip → hoverBus.emit({type:"cluster",cluster:id}) 联动语义地图
+  ══════════════════════════════════════════════════════ */
+  function drawClusterGrid(body, centers, names, groupsPayload) {
+    const counts = (centers && centers.counts) || {};
+    const totalWords = (centers && centers.meta && centers.meta.totalMemberWords) || 1;
+    const classes = (groupsPayload && groupsPayload.classes) || [];
+    if (!classes.length) throw new Error(T("err.empty.groups"));
+
+    // 词数 → 字号映射（11~14px）：保证可读，又体现“大小=词数”
+    let minC = Infinity, maxC = 0;
+    classes.forEach((c) =>
+      c.members.forEach((id) => {
+        const n = counts[String(id)] || 0;
+        if (n < minC) minC = n;
+        if (n > maxC) maxC = n;
+      })
+    );
+    if (!isFinite(minC)) { minC = 0; maxC = 1; }
+    const fontSizeFor = (n) =>
+      11 + (maxC > minC ? (n - minC) / (maxC - minC) : 0) * 3; // 11~14px
+
+    body.innerHTML = "";
+    const grid = document.createElement("div");
+    grid.className = "cluster-grid";
+
+    classes.forEach((cls) => {
+      const sec = document.createElement("section");
+      sec.className = "cg-class cg-ph" + cls.ph;
+
+      // ── 头部：彩色图标方块 + 类名 + 组数/词数
+      const head = document.createElement("div");
+      head.className = "cg-head";
+      const icon = document.createElement("span");
+      icon.className = "cg-icon";
+      icon.textContent = cls.icon;
+      const meta = document.createElement("div");
+      meta.className = "cg-meta";
+      const nm = document.createElement("div");
+      nm.className = "cg-name";
+      nm.textContent = cls.name;
+      const sub = document.createElement("div");
+      sub.className = "cg-sub";
+      let sumWords = 0;
+      cls.members.forEach((id) => (sumWords += counts[String(id)] || 0));
+      sub.textContent = T("cg.sub", { g: cls.members.length, w: fmtNum(sumWords) });
+      meta.appendChild(nm);
+      meta.appendChild(sub);
+      head.appendChild(icon);
+      head.appendChild(meta);
+
+      // ── 组内标签云：按词数降序，chip 大小=词数
+      const chips = document.createElement("div");
+      chips.className = "cg-chips";
+      const sorted = cls.members
+        .slice()
+        .sort((a, b) => (counts[String(b)] || 0) - (counts[String(a)] || 0));
+      sorted.forEach((id) => {
+        const n = counts[String(id)] || 0;
+        const label = clusterLabel(names, id);
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "cg-chip";
+        chip.style.fontSize = fontSizeFor(n).toFixed(1) + "px";
+        chip.textContent = label;
+        chip.dataset.cluster = id;
+        const tip =
+          "<div><b>" + label + T("cluster.tagId", { c: id }) + "</div>" +
+          "<div>" + T("cluster.tipLine", { n: fmtNum(n), pct: ((n / totalWords) * 100).toFixed(1) }) + "</div>";
+        chip.addEventListener("mouseenter", (e) => {
+          chip.classList.add("is-hot");
+          hoverBus.emit({ type: "cluster", cluster: id });
+          showTip(tip, e.clientX, e.clientY);
+        });
+        chip.addEventListener("mousemove", (e) => showTip(tip, e.clientX, e.clientY));
+        chip.addEventListener("mouseleave", () => {
+          chip.classList.remove("is-hot");
+          hoverBus.emit(null);
+          hideTip();
+        });
+        chips.appendChild(chip);
+      });
+
+      sec.appendChild(head);
+      sec.appendChild(chips);
+      grid.appendChild(sec);
+    });
+
+    body.appendChild(grid);
+
+    // ── 卡片底部小标签汇总（平移自 Semantic Map 的「词/簇」信息，静态总览，用本卡真实数据）
+    const totalClusters = classes.reduce((s, c) => s + c.members.length, 0);
+    const summary = document.createElement("div");
+    summary.className = "cg-summary";
+    summary.innerHTML =
+      '<span class="cg-stat"><b>' + fmtNum(totalWords) + "</b>" + T("cg.unitWords") + "</span>" +
+      '<span class="cg-stat"><b>' + totalClusters + "</b>" + T("cg.unitClusters") + "</span>";
+    body.appendChild(summary);
   }
 
   /* ══════════════════════════════════════════════════════
@@ -1905,7 +2217,7 @@ return phonicsIndexCache;
       const preKeys = Object.keys(ref.prefixes).sort((a, b) => b.length - a.length);
       const sufKeys = Object.keys(ref.suffixes).sort((a, b) => b.length - a.length);
 
-      const preCount = {}, sufCount = {}, pairs = {}, deriv = {};
+      const preCount = {}, sufCount = {}, pairs = {}, deriv = {}, wordAffix = {};
       for (let wi = 0; wi < singles.length; wi++) {
         const w = singles[wi];
         const hp = [], hs = [];
@@ -1932,6 +2244,12 @@ return phonicsIndexCache;
           sufCount[m.a] = (sufCount[m.a] || 0) + 1;
           (deriv[m.stem] = deriv[m.stem] || []).push({ word: w, affix: m.a, type: "suf" });
         }
+        if (hp.length || hs.length) {
+          const wa = { pre: [], suf: [] };
+          for (let i = 0; i < hp.length; i++) wa.pre.push(hp[i].a);
+          for (let i = 0; i < hs.length; i++) wa.suf.push(hs[i].a);
+          wordAffix[w] = wa;
+        }
         if (hp.length && hs.length) {
           for (let i = 0; i < hp.length; i++) {
             for (let j = 0; j < hs.length; j++) {
@@ -1951,6 +2269,7 @@ return phonicsIndexCache;
         sufCount: sufCount,
         pairs: pairs,
         deriv: deriv,
+        wordAffix: wordAffix,
         _ms: Math.round((window.performance || Date).now() - t0),
       };
       console.info("[Dashboard] affix index built in " + res._ms + "ms");
@@ -1978,7 +2297,7 @@ return phonicsIndexCache;
         return WD;
       })
       .catch((e) => {
-        console.warn("[Dashboard] word_detail.json 未加载，悬停只显示派生信息", e);
+        console.warn("[Dashboard] word_detail.json not loaded, hover shows derivation info only", e);
         wdDone = true;
         return WD;
       });
@@ -2114,7 +2433,7 @@ return phonicsIndexCache;
         "</div>";
     }
     h += '<div class="tip-mean">' +
-      (mean ? esc(mean) : '<span style="color:var(--text-3)">暂无中文释义</span>') +
+      (mean ? esc(mean) : '<span style="color:var(--text-3)">' + T("wd.noMeaning") + "</span>") +
       "</div>";
     if (extra) h += extra;
     return h;
@@ -2123,20 +2442,25 @@ return phonicsIndexCache;
   /* ══════════════════════════════════════════════════════
      ⑥ 派生词树（径向树 + 碰撞松弛，无 D3）
   ══════════════════════════════════════════════════════ */
-  const DERIVE_COLOR = { pre: "var(--pos-verb)", suf: "var(--pos-adj)", both: "var(--pos-noun)", more: "var(--pos-other)" };
+  const DERIVE_COLOR = { pre: "var(--affix-pre)", suf: "var(--affix-suf)", both: "var(--affix-both)", more: "var(--affix-more)" };
 
   function deriveChildren(idx, root, cap) {
     const seen = {}, out = [];
     const list = idx.deriv[root] || [];
     for (const m of list) {
       const ex = seen[m.word];
-      if (ex) {
-        if (ex.type !== m.type) { ex.type = "both"; ex.affix += " / " + m.affix; }
-        continue;
-      }
-      seen[m.word] = { word: m.word, affix: m.affix, type: m.type };
+      if (ex) continue;
+      seen[m.word] = { word: m.word };
       out.push(seen[m.word]);
     }
+    // 「前后缀都加」按这个词本身判定：同一个词既剥得出前缀、又剥得出后缀才算。
+    // 原来只在「同一个词根同时命中前后缀」时合并（实测 40 个候选词根 0 次），紫色档从未出现过。
+    out.forEach((r) => {
+      const wa = idx.wordAffix[r.word];
+      r.pre = wa ? wa.pre.slice() : [];
+      r.suf = wa ? wa.suf.slice() : [];
+      r.type = r.pre.length && r.suf.length ? "both" : r.suf.length ? "suf" : "pre";
+    });
     out.sort((a, b) => a.word.length - b.word.length || (a.word < b.word ? -1 : 1));
     return { children: out.slice(0, cap), more: Math.max(0, out.length - cap), total: out.length };
   }
@@ -2161,16 +2485,15 @@ return phonicsIndexCache;
     }
     const note = body.closest(".card") && body.closest(".card").querySelector(".card-note");
     if (note) {
-      note.innerHTML =
-        "共 <b>" + fmtNum(totalDerived) + "</b> 个派生词（去重）· 可选词根 " + cands.length +
-        " 个 · 悬停看释义/音标 · 单击发音 · 双击换词根 · 右上可切「列表」视图";
+      note.innerHTML = T("derive.note", { n: fmtNum(totalDerived), c: cands.length });
     }
 
     // ── 左列表 + 右可视化 双栏布局
     const layout = el("div", "derive-layout");
+    const listCol = el("div", "derive-list-col");
     const listWrap = el("div", "derive-list");
     const listHead = el("div", "derive-list-head");
-    listHead.innerHTML = '词根列表 <span class="derive-list-count">' + cands.length + "</span>";
+    listHead.innerHTML = T("derive.listHead") + ' <span class="derive-list-count">' + cands.length + "</span>";
     const list = el("div", "derive-list-items");
     listWrap.appendChild(listHead);
     listWrap.appendChild(list);
@@ -2179,15 +2502,15 @@ return phonicsIndexCache;
     const toolbar = el("div", "derive-toolbar");
 
     // 展开深度（仅树状图显示），靠右
-    const btnDepth = el("button", "hud-btn", "展开到深度 2");
-    btnDepth.title = "展开到深度 2 查看多跳派生";
+    const btnDepth = el("button", "hud-btn", T("derive.depthOut"));
+    btnDepth.title = T("derive.depthTip");
 
     // 显示方式切换：树状图 / 列表（左右分段 toggle）
     const seg = el("div", "derive-seg");
-    const segTree = el("button", "hud-btn is-on", "树状图");
-    const segList = el("button", "hud-btn", "列表");
-    segTree.title = "径向树图：看派生关系";
-    segList.title = "列表视图：一行一词，便于对比";
+    const segTree = el("button", "hud-btn is-on", T("derive.segTree"));
+    const segList = el("button", "hud-btn", T("derive.segList"));
+    segTree.title = T("derive.segTreeTip");
+    segList.title = T("derive.segListTip");
     segTree.addEventListener("click", () => {
       if (mode === "tree") return;
       mode = "tree";
@@ -2206,7 +2529,24 @@ return phonicsIndexCache;
     });
     seg.appendChild(segTree);
     seg.appendChild(segList);
+
+    // 配色提示：贴在「收回深度 1」左边，取代原来堆在卡片底部的说明文字
+    const legend = el("div", "derive-legend");
+    const LEGEND_ITEMS = [
+      { key: "derive.pre", color: DERIVE_COLOR.pre },
+      { key: "derive.suf", color: DERIVE_COLOR.suf },
+      { key: "derive.both", color: DERIVE_COLOR.both },
+      { key: "derive.collapsed", color: DERIVE_COLOR.more, treeOnly: true },
+    ];
+    function setLegend() {
+      legend.innerHTML = LEGEND_ITEMS
+        .filter((it) => !it.treeOnly || mode === "tree")
+        .map((it) => '<span><i style="background:' + it.color + '"></i>' + T(it.key) + "</span>")
+        .join("");
+    }
+
     toolbar.appendChild(seg);
+    toolbar.appendChild(legend);
     toolbar.appendChild(btnDepth);
 
     const crumbs = el("nav", "derive-crumbs");
@@ -2225,14 +2565,12 @@ return phonicsIndexCache;
     viz.appendChild(crumbs);
     viz.appendChild(svgWrap);
 
-    layout.appendChild(listWrap);
+    listCol.appendChild(listWrap);
+    layout.appendChild(listCol);
     layout.appendChild(viz);
     body.appendChild(layout);
 
-    const foot = el("p", "donut-footnote");
-    body.appendChild(foot);
-
-    let depth = 1;
+    let depth = 2;                // 默认展开两层（按钮可收回深度 1）
     let selected = cands[0].w;
     let mode = "tree";            // "tree" 径向树图 / "list" 列表视图
     let path = [selected];        // 派生根下钻历史：候选词根 → 设为词根/双击 逐级 append
@@ -2262,7 +2600,7 @@ return phonicsIndexCache;
     function updateCrumbs() {
       if (path.length <= 1) { crumbs.style.display = "none"; crumbs.innerHTML = ""; return; }
       crumbs.style.display = "";
-      let html = '<span class="dc-label">派生路径</span>';
+      let html = '<span class="dc-label">' + T("derive.path") + "</span>";
       path.forEach((w, i) => {
         if (i > 0) html += '<span class="dc-sep">›</span>';
         if (i < path.length - 1)
@@ -2288,7 +2626,8 @@ return phonicsIndexCache;
       const CAP = 30;
       const l1 = deriveChildren(idx, root, CAP);
       updateCrumbs();
-      if (mode === "list") { renderList(root, l1, CAP); return; }
+      setLegend();
+      if (mode === "list") { renderList(l1, CAP); return; }
 
       const NS = "http://www.w3.org/2000/svg";
       const W = Math.max(360, svgWrap.clientWidth || 600);
@@ -2301,28 +2640,28 @@ return phonicsIndexCache;
 
       function addLevel1() {
         l1.children.forEach((m) => {
-          const node = { id: m.word, depth: 1, type: m.type, label: m.word, affix: m.affix, stem: root };
+          const node = { id: m.word, depth: 1, type: m.type, label: m.word, pre: m.pre, suf: m.suf, stem: root };
           nodes.push(node);
-          links.push({ s: nodes[0], t: node, type: m.type, affix: m.affix });
+          links.push({ s: nodes[0], t: node, type: m.type });
           // 深度 2：只给「还有自己派生的词」挂第二层
           if (depth === 2) {
             const sub = deriveChildren(idx, m.word, 6);
             sub.children.forEach((m2) => {
-              const n2 = { id: m2.word, depth: 2, type: m2.type, label: m2.word, affix: m2.affix, stem: m.word };
+              const n2 = { id: m2.word, depth: 2, type: m2.type, label: m2.word, pre: m2.pre, suf: m2.suf, stem: m.word };
               nodes.push(n2);
-              links.push({ s: node, t: n2, type: m2.type, affix: m2.affix });
+              links.push({ s: node, t: n2, type: m2.type });
             });
             if (sub.more > 0) {
               const n2 = { id: m.word + " +N", depth: 2, type: "more", label: "+" + sub.more, more: true };
               nodes.push(n2);
-              links.push({ s: node, t: n2, type: "more", affix: "" });
+              links.push({ s: node, t: n2, type: "more" });
             }
           }
         });
         if (l1.more > 0) {
           const node = { id: root + "+N", depth: 1, type: "more", label: "+" + l1.more, more: true };
           nodes.push(node);
-          links.push({ s: nodes[0], t: node, type: "more", affix: "" });
+          links.push({ s: nodes[0], t: node, type: "more" });
         }
       }
       addLevel1();
@@ -2349,13 +2688,32 @@ return phonicsIndexCache;
         kids.forEach((l, i) => place(l.t, ang0 + span * i, ang0 + span * (i + 1)));
         n.ang = (ang0 + ang1) / 2;
       }
-      const span0 = (2 * Math.PI) / leafCount;
-      // 顶层节点（深度 1）均分整圆
       const top = links.filter((l) => l.s === nodes[0]);
-      top.forEach((l, i) => place(l.t, -Math.PI / 2 + span0 * i, -Math.PI / 2 + span0 * (i + 1)));
+      if (maxD === 2) {
+        /* 深度 2：整圆按「每个顶层子树占几片叶子」来分，而不是按顶层节点个数均分。
+           原来固定用 2π/外层叶子数 去切 17 个顶层节点，累计角度会超过 360° 绕回原地，
+           导致两个不同分支落在同一个坐标上（实测 8 对完全重叠）。 */
+        const leafUnits = (n) => {
+          const kids = links.filter((l) => l.s === n);
+          if (!kids.length) return 1;
+          return kids.reduce((s, l) => s + leafUnits(l.t), 0);
+        };
+        const units = top.map((l) => leafUnits(l.t));
+        const slice = (2 * Math.PI) / units.reduce((a, b) => a + b, 0);
+        let cursor = -Math.PI / 2;
+        top.forEach((l, i) => {
+          const span = units[i] * slice;
+          place(l.t, cursor, cursor + span);
+          cursor += span;
+        });
+      } else {
+        // 深度 1：保持原来的均分（V1 观感不变）
+        const span0 = (2 * Math.PI) / leafCount;
+        top.forEach((l, i) => place(l.t, -Math.PI / 2 + span0 * i, -Math.PI / 2 + span0 * (i + 1)));
+      }
       nodes[0].ang = -Math.PI / 2;
       nodes.forEach((n) => {
-        const rr = maxD === 1 ? 1 : Math.max(n.depth, 1) / maxD;
+        const rr = maxD === 1 ? 1 : n.depth / maxD;   // 深度 2 时根节点回圆心（原 Math.max 把根也推到内圈）
         n.x = W / 2 + rx * rr * Math.cos(n.ang);
         n.y = H / 2 + ry * rr * Math.sin(n.ang);
       });
@@ -2383,6 +2741,10 @@ return phonicsIndexCache;
       nodes.forEach((n) => {
         const g = document.createElementNS(NS, "g");
         g.setAttribute("class", "derive-node");
+        // 悬停/朗读的高亮沿用本节点所属派生方式的配色
+        g.style.setProperty("--affix", DERIVE_COLOR[n.type] || DERIVE_COLOR.more);
+        const toks = (n.pre || []).map((a) => ({ txt: a + "-", cls: "pre" }))
+          .concat((n.suf || []).map((a) => ({ txt: "-" + a, cls: "suf" })));
         const c = document.createElementNS(NS, "circle");
         const r = n.depth === 0 ? 9 : n.type === "more" ? 5 : 6.5;
         c.setAttribute("cx", n.x.toFixed(1));
@@ -2402,12 +2764,17 @@ return phonicsIndexCache;
         if (!n.more) {
           const word = n.label;
           const canRoot = !!idx.deriv[word] && word !== selected;
-          const affixTxt =
-            n.type === "both" ? "前后缀" : n.type === "pre" ? "加前缀" : n.type === "suf" ? "加后缀" : "";
+          const markTxt =
+            n.type === "both" ? T("derive.both") : n.type === "pre" ? T("derive.pre") : n.type === "suf" ? T("derive.suf") : "";
+          const chips = toks.length
+            ? '<div class="tip-row tip-affix"><span class="tip-affix-label">' + markTxt + "</span>" +
+              toks.map((k) => '<span class="dl-badge ' + k.cls + '">' + esc(k.txt) + "</span>").join("") +
+              "</div>"
+            : "";
           const extra =
-            (affixTxt ? '<div class="tip-row" style="margin-top:5px">' + affixTxt + "：<b>" + esc(n.affix) + "</b></div>" : "") +
-            (n.depth > 0 ? '<div class="tip-row">词根：<b>' + esc(n.stem) + "</b></div>" : "") +
-            (canRoot ? '<div class="tip-hint"><span>双击以此为词根</span></div>' : "");
+            chips +
+            (n.depth > 0 ? '<div class="tip-row">' + T("derive.stemRow", { w: esc(n.stem) }) + "</div>" : "") +
+            (canRoot ? '<div class="tip-hint"><span>' + T("derive.dblRoot") + "</span></div>" : "");
 
           const enter = (ev) => {
             showTip(wordTipHTML(word, extra), ev.clientX, ev.clientY);
@@ -2431,35 +2798,23 @@ return phonicsIndexCache;
         }
         svg.appendChild(g);
       });
-
-      foot.innerHTML =
-        '<span class="derive-legend">' +
-        '<span><i style="background:' + DERIVE_COLOR.pre + '"></i>加前缀</span>' +
-        '<span><i style="background:' + DERIVE_COLOR.suf + '"></i>加后缀</span>' +
-        '<span><i style="background:' + DERIVE_COLOR.both + '"></i>前后缀都加</span>' +
-        '<span><i style="background:' + DERIVE_COLOR.more + '"></i>折叠 / 未展开</span>' +
-        "</span>" +
-        "<br>构边规则：词 A 去掉词缀后仍是词库中的词（含 i→y、双辅音两种常见交替）才连边；" +
-        "默认深度 1，单根最多 30 条边，超出折叠为 +N。" +
-        '<br>交互：<b>悬停</b>看中文释义 / 音标 / 词性；<b>单击</b>朗读该词（朗读时节点脉冲）；<b>双击</b>以该词为词根重绘。' +
-        (l1.total > CAP ? "当前词根共 " + l1.total + " 个派生，已显示 " + Math.min(CAP, l1.total) + " 个。" : "");
     }
 
     btnDepth.addEventListener("click", () => {
       depth = depth === 1 ? 2 : 1;
-      btnDepth.textContent = depth === 1 ? "展开到深度 2" : "收回深度 1";
+      btnDepth.textContent = depth === 1 ? T("derive.depthIn") : T("derive.depthOut");
       render();
     });
 
     /* ── 列表视图：按派生方式分组，一行一词，左对齐便于对比 ── */
-    function renderList(root, l1, CAP) {
+    function renderList(l1, CAP) {
       svgWrap.innerHTML = "";
       const wrap = el("div", "derive-list-view");
 
       const groups = [
-        { key: "pre",  label: "加前缀",     color: DERIVE_COLOR.pre },
-        { key: "suf",  label: "加后缀",     color: DERIVE_COLOR.suf },
-        { key: "both", label: "前后缀都加", color: DERIVE_COLOR.both },
+        { key: "pre",  label: T("derive.pre"),  color: DERIVE_COLOR.pre },
+        { key: "suf",  label: T("derive.suf"),  color: DERIVE_COLOR.suf },
+        { key: "both", label: T("derive.both"), color: DERIVE_COLOR.both },
       ];
 
       groups.forEach((g) => {
@@ -2494,11 +2849,14 @@ return phonicsIndexCache;
           // 右对齐簇：设为词根 → 派生方式（加前缀 / 加后缀）
           let right = "";
           if (canRoot)
-            right += '<button class="dl-root" data-w="' + esc(word) + '" title="以该词为词根重绘">' + ROOT_ICON + "<span>设为词根</span></button>";
-          const badges = String(m.affix).split(" / ").map((tok) => {
-            const suf = tok.charAt(0) === "-";
-            return '<span class="dl-badge ' + (suf ? "suf" : "pre") + '">' +
-              (suf ? "加后缀 " : "加前缀 ") + esc(tok) + "</span>";
+            right += '<button class="dl-root" data-w="' + esc(word) + '" title="' + T("derive.setRootTip") + '">' + ROOT_ICON + "<span>" + T("derive.setRoot") + "</span></button>";
+          // 词缀标记按这个词本身的前后缀来上色（橙＝前缀、青绿＝后缀）
+          const toks = (m.pre || []).map((a) => ({ txt: a + "-", cls: "pre" }))
+            .concat((m.suf || []).map((a) => ({ txt: "-" + a, cls: "suf" })));
+          row.style.setProperty("--affix", DERIVE_COLOR[m.type] || DERIVE_COLOR.pre);
+          const badges = toks.map((k) => {
+            return '<span class="dl-badge ' + k.cls + '">' +
+              (k.cls === "pre" ? T("derive.badgePre") : T("derive.badgeSuf")) + esc(k.txt) + "</span>";
           }).join("");
           right += '<span class="dl-affix">' + badges + "</span>";
           html += '<span class="dl-right">' + right + "</span>";
@@ -2511,7 +2869,7 @@ return phonicsIndexCache;
 
       if (l1.more > 0) {
         const more = el("div", "dl-more");
-        more.textContent = "还有 " + l1.more + " 个派生未显示（单根最多 " + CAP + " 条）";
+        more.textContent = T("derive.moreHidden", { n: l1.more, cap: CAP });
         wrap.appendChild(more);
       }
 
@@ -2532,15 +2890,6 @@ return phonicsIndexCache;
           setRoot(btn.dataset.w, false);   // 列表「设为词根」，追加路径
         });
       });
-
-      foot.innerHTML =
-        '<span class="derive-legend">' +
-        '<span><i style="background:' + DERIVE_COLOR.pre + '"></i>加前缀</span>' +
-        '<span><i style="background:' + DERIVE_COLOR.suf + '"></i>加后缀</span>' +
-        '<span><i style="background:' + DERIVE_COLOR.both + '"></i>前后缀都加</span>' +
-        "</span>" +
-        "<br>列表模式：按派生方式分组、一行一词、左对齐便于对比；<b>单击整行</b>朗读该词（朗读时高亮），点「🌳 设为词根」以该词重绘。" +
-        (l1.more > 0 ? "当前词根共 " + l1.total + " 个派生，已显示 " + Math.min(CAP, l1.total) + " 个。" : "");
     }
 
     render();
@@ -2729,9 +3078,9 @@ return phonicsIndexCache;
     ribbons.forEach((r) => {
       const tipHTML =
         "<div><b>" + r.rp.d.a + "- × -" + r.rs.d.a + "</b></div>" +
-        "<div>" + fmtNum(r.segP.n) + " 个词同时命中</div>" +
-        '<div style="margin-top:4px;color:var(--text-2)">示例：' +
-        ((r.segP.ex || []).map((w) => "<b>" + w + "</b>").join("、") || "—") + "</div>";
+        "<div>" + T("chord.tipHits", { n: fmtNum(r.segP.n) }) + "</div>" +
+        '<div style="margin-top:4px;color:var(--text-2)">' + T("tip.examples") +
+        ((r.segP.ex || []).map((w) => "<b>" + w + "</b>").join(T("list.sep")) || "—") + "</div>";
       const enter = (ev) => {
         ribbons.forEach((o) => o.node.classList.toggle("is-dim", o !== r));
         allArcs.forEach((a) => a.node.classList.toggle("is-dim", a !== r.rp && a !== r.rs));
@@ -2748,8 +3097,8 @@ return phonicsIndexCache;
       const meaning = a.d.m || "—";
       const tipHTML =
         "<div><b>" + (a.kind === "pre" ? a.d.a + "-" : "-" + a.d.a) + "</b> · " +
-        (a.kind === "pre" ? "前缀" : "后缀") + "</div>" +
-        "<div>命中 " + fmtNum(a.d.n) + " 词</div>" +
+        T(a.kind === "pre" ? "chord.kindPre" : "chord.kindSuf") + "</div>" +
+        "<div>" + T("chord.tipMatch", { n: fmtNum(a.d.n) }) + "</div>" +
         '<div style="margin-top:4px;color:var(--text-2)">' + meaning + "</div>";
       const enter = (ev) => {
         ribbons.forEach((o) => o.node.classList.toggle("is-dim", o.rp !== a && o.rs !== a));
@@ -2766,11 +3115,12 @@ return phonicsIndexCache;
 
     const foot = el("p", "donut-footnote");
     const totPairs = Object.keys(idx.pairs).length;
-    foot.innerHTML =
-      "圆环左半是出现最多的 " + pre.length + " 个前缀、右半是 " + suf.length +
-      " 个后缀；一段弧线连接一对前后缀，线越粗代表同时带这对前后缀的词越多。<br>" +
-      "全部前后缀组合共 " + fmtNum(totPairs) + " 种，这里展示最主要 " + ribbons.length +
-      " 条。";
+    foot.innerHTML = T("chord.foot", {
+      pre: pre.length,
+      suf: suf.length,
+      pairs: fmtNum(totPairs),
+      shown: ribbons.length,
+    });
     body.appendChild(foot);
   }
 
@@ -2808,14 +3158,15 @@ return phonicsIndexCache;
         loadJSON("data/word_coords.json"),
         loadJSON("data/cluster_names.json"),
       ]);
-      drawScatter(body, p[0], p[1]);
+      drawSemanticMap(body, p[0], p[1]);
     },
     "cluster-bubbles": async (body) => {
       const p = await Promise.all([
         loadJSON("data/cluster_centers.json"),
         loadJSON("data/cluster_names.json"),
+        loadJSON("data/cluster_groups.json"),
       ]);
-      drawBubbles(body, p[0], p[1]);
+      drawClusterGrid(body, p[0], p[1], p[2]);
     },
     "derive-tree": async (body) => {
       // 词条详情 2.2MB，与词缀索引并行拉取；失败也不阻塞出图
@@ -2843,15 +3194,43 @@ return phonicsIndexCache;
       if (!draw || !body) return;
       try {
         await draw(body);
-        drawn.push({ body: body, draw: draw });
+        /* 按容器去重：重绘（主题切换 / V2 改窗口宽）不累积重复项，
+           否则一次主题切换会把同一张图画好几遍 */
+        if (!drawn.some((d) => d.body === body)) drawn.push({ body: body, draw: draw });
       } catch (e) {
-        body.innerHTML = '<div class="card-error">图表加载失败：' + (e && e.message ? e.message : e) + "</div>";
+        body.innerHTML = '<div class="card-error">' + T("err.chartLoad") + (e && e.message ? e.message : e) + "</div>";
         console.error("[Dashboard] chart '" + key + "' failed:", e);
       }
     };
 
-    // 主题切换 → 逐卡重绘。先清 hoverBus 旧句柄（drawScatter 重跑会重新 register），
-    // 避免重复挂载；旧 canvas 的 resize 监听靠 isConnected 自行失效（见 drawScatter）。
+    /* ── embed 模式：?vizembed=key[,key] 只显示指定卡片并铺满窗口（viz.html 全屏版挂载用）。
+       无参数时下方分支完全不执行，现有 dashboard 行为不变。 ── */
+    const embedKeys = (new URLSearchParams(location.search).get("vizembed") || "")
+      .split(",")
+      .map((k) => k.trim())
+      .filter((k) => CHART_REGISTRY[k]);
+    if (embedKeys.length) {
+      document.documentElement.classList.add("dash-embed");
+      const st = document.createElement("style");
+      st.textContent =
+        "html.dash-embed{background:var(--bg)}" +
+        "html.dash-embed .dash-navbar,html.dash-embed .dash-header,html.dash-embed .dash-hero{display:none!important}" +
+        "html.dash-embed .dash-main{padding:0}" +
+        "html.dash-embed .card-grid{display:flex;flex-direction:column;gap:0;max-width:none;padding:0;position:fixed;inset:0}" +
+        "html.dash-embed .card{display:none}" +
+        embedKeys
+          .map((k) => 'html.dash-embed .card[data-chart="' + k + '"]{display:flex;flex:1;min-height:0;border-radius:0;border:none;box-shadow:none;margin:0}')
+          .join("") +
+        "html.dash-embed .card.is-two,html.dash-embed .card.is-wide{grid-column:auto}";
+      document.head.appendChild(st);
+      const targets = cards.filter((c) => embedKeys.indexOf(c.getAttribute("data-chart")) !== -1);
+      targets.forEach(render);
+      window.__dashRenderAll = () => targets.forEach(render);
+      return;
+    }
+
+    // 主题切换 → 逐卡重绘。先清 hoverBus 旧句柄（drawSemanticMap 重跑会重新 register），
+    // 避免重复挂载；旧 canvas 的 resize 监听靠 isConnected 自行失效（见 drawSemanticMap）。
     onThemeApplied = function () {
       if (!drawn.length) return;
       hoverBus.handlers.length = 0;
@@ -2882,6 +3261,18 @@ return phonicsIndexCache;
 
     // 开发钩子：IntersectionObserver 不触发的环境（内嵌预览）可手动全量渲染
     window.__dashRenderAll = () => cards.forEach(render);
+    /* V2（dashboard2.html）钩子：窗口变宽/变窄后按当前容器宽重画「已经画过的」图。
+       只重画 drawn 里的，未滚到的仍走懒加载；无参数时 V1 不会调用它。 */
+    window.__dashRedraw = () => {
+      drawn.slice().forEach(function (r) {
+        if (!r.body.isConnected) return;
+        try {
+          r.draw(r.body);
+        } catch (e) {
+          console.error("[Dashboard] redraw failed:", e);
+        }
+      });
+    };
   }
 
   /* ══════════════════════════════════════════════════════

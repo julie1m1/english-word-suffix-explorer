@@ -1,3 +1,4 @@
+      /* 字体改用 Google Fonts 的 DM Sans / Fraunces；本地商业字体不随仓库发布 */
 
       /* ══════════════════════════════════════════════
            MATERIAL DESIGN 3 — DARK THEME
@@ -45,24 +46,30 @@
         --state-focus: rgba(208, 188, 255, 0.12);
         --state-press: rgba(208, 188, 255, 0.16);
 
-        /* WordNet 关系图配色 · dark 版（M3 色调梯：连线/词框描边统一中性色，关系类型只由底色表达）
-           静止 tone 22（比卡面亮 3 倍，不压眼）→ hover 才回到正常档 tone 30；WordNet 扩展词 tone 18 */
+        /* WordNet 关系图配色 · dark 版
+           dark 下词框翻到色调梯浅端（与 light 同档），文字改用页面背景色 —— 浅底深字，
+           靠深色卡面把词框"抠"出来，而不是靠亮字。连线/描边仍是中性色。
+           静止 t90 → hover t80；WordNet 扩展词 t95 */
         --wn-line: #9a94a5; /* outline 混 12% primary，与主色同源 */
-        --wn-hyper-fill: #003856;
-        --wn-hyper-fill-hi: #004b71;
-        --wn-hyper-fill-dim: #002f49;
-        --wn-hypo-fill: #143d07;
-        --wn-hypo-fill-hi: #275018;
-        --wn-hypo-fill-dim: #0a3400;
-        --wn-coord-fill: #003c3b;
-        --wn-coord-fill-hi: #00504f;
-        --wn-coord-fill-dim: #003231;
-        --wn-syn-fill: #433300;
-        --wn-syn-fill-hi: #594400;
-        --wn-syn-fill-dim: #382a00;
-        --wn-ant-fill: #6d0b0b;
-        --wn-ant-fill-hi: #87201b;
-        --wn-ant-fill-dim: #600104;
+        --wn-fill-plain: #e6e0e9;
+        --wn-node-text: #1c1b1f; /* = --md-surface，用户指定的"现在的背景色" */
+        --wn-node-text-ext: #49454f;
+        --wn-node-tag: #49454f;
+        --wn-hyper-fill: #cbe6ff;
+        --wn-hyper-fill-hi: #8fcdff;
+        --wn-hyper-fill-dim: #e6f2ff;
+        --wn-hypo-fill: #bef0a7;
+        --wn-hypo-fill-hi: #a3d48d;
+        --wn-hypo-fill-dim: #ccffb4;
+        --wn-coord-fill: #9ff1ee;
+        --wn-coord-fill-hi: #83d4d2;
+        --wn-coord-fill-dim: #aefffc;
+        --wn-syn-fill: #ffdf92;
+        --wn-syn-fill-hi: #eec141;
+        --wn-syn-fill-dim: #ffefcf;
+        --wn-ant-fill: #ffdad6;
+        --wn-ant-fill-hi: #ffb4ab;
+        --wn-ant-fill-dim: #ffedea;
       }
 
       /* ══════════════════════════════════════════════
@@ -109,9 +116,13 @@
         --state-focus: rgba(103, 80, 164, 0.12);
         --state-press: rgba(103, 80, 164, 0.16);
 
-        /* WordNet 关系图配色 · light 版（与 dark 同一条色调梯规则，只是翻到浅端）
+        /* WordNet 关系图配色 · light 版（词框浅底深字，与 dark 同档；只有卡面与连线中性色不同）
            词框底色 tone 90 → hover 提亮到 tone 80；WordNet 扩展词 tone 95 */
         --wn-line: #777083; /* outline 混 12% primary，与主色同源 */
+        --wn-fill-plain: var(--md-surface-3);
+        --wn-node-text: var(--text-1);
+        --wn-node-text-ext: var(--text-2);
+        --wn-node-tag: var(--text-3);
         --wn-hyper-fill: #cbe6ff;
         --wn-hyper-fill-hi: #8fcdff;
         --wn-hyper-fill-dim: #e6f2ff;
@@ -196,14 +207,16 @@
         height: 18px;
       }
       .sidebar-header h2 {
-        font-family: "Fraunces", serif;
-        font-style: italic;
-        font-weight: 300;
+        font-family: "NB International Pro", "DM Sans", sans-serif;
+        font-style: normal;
+        font-weight: 700;
         font-size: 17px;
         color: var(--text-1);
         line-height: 1.2;
       }
       .sidebar-header span {
+        font-family: "NB International Pro", "DM Sans", sans-serif;
+        font-weight: 400;
         font-size: 10px;
         color: var(--text-3);
         text-transform: uppercase;
@@ -409,16 +422,16 @@
   background: transparent;
   outline: none;
   font-size: 13px;
-  color: var(--text-primary);
+  color: var(--text-1);
   min-width: 0;
 }
 .search-box input::placeholder {
-  color: var(--text-secondary);
+  color: var(--text-2);
   opacity: 0.5;
 }
 .search-icon {
   flex-shrink: 0;
-  color: var(--text-secondary);
+  color: var(--text-2);
   opacity: 0.5;
   order: 1;
 }
@@ -433,12 +446,12 @@
   border-radius: 50%;
   cursor: pointer;
   padding: 0;
-  color: var(--text-secondary);
-  transition: all 0.15s;
+  color: var(--text-2);
+  transition: background 0.15s, color 0.15s;
   order: 2;
 }
 .search-clear:hover {
-  background: var(--text-secondary);
+  background: var(--text-2);
   color: var(--surface);
 }
 
@@ -457,7 +470,7 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-2);
   order: -1;
 }
 .search-collapse:hover {
@@ -492,8 +505,8 @@
       /* --- 新增标题样式 --- */
 .top-bar-title {
   display: none; /* 默认隐藏（桌面端不显示） */
-  font-family: "Fraunces", serif;
-  font-style: italic;
+  font-family: "NB International Pro", "DM Sans", sans-serif;
+  font-style: normal;
   font-weight: 700;
   font-size: 16px;
   color: var(--accent); /* 使用主题色突出 */
@@ -1018,14 +1031,14 @@
         transform: translateY(-1px);
       }
       .card.viewed {
-        border-left: 3px solid var(--green);
+        border-left: 3px solid var(--accent);
       }
       .card.speaking {
-        border-color: var(--green);
-        box-shadow: 0 0 0 2px var(--green-soft);
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px var(--accent-soft);
       }
 
-      /* playing animation icon — 桌面（卡片 + list）统一绿色方块动效 */
+      /* playing animation icon — 桌面（卡片 + list）统一主色方块动效 */
       @media (min-width: 1025px) {
         #grid .card.speaking .word-text::after {
           content: "";
@@ -1034,14 +1047,14 @@
           height: 10px;
           margin-left: 6px;
           vertical-align: middle;
-          background: var(--green);
+          background: var(--accent);
           border-radius: 1px;
           animation: soundwave 0.6s ease-in-out infinite alternate;
         }
       }
       /* 播放中：小喇叭脉冲高亮（list 视图 + 手机端行式共用） */
       .card.speaking .word-speak {
-        color: var(--green);
+        color: var(--accent);
         animation: speak-pulse 0.55s ease-in-out infinite alternate;
       }
       @keyframes speak-pulse {
@@ -1420,7 +1433,7 @@ display: block !important;
           box-shadow: none;
           border-color: var(--accent);
         }
-        #grid .card.viewed { border-left: 3px solid var(--green); }
+        #grid .card.viewed { border-left: 3px solid var(--accent); }
         #grid .card.expanded {
           border-color: var(--accent);
           box-shadow: 0 0 0 1px var(--accent);
@@ -1896,9 +1909,9 @@ display: block !important;
 
 /* ── Now playing card ── */
 .card.now-playing {
-  border-color: var(--green) !important;
-  border-left: 3px solid var(--green);
-  box-shadow: 0 0 0 2px var(--green-soft);
+  border-color: var(--accent) !important;
+  border-left: 3px solid var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
 /* ── Grid padding when player active ── */
@@ -3523,6 +3536,13 @@ body.spelling-mode .card-review {
   font-size: 15px;
   color: var(--text-2);
 }
+.detail-syllables {
+  font-size: 15px;
+  color: var(--text-2);
+  letter-spacing: 0.05em;
+  margin-left: 8px;
+  white-space: nowrap;
+}
 .detail-pos {
   display: flex;
   gap: 5px;
@@ -3778,6 +3798,67 @@ body.spelling-mode .card-review {
 .detail-def { line-height: 2.05; }
 .detail-body .example-sentence { padding: 4px 0; line-height: 1.9; }
 
+/* ══ 21世纪大英汉词典块（离线抽取产物，挂在电脑/pad 端 list 详情最下方）══
+   只用语义令牌；一行 = 一个义项，例句折到义项下方独立成块 */
+.dict21 { font-size: 15px; line-height: 1.9; color: var(--text-1); }
+.dict21 .dz-part + .dz-part {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.dz-head { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--text-1); }
+.dz-sup { font-size: 11px; font-weight: 700; color: var(--accent); vertical-align: super; margin-left: 2px; }
+.dz-via {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-3);
+  background: var(--surface-2);
+  padding: 1px 7px;
+  border-radius: 999px;
+  vertical-align: 2px;
+}
+.dz-group { display: flex; gap: 10px; margin-bottom: 10px; }
+.dz-pos {
+  flex: 0 0 auto;
+  min-width: 34px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  padding-top: 4px;
+}
+.dz-senses { flex: 1 1 auto; min-width: 0; }
+.dz-sense { display: flex; flex-wrap: wrap; column-gap: 8px; padding: 2px 0; }
+.dz-num { flex: 0 0 auto; font-size: 13px; color: var(--text-3); padding-top: 1px; }
+.dz-text { flex: 1 1 200px; min-width: 0; }
+.dz-ex {
+  flex: 1 0 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 3px 0 5px;
+  padding-left: 10px;
+  border-left: 2px solid var(--border);
+}
+.dz-ex-en { font-size: 14px; color: var(--text-2); line-height: 1.7; }
+.dz-ex-zh { font-size: 13px; color: var(--text-3); line-height: 1.7; }
+.dz-line { display: flex; gap: 10px; margin-top: 8px; }
+.dz-label { flex: 0 0 auto; min-width: 34px; font-size: 12px; font-weight: 700; color: var(--text-3); padding-top: 5px; }
+.dz-chips { flex: 1 1 auto; display: flex; flex-wrap: wrap; gap: 6px; }
+.dz-chip {
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-1);
+}
+.dz-items { flex: 1 1 auto; min-width: 0; }
+.dz-phr { padding: 2px 0; }
+.dz-phr-p { font-weight: 600; color: var(--text-1); }
+.dz-phr-g { margin-left: 6px; font-size: 14px; color: var(--text-2); }
+.dz-phone { margin-top: 12px; font-size: 13px; color: var(--text-3); }
+
 /* ══ iPad 横屏（1025–1366px）：导航栏强制两排 ══
    第一排：搜索框撑满左侧、功能图标贴右；第二排：词性标签整行 */
 @media (min-width: 1025px) and (max-width: 1366px) {
@@ -3851,32 +3932,35 @@ body.spelling-mode .card-review {
 .wn-wrap {
   margin-top: 20px; /* 与上方 Definition/Examples 区块拉开 */
 }
+/* 显示方式切换：沿用 dashboard 树状图/列表的分段 toggle（内凹轨道 + 实心选中块） */
 .wn-tabs {
-  display: flex;
-  gap: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  border-radius: 10px;
   margin: 14px 0 10px;
 }
 .wn-tab {
   font-family: inherit;
-  font-size: 12px;
-  padding: 4px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 8px;
+  border: none;
   background: transparent;
   color: var(--text-2);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 .wn-tab:hover {
   background: var(--state-hover);
-  border-color: var(--accent);
-  color: var(--accent);
+  color: var(--text-1);
 }
 .wn-tab.on {
-  background: var(--accent);
+  background: var(--md-primary);
   color: var(--md-on-primary);
-  border-color: var(--accent);
-  font-weight: 600;
 }
 .wn-graph {
   position: relative;
@@ -3933,10 +4017,10 @@ body.spelling-mode .card-review {
 .wn-svg .wn-mk-hyper, .wn-svg .wn-mk-hypo { fill: var(--wn-line); }
 .wn-svg .wn-glow { flood-color: var(--accent); }
 .wn-node:not(.wn-center) rect, .wn-bub circle {
-  fill: var(--md-surface-3);
+  fill: var(--wn-fill-plain);
   stroke: none; /* 关系类型已由底色承担，词框不再描边 */
 }
-/* WordNet 扩展词：底色更淡一档 + 虚线边框（底色几乎与卡面同色，虚线是它唯一的标识） */
+/* WordNet 扩展词：底色再淡一档（t95）+ 虚线边框（虚线是它唯一的标识） */
 .wn-node.wn-ext rect {
   stroke: var(--wn-line);
   stroke-width: 1;
@@ -3954,7 +4038,7 @@ body.spelling-mode .card-review {
 .wn-node.wn-ext.wn-k-coord rect { fill: var(--wn-coord-fill-dim); }
 .wn-node.wn-ext.wn-k-syn rect { fill: var(--wn-syn-fill-dim); }
 .wn-node.wn-ext.wn-k-ant rect { fill: var(--wn-ant-fill-dim); }
-/* hover：底色提亮一档（light t90→t80 / dark t30→t40） */
+/* hover：底色加深一档（light 与 dark 都是 t90→t80） */
 .wn-node.wn-k-hyper:hover rect, .wn-bub.wn-k-hyper:hover circle,
 .wn-node.wn-ext.wn-k-hyper:hover rect { fill: var(--wn-hyper-fill-hi); }
 .wn-node.wn-k-hypo:hover rect, .wn-bub.wn-k-hypo:hover circle,
@@ -3965,13 +4049,13 @@ body.spelling-mode .card-review {
 .wn-node.wn-ext.wn-k-syn:hover rect { fill: var(--wn-syn-fill-hi); }
 .wn-node.wn-k-ant:hover rect, .wn-bub.wn-k-ant:hover circle,
 .wn-node.wn-ext.wn-k-ant:hover rect { fill: var(--wn-ant-fill-hi); }
-.wn-bub text { fill: var(--text-2); }
+.wn-bub text { fill: var(--wn-node-text-ext); }
 .wn-center rect.wn-core { fill: var(--accent); }
 .wn-center text { fill: var(--md-on-primary); }
 .wn-center .wn-tag { fill: color-mix(in srgb, var(--md-on-primary) 78%, transparent); }
-.wn-node:not(.wn-center) text { fill: var(--text-1); }
-.wn-node.wn-ext:not(.wn-center) text { fill: var(--text-2); }
-.wn-node .wn-tag { fill: var(--text-3); }
+.wn-node:not(.wn-center) text { fill: var(--wn-node-text); }
+.wn-node.wn-ext:not(.wn-center) text { fill: var(--wn-node-text-ext); }
+.wn-node .wn-tag { fill: var(--wn-node-tag); }
 .wn-node {
   cursor: pointer;
 }
@@ -4039,7 +4123,7 @@ body.spelling-mode .card-review {
 .wn-lg-coord { --f: var(--wn-coord-fill); }
 .wn-lg-syn { --f: var(--wn-syn-fill); }
 .wn-lg-ant { --f: var(--wn-ant-fill); }
-.wn-lg-ext { --f: var(--md-surface-3); }
+.wn-lg-ext { --f: var(--wn-fill-plain); }
 .wn-lg i.wn-dash {
   border-style: dashed;
 }

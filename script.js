@@ -2127,13 +2127,16 @@ function renderSuffixControls(filterText = "") {
       let wordnetRel = {}; // WordNet 同/反义关系（data/wordnet_rel.json）
       let localWords = new Set(); // 本地 3W 词库词（小写）
       let vocabByWord = new Map(); // 小写词 → vocab 条目
+      let hyphenMap = null; // 音节断点（data/hyphen.json，键为小写 → 断点位置数组）
+      let hyphenPromise = null;
 
-      // 加载例句数据 + 本地音标 + WordNet 关系，完成后刷新已渲染卡片
+      // 加载例句数据 + 本地音标 + WordNet 关系 + 音节断点，完成后刷新已渲染卡片
       Promise.all([
         fetch("data/examples.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
         fetch("data/ecdict-examples.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
         fetch("data/ipa.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
         fetch("data/wordnet_rel.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
+        loadHyphen(),
       ]).then(([ex, ec, ipa, wnRel]) => {
         staticExamples = ex;
         ecdictExamples = ec;
@@ -2177,6 +2180,47 @@ function renderSuffixControls(filterText = "") {
       // 本地音标查询（data/ipa.json，键为小写）
       function getLocalIPA(word) {
         return localIPA[word.toLowerCase()] || "";
+      }
+
+      // 音节划分查询（data/hyphen.json，Moby Hyphenation List，键为小写 → 断点位置）
+      function loadHyphen() {
+        if (!hyphenPromise) {
+          hyphenPromise = fetch("data/hyphen.json")
+            .then(r => r.ok ? r.json() : {})
+            .catch(() => ({}))
+            .then(m => (hyphenMap = m || {}));
+        }
+        return hyphenPromise;
+      }
+      function syllabifiedWord(word) {
+        if (!hyphenMap) return "";
+        const w = String(word);
+        const key = w.toLowerCase();
+        const cuts = hyphenMap[key];
+        if (!Array.isArray(cuts) || !cuts.length || w.length !== key.length) return "";
+        let out = "", prev = 0;
+        for (const i of cuts) {
+          if (i <= prev || i >= w.length) continue;
+          out += w.slice(prev, i) + "·";
+          prev = i;
+        }
+        return out + w.slice(prev);
+      }
+      function syllableSlot(word) {
+        return `<span class="detail-syllables" data-syl="${encodeURIComponent(word)}" hidden></span>`;
+      }
+      function fillSyllables(scope) {
+        const el = scope.querySelector(".detail-syllables");
+        if (!el) return;
+        const apply = () => {
+          if (!el.isConnected) return;
+          const text = syllabifiedWord(decodeURIComponent(el.dataset.syl));
+          if (!text) return;
+          el.textContent = text;
+          el.hidden = false;
+        };
+        if (hyphenMap) apply();
+        else loadHyphen().then(apply);
       }
 
       // 重建「本地 3W 词库」索引（随词库切换更新）；用于区分本地库 / WordNet 扩展词
@@ -2449,6 +2493,100 @@ function renderSuffixControls(filterText = "") {
         return out;
       }
 
+      /* ══ 21世纪大英汉词典总开关 ══
+         data/dict21/ 释义数据因版权不随仓库发布，线上默认关闭，避免每次查词产生 404。
+         本地如需启用：改为 true，并确保本地存在 data/dict21/ 分片。*/
+      const DICT21_ENABLED = false;
+
+      /* ══ 21世纪大英汉词典：离线抽取产物 data/dict21/，按首字母分片懒加载 ══
+         只在电脑/pad 端 list 详情面板挂载；查不到就整块不出现，不留空壳入口 */
+      const Dict21 = (() => {
+        const norm = k => String(k).toLowerCase().replace(/\s+/g, " ").trim();
+        const chunkOf = k => (/^[a-z]$/.test(k[0]) ? k[0] : "0");
+        const cache = new Map();
+        const pending = new Map();
+        function chunk(c) {
+          if (cache.has(c)) return Promise.resolve(cache.get(c));
+          if (!pending.has(c)) pending.set(c, fetch(`data/dict21/${c}.json`)
+            .then(r => (r.ok ? r.json() : {}))
+            .then(j => { cache.set(c, j); pending.delete(c); return j; })
+            .catch(() => { cache.set(c, {}); pending.delete(c); return {}; }));
+          return pending.get(c);
+        }
+        let wfPromise = null;
+        const wfMap = () => wfPromise || (wfPromise = fetch("data/dict21/_wf.json")
+          .then(r => (r.ok ? r.json() : {})).catch(() => ({})));
+        return {
+          async get(word) {
+            const k = norm(word);
+            if (!k) return null;
+            const d = await chunk(chunkOf(k));
+            if (d[k]) return { parts: d[k], key: k, via: false };
+            const lemma = (await wfMap())[k];   // 词典只收原形：用其自带"变形"字段反查
+            if (!lemma) return null;
+            const d2 = await chunk(chunkOf(lemma));
+            return d2[lemma] ? { parts: d2[lemma], key: lemma, via: true } : null;
+          },
+        };
+      })();
+
+      const DZ_SUP = "¹²³⁴⁵⁶⁷⁸⁹";
+      function dict21HTML(word, parts, via) {
+        const real = parts.filter(p => p.g.length);   // 只剩"见 X"的词条不显示
+        if (!real.length) return "";
+        const showHead = parts.length > 1 || via;
+        let html = `<div class="detail-section-title">21世纪大英汉词典</div>`;
+        for (const [pi, p] of real.entries()) {
+          const sup = p.hom ? (DZ_SUP[Number(p.hom) - 1] || p.hom) : "";
+          html += `<div class="dz-part">`;
+          if (showHead) html += `<div class="dz-head">${esc(p.h || word)}` +
+            (sup ? `<span class="dz-sup">${esc(sup)}</span>` : "") +
+            (via && pi === 0 ? `<span class="dz-via">变形词·原形</span>` : "") + `</div>`;
+
+          for (const g of p.g) {
+            html += `<div class="dz-group">${g.p ? `<span class="dz-pos">${esc(g.p)}</span>` : ""}<div class="dz-senses">`;
+            for (const s of g.s) {
+              const hasEx = s.ex && s.ex.length;
+              const t = hasEx ? s.t.replace(/[：:]\s*$/, "") : s.t;
+              html += `<div class="dz-sense">${s.n ? `<span class="dz-num">${esc(s.n)}</span>` : ""}` +
+                `<span class="dz-text">${esc(t)}</span>` +
+                (hasEx ? s.ex.map(e => `<span class="dz-ex"><span class="dz-ex-en">${esc(e[0])}</span>` +
+                  (e[1] ? `<span class="dz-ex-zh">${esc(e[1])}</span>` : "") + `</span>`).join("") : "") +
+                `</div>`;
+            }
+            html += `</div></div>`;
+          }
+          if (p.phr && p.phr.length) {
+            html += `<div class="dz-line"><span class="dz-label">短语</span><div class="dz-items">` +
+              p.phr.map(x => `<div class="dz-phr"><span class="dz-phr-p">${esc(x.p)}</span>` +
+                (x.g ? `<span class="dz-phr-g">${esc(x.g)}</span>` : "") + `</div>`).join("") + `</div></div>`;
+          }
+          for (const [label, arr] of [["同义词", p.syn], ["反义词", p.ant], ["变形", p.wf], ["参见", p.ref]]) {
+            if (!arr || !arr.length) continue;
+            html += `<div class="dz-line"><span class="dz-label">${label}</span><div class="dz-chips">` +
+              arr.map(v => `<span class="dz-chip">${esc(v)}</span>`).join("") + `</div></div>`;
+          }
+          if (p.ph) html += `<div class="dz-phone">${esc(p.ph)}</div>`;
+          html += `</div>`;
+        }
+        return `<div class="detail-section dict21">${html}</div>`;
+      }
+
+      let dzSeq = 0;
+      function attachDict21(scope, word, isMobile) {
+        if (!DICT21_ENABLED) return;
+        const seq = ++dzSeq;   // 每次重渲染都作废上一张待回来的词典块
+        if (isMobile) return;
+        Dict21.get(word).then(res => {
+          if (seq !== dzSeq || !res || !scope.isConnected) return;
+          const html = dict21HTML(word, res.parts, res.via);
+          if (!html) return;
+          const box = document.createElement("div");
+          box.innerHTML = html;
+          scope.appendChild(box.firstElementChild);
+        });
+      }
+
       function showDetailPanel(item) {
         const panel = document.getElementById("detailPanel");
         const content = document.getElementById("detailContent");
@@ -2501,6 +2639,7 @@ function renderSuffixControls(filterText = "") {
               <div class="detail-word">${detailWordHTML}</div>
               ${posTags ? `<div class="detail-pos">${posTags}</div>` : ""}
               ${phonetic ? `<span class="detail-phonetic">${esc(phonetic)}</span>` : ""}
+              ${syllableSlot(item.word)}
               <button class="detail-play-btn" type="button" title="Play pronunciation" aria-label="Play pronunciation">
                 ${icon("speaker-wave", 16)}
               </button>
@@ -2512,6 +2651,7 @@ function renderSuffixControls(filterText = "") {
             ${exampleHTML}
           </div>
         `;
+        fillSyllables(content);
 
         content.querySelector(".detail-play-btn")?.addEventListener("click", () => playDetailWord(item.word));
         content.querySelector(".detail-close-btn")?.addEventListener("click", closeDetailPanel);
@@ -2550,6 +2690,7 @@ function renderSuffixControls(filterText = "") {
         card.classList.add("expanded");
         if (!box.dataset.loaded) {
           box.innerHTML = Explorer.inlineHTML(item.word);
+          fillSyllables(box);
           box.dataset.loaded = "1";
           box.querySelectorAll(".rel-word").forEach(b =>
             b.addEventListener("click", () => openOverlayExplorer(b.dataset.word)));
@@ -3217,6 +3358,7 @@ function renderSuffixControls(filterText = "") {
               <div class="detail-word">${detailWordHTML}</div>
               ${posTags ? `<div class="detail-pos">${posTags}</div>` : ""}
               ${phonetic ? `<span class="detail-phonetic">${esc(phonetic)}</span>` : ""}
+              ${syllableSlot(item.word)}
               <button class="detail-play-btn" type="button" title="Play pronunciation" aria-label="Play pronunciation">
                 ${icon("speaker-wave", 16)}
               </button>
@@ -3370,6 +3512,7 @@ function renderSuffixControls(filterText = "") {
           const core = coreHTML(item, isMobile);
 
           content.innerHTML = `<div class="exp-breadcrumb">${crumbs}</div>${core}${relationsSection(word)}`;
+          fillSyllables(content);
 
           // 事件绑定
           content.querySelector(".detail-play-btn")?.addEventListener("click", () => playDetailWord(word));
@@ -3380,6 +3523,7 @@ function renderSuffixControls(filterText = "") {
           content.querySelectorAll(".rel-word").forEach(b =>
             b.addEventListener("click", () => drill(b.dataset.word)));
           bindWnUI(content, w => drill(w));
+          attachDict21(content, word, isMobile);   // 词典块只挂电脑端 list 详情；手机端行内展开不加载
         }
 
         function start(w) { path = [w]; render(); }

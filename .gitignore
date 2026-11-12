@@ -24,11 +24,9 @@ scripts/longman*_chunk*.json
 scripts/longman*_missing.json
 
 # ===== 以下为“仅上传网页展示所需文件”的补充忽略规则 =====
-# 文档（不随网页展示）
+# 文档（不随网页展示，一律不入库）
 README.md
 PRD*.md
-# 例外：音节可视化的 PRD 需随仓库保留，便于任何人检索
-!PRD-syllables.md
 
 # 网页展示无关的构建脚本、截图资源与 npm 配置
 scripts/
@@ -46,3 +44,25 @@ data/word_families.json
 data/families_review.csv
 data/Suffix_Ref_cleaned.csv
 data/Suffix_Ref_检查报告.md
+
+# ===== 版权 / 体积原因不随仓库发布（2026-11-12） =====
+# 原始词典与抽取的释义分片（版权）；线上自动降级，整块释义不渲染
+21dictionary/
+data/dict21/
+
+# 商业字体 NB International Pro：CSS 已改用 Google Fonts 的 DM Sans / Fraunces
+fonts/
+
+# 独立可视化长页（无页面入口，暂不发布）
+viz.html
+viz.css
+viz.js
+vendor/gsap.min.js
+vendor/ScrollTrigger.min.js
+
+# 旧版 dashboard 归档（现统一使用 dashboard2.html 中英双语版）
+archive/
+
+# 未被词书清单引用的历史数据（本地保留，仅移出索引）
+data/17天搞定GRE单词.csv
+data/IELTS-4000 - 副本.txt
